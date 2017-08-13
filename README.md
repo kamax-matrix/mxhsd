@@ -1,4 +1,5 @@
 # mxhsd
+[Purpose](#purpose) | [Origins](#origins) | [Goals](#goals) | [Features](#features) | [Support](#support)
 
 ## Purpose
 mxhsd is Matrix Homeserver aimed towards entities who want to have in-depth control of their servers, users and can truely integrate Matrix with their environment.
@@ -30,4 +31,3 @@ Version 0.1 aims to include the following features/abilities:
 
 ## Support
 Via Matrix: [#mxhsd:kamax.io](https://matrix.to/#/#mxhsd:kamax.io) - [Static view](https://view.matrix.org/room/!MDGUnxWASkbvkdZMpE:kamax.io/)
-
