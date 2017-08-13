@@ -1,4 +1,6 @@
 # mxhsd
+[![Build Status](https://travis-ci.org/kamax-io/mxhsd.svg?branch=master)](https://travis-ci.org/kamax-io/mxhsd)  
+
 [Purpose](#purpose) | [Origins](#origins) | [Goals](#goals) | [Features](#features) | [Support](#support)
 
 ## Purpose
