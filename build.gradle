@@ -12,10 +12,12 @@ buildscript {
 }
 
 repositories {
+    maven { url "https://kamax.io/maven/releases" }
     mavenCentral()
 }
 
 dependencies {
+    compile 'io.kamax:matrix-java-sdk:0.0.1'
     compile 'org.springframework.boot:spring-boot-starter-web:1.5.6.RELEASE'
 
     // Various utilities
