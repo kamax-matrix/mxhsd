@@ -9,7 +9,7 @@ mxhsd is Matrix Homeserver aimed towards entities who want to have in-depth cont
 mxhsd is licensed under [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.en.html)
 
 ## Origins
-Due to increasing frustration around the original Matrix project, the client and server implementations, the lack of protocol spec updates and a general lack of care for corporate environments, we decide to create a homeserver implementation (and related tools) that would empower the server admins just as much as the users.
+Due to increasing frustration around the original Matrix project, the client and server implementations, the lack of protocol spec updates and a general lack of support for corporate environments, we decide to create a homeserver implementation (and related tools) that would empower the server admins just as much as the users.
 
 ## Goals
 mxhsd wants to provide a Matrix Homeserver implementation with the expected level of admin, control and auditing corporations would expect, where every action performed by a user can be controlled by an ACL.
