@@ -18,10 +18,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core;
+package io.kamax.mxhsd.api;
 
-public interface IUserSession {
+/**
+ * Represent a Matrix Homeserver
+ */
+public interface IHomeServer {
 
-    void logout();
+    /**
+     * Attempts to authenticate against this Homeserver.
+     *
+     * @param username The username of the user
+     * @param password The password of the user
+     * @return The access token of the newly created session
+     */
+    String login(String username, char[] password);
+
+    /**
+     * Retrieve an authenticated user session with an access token.
+     *
+     * @param token Access token mapped to a user session
+     * @return The user session
+     */
+    IUserSession getUserSession(String token);
 
 }

@@ -18,18 +18,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd;
+package io.kamax.mxhsd.api.exception;
 
-public class NoJsonException extends MatrixException {
+public class ForbiddenException extends MatrixException {
 
-    public static final String CODE = "M_NOT_JSON";
+    public static final String Code = "M_FORBIDDEN";
 
-    public NoJsonException(String message) {
-        super(CODE, message);
-    }
-
-    public NoJsonException(Throwable t) {
-        super(CODE, t.getMessage(), t);
+    public ForbiddenException(String error) {
+        super(Code, error);
     }
 
 }

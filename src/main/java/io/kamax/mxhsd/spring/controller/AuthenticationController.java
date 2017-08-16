@@ -20,7 +20,9 @@
 
 package io.kamax.mxhsd.spring.controller;
 
-import io.kamax.mxhsd.NoJsonException;
+import com.google.gson.JsonObject;
+import io.kamax.mxhsd.api.exception.NoJsonException;
+import io.kamax.mxhsd.core.JsonUtil;
 import io.kamax.mxhsd.spring.service.HomeserverService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
@@ -40,7 +42,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @Controller
 @RestController
-@RequestMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(path = APIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class AuthenticationController {
 
     @Autowired
@@ -58,17 +60,20 @@ public class AuthenticationController {
         }
     }
 
-    @RequestMapping(method = POST, path = APIr0.Base + "/login")
+    @RequestMapping(method = POST, path = "/login")
     public String login(HttpServletRequest req) throws IOException {
-        return svc.get().login(getJson(req));
+        JsonObject obj = JsonUtil.parse(getJson(req)).getAsJsonObject();
+        String username = JsonUtil.getOrThrow(obj, "username");
+        char[] password = JsonUtil.getOrThrow(obj, "password").toCharArray();
+        return svc.get().login(username, password);
     }
 
-    @RequestMapping(method = POST, path = APIr0.Base + "/tokenrefresh")
+    @RequestMapping(method = POST, path = "/tokenrefresh")
     public String tokenRefresh() {
         throw new NotImplementedException("tokenrefresh");
     }
 
-    @RequestMapping(method = POST, path = APIr0.Base + "/logout")
+    @RequestMapping(method = POST, path = "/logout")
     public String logout(@RequestParam("access_token") String accessToken) {
         svc.get().getUserSession(accessToken).logout();
 

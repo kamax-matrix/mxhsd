@@ -18,25 +18,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.core.auth;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import org.springframework.stereotype.Service;
+public interface ILdapAuthConfig {
 
-import javax.annotation.PostConstruct;
+    String getHost();
 
-@Service
-public class HomeserverService {
+    int getPort();
 
-    private IHomeServer srv;
+    String getBindDn();
 
-    @PostConstruct
-    public void postConstruct() {
-        // TODO create instance
-    }
+    char[] getBindPassword();
 
-    public IHomeServer get() {
-        return srv;
-    }
+    String getBaseDn();
+
+    String getQuery();
 
 }

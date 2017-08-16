@@ -18,25 +18,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.api.exception;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import org.springframework.stereotype.Service;
+public class MatrixException extends RuntimeException {
 
-import javax.annotation.PostConstruct;
+    private String errorCode;
+    private String error;
 
-@Service
-public class HomeserverService {
-
-    private IHomeServer srv;
-
-    @PostConstruct
-    public void postConstruct() {
-        // TODO create instance
+    public MatrixException(String errorCode, String error) {
+        this.errorCode = errorCode;
+        this.error = error;
     }
 
-    public IHomeServer get() {
-        return srv;
+    public MatrixException(String errorCode, String error, Throwable t) {
+        super(errorCode + ": " + error, t);
+        this.errorCode = errorCode;
+        this.error = error;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    public String getError() {
+        return error;
     }
 
 }

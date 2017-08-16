@@ -18,25 +18,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.core.auth;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import org.springframework.stereotype.Service;
+import io.kamax.matrix._MatrixID;
+import io.kamax.mxhsd.api.auth.IAuthProvider;
 
-import javax.annotation.PostConstruct;
+public class LdapAuthentication implements IAuthProvider {
 
-@Service
-public class HomeserverService {
+    private ILdapAuthConfig cfg;
 
-    private IHomeServer srv;
-
-    @PostConstruct
-    public void postConstruct() {
-        // TODO create instance
+    public LdapAuthentication(ILdapAuthConfig cfg) {
+        this.cfg = cfg;
     }
 
-    public IHomeServer get() {
-        return srv;
+
+    @Override
+    public _MatrixID login(String domain, String user, char[] password) {
+        return null;
     }
 
 }

@@ -20,8 +20,10 @@
 
 package io.kamax.mxhsd.spring.controller;
 
-import io.kamax.mxhsd.MatrixException;
-import io.kamax.mxhsd.NoJsonException;
+import io.kamax.mxhsd.api.exception.ForbiddenException;
+import io.kamax.mxhsd.api.exception.InvalidJsonException;
+import io.kamax.mxhsd.api.exception.MatrixException;
+import io.kamax.mxhsd.api.exception.NoJsonException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -37,18 +39,30 @@ public class DefaultExceptionHandler {
 
     private Logger log = LoggerFactory.getLogger(DefaultExceptionHandler.class);
 
-    public static String handle(String erroCode, String error) {
+    static String handle(String erroCode, String error) {
         return "{\"errcode\":\"" + erroCode + "\",\"error\":\"" + error + "\"}";
     }
 
-    public String handle(MatrixException e) {
+    public String handleException(MatrixException e) {
         return handle(e.getErrorCode(), e.getError());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(NoJsonException.class)
     public String handle(NoJsonException e) {
-        return handle(e);
+        return handleException(e);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InvalidJsonException.class)
+    public String handle(InvalidJsonException e) {
+        return handleException(e);
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(ForbiddenException.class)
+    public String handle(ForbiddenException e) {
+        return handleException(e);
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

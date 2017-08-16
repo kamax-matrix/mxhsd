@@ -18,25 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.api.exception;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import org.springframework.stereotype.Service;
+public class UnknownException extends MatrixException {
 
-import javax.annotation.PostConstruct;
-
-@Service
-public class HomeserverService {
-
-    private IHomeServer srv;
-
-    @PostConstruct
-    public void postConstruct() {
-        // TODO create instance
-    }
-
-    public IHomeServer get() {
-        return srv;
+    public UnknownException(String error) {
+        super("M_UNKNOWN", error);
     }
 
 }

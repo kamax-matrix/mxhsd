@@ -18,25 +18,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.api.exception;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import org.springframework.stereotype.Service;
+public class NoJsonException extends MatrixException {
 
-import javax.annotation.PostConstruct;
+    public static final String CODE = "M_NOT_JSON";
 
-@Service
-public class HomeserverService {
-
-    private IHomeServer srv;
-
-    @PostConstruct
-    public void postConstruct() {
-        // TODO create instance
+    public NoJsonException(String message) {
+        super(CODE, message);
     }
 
-    public IHomeServer get() {
-        return srv;
+    public NoJsonException(Throwable t) {
+        super(CODE, t.getMessage(), t);
     }
 
 }

@@ -18,30 +18,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd;
+package io.kamax.mxhsd.core;
 
-public class MatrixException extends RuntimeException {
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import io.kamax.mxhsd.api.exception.InvalidJsonException;
 
-    private String errorCode;
-    private String error;
+public class JsonUtil {
 
-    public MatrixException(String errorCode, String error) {
-        this.errorCode = errorCode;
-        this.error = error;
+    public static JsonElement parse(String s) {
+        try {
+            return new JsonParser().parse(s);
+        } catch (JsonParseException e) {
+            throw new InvalidJsonException(e);
+        }
     }
 
-    public MatrixException(String errorCode, String error, Throwable t) {
-        super(errorCode + ": " + error, t);
-        this.errorCode = errorCode;
-        this.error = error;
-    }
+    public static String getOrThrow(JsonObject obj, String member) {
+        if (!obj.has(member)) {
+            throw new InvalidJsonException(member + " is missing");
+        }
 
-    public String getErrorCode() {
-        return errorCode;
-    }
-
-    public String getError() {
-        return error;
+        return obj.get(member).getAsString();
     }
 
 }

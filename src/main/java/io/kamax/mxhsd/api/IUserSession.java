@@ -18,25 +18,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.api;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import org.springframework.stereotype.Service;
+import io.kamax.matrix._MatrixID;
 
-import javax.annotation.PostConstruct;
+public interface IUserSession {
 
-@Service
-public class HomeserverService {
+    _MatrixID getUserId();
 
-    private IHomeServer srv;
-
-    @PostConstruct
-    public void postConstruct() {
-        // TODO create instance
-    }
-
-    public IHomeServer get() {
-        return srv;
-    }
+    void logout();
 
 }
