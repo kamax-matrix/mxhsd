@@ -43,7 +43,7 @@ public class DefaultController {
         }
 
         res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        return "{\"errcode\":\"M_NOT_IMPLEMENTED\",\"error\":\"Not implemented\"}";
+        return DefaultExceptionHandler.handle("M_NOT_IMPLEMENTED", "Not implemented");
     }
 
 }
