@@ -18,25 +18,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.api.session;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.IHomeserverConfig;
-import io.kamax.mxhsd.core.Homeserver;
-import io.kamax.mxhsd.core.device.DeviceManager;
-import org.springframework.stereotype.Service;
+import io.kamax.matrix._MatrixID;
+import io.kamax.mxhsd.api.device.IDevice;
+import io.kamax.mxhsd.api.sync.ISyncData;
+import io.kamax.mxhsd.api.sync.ISyncOptions;
+import io.kamax.mxhsd.api.user.IUser;
 
-@Service
-public class HomeserverService {
+public interface IUserSession {
 
-    private IHomeServer srv;
+    IUserSession getForUser(_MatrixID mxId);
 
-    public HomeserverService(IHomeserverConfig cfg) {
-        srv = new Homeserver(cfg, new DumbAuthProvider(), new DeviceManager());
-    }
+    IUser getUser();
 
-    public IHomeServer get() {
-        return srv;
-    }
+    IDevice getDevice();
+
+    void setPresence(String presence);
+
+    ISyncData fetchData(ISyncOptions options);
+
+    void logout();
 
 }

@@ -20,20 +20,15 @@
 
 package io.kamax.mxhsd.spring.controller;
 
-import io.kamax.mxhsd.api.exception.ForbiddenException;
-import io.kamax.mxhsd.api.exception.InvalidJsonException;
-import io.kamax.mxhsd.api.exception.MatrixException;
-import io.kamax.mxhsd.api.exception.NoJsonException;
+import io.kamax.mxhsd.api.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 
 @ControllerAdvice
+@ResponseBody
 @RequestMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class DefaultExceptionHandler {
 
@@ -62,6 +57,12 @@ public class DefaultExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(ForbiddenException.class)
     public String handle(ForbiddenException e) {
+        return handleException(e);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(InvalidTokenException.class)
+    public String handle(InvalidTokenException e) {
         return handleException(e);
     }
 

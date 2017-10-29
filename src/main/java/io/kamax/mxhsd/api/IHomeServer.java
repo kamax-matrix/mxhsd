@@ -20,19 +20,23 @@
 
 package io.kamax.mxhsd.api;
 
+import io.kamax.mxhsd.api.session.IUserSession;
+
 /**
  * Represent a Matrix Homeserver
  */
 public interface IHomeServer {
+
+    String getDomain();
 
     /**
      * Attempts to authenticate against this Homeserver.
      *
      * @param username The username of the user
      * @param password The password of the user
-     * @return The access token of the newly created session
+     * @return The newly created session
      */
-    String login(String username, char[] password);
+    IUserSession login(String username, char[] password);
 
     /**
      * Retrieve an authenticated user session with an access token.

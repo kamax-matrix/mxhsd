@@ -20,19 +20,19 @@
 
 package io.kamax.mxhsd.spring.controller;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 
-@Controller
 @RestController
 @RequestMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class DefaultController {
@@ -41,12 +41,6 @@ public class DefaultController {
 
     @RequestMapping("/**")
     public String catchAll(HttpServletRequest req, HttpServletResponse res) {
-        StringBuffer url = req.getRequestURL();
-
-        if (!StringUtils.isBlank(req.getQueryString())) {
-            url.append("?").append(req.getQueryString());
-        }
-
         StringBuffer postData = new StringBuffer();
         Enumeration<String> postParms = req.getParameterNames();
         while (postParms.hasMoreElements()) {
@@ -57,12 +51,17 @@ public class DefaultController {
             postData.append(parm).append("=").append(req.getParameter(parm));
         }
 
-        log.warn("Requested unsupported URL: {}", url);
+        log.warn("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
         if (postData.length() > 0) {
             log.warn("POST data: {}", postData);
         }
+        try {
+            log.warn("Body: {}", IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            log.warn("Body: Unable to read", e);
+        }
 
-        res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        res.setStatus(HttpServletResponse.SC_NOT_FOUND);
         return DefaultExceptionHandler.handle("M_NOT_IMPLEMENTED", "Not implemented");
     }
 

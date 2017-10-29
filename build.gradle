@@ -27,7 +27,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.6.RELEASE'
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.7.RELEASE'
     }
 }
 
@@ -37,8 +37,8 @@ repositories {
 }
 
 dependencies {
-    compile 'io.kamax:matrix-java-sdk:0.0.1'
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.6.RELEASE'
+    compile 'io.kamax:matrix-java-sdk:0.0.2'
+    compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
 
     // Various utilities
     compile 'org.apache.commons:commons-lang3:3.5'

@@ -18,21 +18,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core;
+package io.kamax.mxhsd.spring.config;
 
-import io.kamax.matrix._MatrixID;
-import io.kamax.mxhsd.api.IUserSession;
+import io.kamax.mxhsd.api.IHomeserverConfig;
+import io.kamax.mxhsd.spring.ConfigurationException;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-public class UserSession implements IUserSession {
+import javax.annotation.PostConstruct;
 
-    @Override
-    public _MatrixID getUserId() {
-        return null;
+@Configuration
+@ConfigurationProperties("matrix")
+public class HomeserverConfig implements IHomeserverConfig {
+
+    private String domain;
+
+    @PostConstruct
+    public void build() {
+        if (StringUtils.isBlank(domain)) {
+            throw new ConfigurationException("matrix.domain");
+        }
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
     }
 
     @Override
-    public void logout() {
-
+    public String getDomain() {
+        return domain;
     }
 
 }

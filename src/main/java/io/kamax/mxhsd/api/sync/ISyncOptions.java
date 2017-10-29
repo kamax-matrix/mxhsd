@@ -18,25 +18,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.api.sync;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.IHomeserverConfig;
-import io.kamax.mxhsd.core.Homeserver;
-import io.kamax.mxhsd.core.device.DeviceManager;
-import org.springframework.stereotype.Service;
+import java.util.Optional;
 
-@Service
-public class HomeserverService {
+public interface ISyncOptions {
 
-    private IHomeServer srv;
+    Optional<String> getFilterId();
 
-    public HomeserverService(IHomeserverConfig cfg) {
-        srv = new Homeserver(cfg, new DumbAuthProvider(), new DeviceManager());
-    }
+    Optional<String> getSince();
 
-    public IHomeServer get() {
-        return srv;
-    }
+    boolean isFullState();
+
+    long getTimeout();
 
 }

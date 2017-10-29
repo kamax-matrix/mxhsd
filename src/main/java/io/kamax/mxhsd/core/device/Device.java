@@ -18,25 +18,43 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.core.device;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.IHomeserverConfig;
-import io.kamax.mxhsd.core.Homeserver;
-import io.kamax.mxhsd.core.device.DeviceManager;
-import org.springframework.stereotype.Service;
+import io.kamax.matrix._MatrixID;
+import io.kamax.mxhsd.api.device.IDevice;
 
-@Service
-public class HomeserverService {
+public class Device implements IDevice {
 
-    private IHomeServer srv;
+    private String id;
+    private String token;
+    private String name;
+    private _MatrixID user;
 
-    public HomeserverService(IHomeserverConfig cfg) {
-        srv = new Homeserver(cfg, new DumbAuthProvider(), new DeviceManager());
+    public Device(String id, String token, String name, _MatrixID user) {
+        this.id = id;
+        this.token = token;
+        this.name = name;
+        this.user = user;
     }
 
-    public IHomeServer get() {
-        return srv;
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public _MatrixID getUser() {
+        return user;
+    }
+
+    @Override
+    public String getToken() {
+        return token;
     }
 
 }

@@ -18,14 +18,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api;
+package io.kamax.mxhsd.spring;
 
-import io.kamax.matrix._MatrixID;
+import java.util.Optional;
 
-public interface IUserSession {
+public class ConfigurationException extends RuntimeException {
 
-    _MatrixID getUserId();
+    private String key;
+    private String detailedMsg;
 
-    void logout();
+    public ConfigurationException(String key) {
+        super("Invalid or empty value for configuration key " + key);
+    }
+
+    public ConfigurationException(Throwable t) {
+        super(t.getMessage(), t);
+    }
+
+    public ConfigurationException(String key, String detailedMsg) {
+        this(key);
+        this.detailedMsg = detailedMsg;
+    }
+
+    public Optional<String> getDetailedMessage() {
+        return Optional.ofNullable(detailedMsg);
+    }
 
 }

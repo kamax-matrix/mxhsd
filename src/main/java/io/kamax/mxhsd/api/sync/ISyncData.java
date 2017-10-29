@@ -18,10 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller;
+package io.kamax.mxhsd.api.sync;
 
-public class APIr0 {
+public interface ISyncData {
 
-    public static final String Base = "/_matrix/client/r0";
+    String getNextBatchToken();
 
 }

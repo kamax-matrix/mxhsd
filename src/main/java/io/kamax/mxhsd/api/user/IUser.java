@@ -18,25 +18,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.api.user;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.IHomeserverConfig;
-import io.kamax.mxhsd.core.Homeserver;
-import io.kamax.mxhsd.core.device.DeviceManager;
-import org.springframework.stereotype.Service;
+import io.kamax.matrix._MatrixID;
 
-@Service
-public class HomeserverService {
+import java.util.Optional;
 
-    private IHomeServer srv;
+public interface IUser {
 
-    public HomeserverService(IHomeserverConfig cfg) {
-        srv = new Homeserver(cfg, new DumbAuthProvider(), new DeviceManager());
-    }
+    _MatrixID getId();
 
-    public IHomeServer get() {
-        return srv;
-    }
+    IFilter createFilter(String content);
+
+    Optional<IFilter> findFilter(String id);
 
 }

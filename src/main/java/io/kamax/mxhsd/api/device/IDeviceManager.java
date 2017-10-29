@@ -18,16 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring;
+package io.kamax.mxhsd.api.device;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import io.kamax.matrix._MatrixID;
 
-@SpringBootApplication
-public class MxhsdSpringBootApp {
+public interface IDeviceManager {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MxhsdSpringBootApp.class, args);
-    }
+    IDevice create(_MatrixID user, String name);
 
 }

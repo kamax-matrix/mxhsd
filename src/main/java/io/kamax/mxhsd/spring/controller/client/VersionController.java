@@ -18,25 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.service;
+package io.kamax.mxhsd.spring.controller.client;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.IHomeserverConfig;
-import io.kamax.mxhsd.core.Homeserver;
-import io.kamax.mxhsd.core.device.DeviceManager;
-import org.springframework.stereotype.Service;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Service
-public class HomeserverService {
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
-    private IHomeServer srv;
+@RestController
+@RequestMapping(path = ClientAPI.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+public class VersionController {
 
-    public HomeserverService(IHomeserverConfig cfg) {
-        srv = new Homeserver(cfg, new DumbAuthProvider(), new DeviceManager());
-    }
-
-    public IHomeServer get() {
-        return srv;
+    @RequestMapping(method = GET, path = "/versions")
+    public String getVersions() {
+        return "{\"versions\":[\"r0.2.0\", \"unstable\"]}";
     }
 
 }

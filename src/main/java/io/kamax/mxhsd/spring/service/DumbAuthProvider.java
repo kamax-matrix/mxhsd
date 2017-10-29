@@ -20,23 +20,15 @@
 
 package io.kamax.mxhsd.spring.service;
 
-import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.IHomeserverConfig;
-import io.kamax.mxhsd.core.Homeserver;
-import io.kamax.mxhsd.core.device.DeviceManager;
-import org.springframework.stereotype.Service;
+import io.kamax.matrix.MatrixID;
+import io.kamax.matrix._MatrixID;
+import io.kamax.mxhsd.api.auth.IAuthProvider;
 
-@Service
-public class HomeserverService {
+public class DumbAuthProvider implements IAuthProvider {
 
-    private IHomeServer srv;
-
-    public HomeserverService(IHomeserverConfig cfg) {
-        srv = new Homeserver(cfg, new DumbAuthProvider(), new DeviceManager());
-    }
-
-    public IHomeServer get() {
-        return srv;
+    @Override
+    public _MatrixID login(String domain, String user, char[] password) {
+        return new MatrixID(user, domain);
     }
 
 }
