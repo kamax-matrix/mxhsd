@@ -45,10 +45,14 @@ public class DefaultController {
         Enumeration<String> postParms = req.getParameterNames();
         while (postParms.hasMoreElements()) {
             String parm = postParms.nextElement();
-            if (postData.length() > 0) {
-                postData.append("&");
+            if ("access_token".equals(parm.toLowerCase())) {
+                postData.append(parm).append("=").append("<redacted>");
+            } else {
+                if (postData.length() > 0) {
+                    postData.append("&");
+                }
+                postData.append(parm).append("=").append(req.getParameter(parm));
             }
-            postData.append(parm).append("=").append(req.getParameter(parm));
         }
 
         log.warn("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
