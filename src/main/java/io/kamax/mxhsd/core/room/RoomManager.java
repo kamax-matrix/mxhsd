@@ -20,20 +20,21 @@
 
 package io.kamax.mxhsd.core.room;
 
-import io.kamax.matrix.codec.MxBase64;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomCreateOptions;
 import io.kamax.mxhsd.api.room.IRoomManager;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class RoomManager implements IRoomManager {
 
-    private HomeserverState state;
+    private Logger log = LoggerFactory.getLogger(RoomManager.class);
 
+    private HomeserverState state;
     private Map<String, IRoom> rooms;
 
     public RoomManager(HomeserverState state) {
@@ -48,16 +49,32 @@ public class RoomManager implements IRoomManager {
     private String getId() {
         String id;
         do {
-            id = MxBase64.encode(RandomStringUtils.random(12) + ":" + state.getDomain());
+            id = "!" + RandomStringUtils.randomAlphanumeric(16) + ":" + state.getDomain();
         } while (hasRoom(id));
 
-        return "!" + id;
+        log.info("Generated Room ID {}", id);
+        return id;
     }
 
     @Override
-    public IRoom createRoom(IRoomCreateOptions options) {
-        IRoom room = new Room(state, getId());
+    public synchronized IRoom createRoom(IRoomCreateOptions options) { // FIXME use RWLock
+        String id = getId();
+        Room room = new Room(state, id);
+        room.setCreator(options.getCreator());
+        rooms.put(id, room);
+
+        log.info("Room {} created", id);
         return room;
+    }
+
+    @Override
+    public synchronized Optional<IRoom> findRoom(String id) { // FIXME use RWLock
+        return Optional.ofNullable(rooms.get(id));
+    }
+
+    @Override
+    public synchronized List<IRoom> listRooms() { // FIXME use RWLock
+        return new ArrayList<>(rooms.values());
     }
 
 }

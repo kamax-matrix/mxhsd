@@ -22,11 +22,7 @@ package io.kamax.mxhsd.api.event;
 
 import com.google.gson.JsonObject;
 
-import java.time.Instant;
-
 public interface ISimpleEvent {
-
-    Instant getTimestamp();
 
     String getType();
 

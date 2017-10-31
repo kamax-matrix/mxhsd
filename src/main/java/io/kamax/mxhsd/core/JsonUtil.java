@@ -46,8 +46,12 @@ public class JsonUtil {
         return obj.get(member).getAsString();
     }
 
-    public static JsonObject getObj(JsonObject o, String key) {
-        return findObj(o, key).orElseGet(JsonObject::new);
+    public static JsonObject getObjOrCompute(JsonObject o, String key) {
+        if (!o.has(key)) {
+            o.add(key, new JsonObject());
+        }
+
+        return o.get(key).getAsJsonObject();
     }
 
     public static long getLong(JsonObject o, String key, long failover) {

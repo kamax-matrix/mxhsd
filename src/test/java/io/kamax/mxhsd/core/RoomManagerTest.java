@@ -18,37 +18,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.core;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.core.room.RoomCreateOptions;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
 
-import java.time.Instant;
-import java.util.Collection;
+import static junit.framework.TestCase.assertTrue;
 
-public interface IEventBuilder {
+public class RoomManagerTest extends GenericHomeserverTest {
 
-    IEventBuilder setTimestamp(Instant instant);
-
-    IEventBuilder setType(String type);
-
-    IEventBuilder addParent(ISignedEvent parent);
-
-    default IEventBuilder addParents(Collection<ISignedEvent> parents) {
-        parents.forEach(this::addParent);
-        return this;
+    @Test
+    public void createRoom() {
+        IUserSession session = hs.login("test", "test".toCharArray());
+        RoomCreateOptions opts = new RoomCreateOptions(session.getUser().getId());
+        IRoom room = session.createRoom(opts);
+        assertTrue(StringUtils.isNotBlank(room.getId()));
     }
-
-    Collection<String> getParents();
-
-    JsonArray getAuthEvents();
-
-    JsonObject getContent();
-
-    JsonObject getPrevState();
-
-    JsonObject getJson();
-
-    IEvent build(String id);
 
 }

@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.core;
 
+import io.kamax.matrix.MatrixID;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.device.IDevice;
@@ -54,7 +55,7 @@ public class Homeserver implements IHomeServer {
 
     @Override
     public IUserSession login(String username, char[] password) {
-        _MatrixID mxid = state.getAuthMgr().login(getDomain(), username, password);
+        _MatrixID mxid = new MatrixID(state.getAuthMgr().login(getDomain(), username, password).getId().toLowerCase());
         if (!mxid.isValid()) {
             log.warn("Invalid Matrix ID from auth backend: {}", mxid);
             throw new ForbiddenException("authentication returned invalid Matrix ID");
@@ -62,7 +63,7 @@ public class Homeserver implements IHomeServer {
 
         IDevice dev = state.getDevMgr().create(mxid, Long.toString(System.currentTimeMillis())); // FIXME createOrFind() ?
         IHomeserverUser user = new HomeserverUser(mxid);
-        IUserSession session = new UserSession(state.getRoomMgr(), user, dev);
+        IUserSession session = new UserSession(state, user, dev);
 
         sessions.put(dev.getToken(), session);
         return session;

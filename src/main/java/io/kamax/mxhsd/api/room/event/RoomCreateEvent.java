@@ -18,37 +18,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.api.room.event;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.kamax.matrix._MatrixID;
+import io.kamax.mxhsd.api.event.EventKey;
+import io.kamax.mxhsd.api.room.RoomEventType;
 
-import java.time.Instant;
-import java.util.Collection;
+public class RoomCreateEvent extends SimpleRoomEvent {
 
-public interface IEventBuilder {
+    private String creator;
 
-    IEventBuilder setTimestamp(Instant instant);
-
-    IEventBuilder setType(String type);
-
-    IEventBuilder addParent(ISignedEvent parent);
-
-    default IEventBuilder addParents(Collection<ISignedEvent> parents) {
-        parents.forEach(this::addParent);
-        return this;
+    public RoomCreateEvent(String roomId, _MatrixID creator) {
+        super(roomId, RoomEventType.Creation);
+        this.creator = creator.getId();
     }
 
-    Collection<String> getParents();
+    @Override
+    protected void produceBody(JsonObject o) {
+        super.produceBody(o);
+        o.addProperty(EventKey.StateKey.get(), "");
+    }
 
-    JsonArray getAuthEvents();
-
-    JsonObject getContent();
-
-    JsonObject getPrevState();
-
-    JsonObject getJson();
-
-    IEvent build(String id);
+    @Override
+    protected void produceContent(JsonObject o) {
+        o.addProperty("creator", creator);
+    }
 
 }

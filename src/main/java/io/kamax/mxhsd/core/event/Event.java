@@ -24,21 +24,18 @@ import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.IEvent;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Event implements IEvent {
 
     private String id;
-    private long depth;
     private String type;
-    private String raw;
-    private List<IEvent> parents;
+    private long depth;
+    private String json;
 
-    public Event(String id, String raw) {
+    public Event(String id, String type, long depth, String json) {
         this.id = id;
-        this.raw = raw;
-        this.parents = new ArrayList<>(parents);
+        this.type = type;
+        this.depth = depth;
+        this.json = json;
     }
 
     @Override
@@ -57,13 +54,8 @@ public class Event implements IEvent {
     }
 
     @Override
-    public List<IEvent> getParents() {
-        return new ArrayList<>(parents);
-    }
-
-    @Override
     public JsonObject getJson() {
-        return GsonUtil.get().fromJson(raw, JsonObject.class);
+        return GsonUtil.get().fromJson(json, JsonObject.class);
     }
 
 }

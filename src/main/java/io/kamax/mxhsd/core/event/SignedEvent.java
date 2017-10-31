@@ -21,36 +21,29 @@
 package io.kamax.mxhsd.core.event;
 
 import com.google.gson.JsonObject;
-import io.kamax.mxhsd.api.event.ISimpleEvent;
+import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.ISignedEvent;
 
-import java.time.Instant;
+public class SignedEvent implements ISignedEvent {
 
-public abstract class SimpleEvent implements ISimpleEvent {
-
+    private String id;
     private String type;
-    private Instant timestamp;
+    private long depth;
+    private String raw;
 
-    public SimpleEvent(String type) {
-        this(type, Instant.now());
+    public SignedEvent(String id, String raw) {
+        this.id = id;
+        this.raw = raw;
     }
-
-    public SimpleEvent(String type, Instant timestamp) {
-        this.type = type;
-        this.timestamp = timestamp;
-    }
-
-    protected JsonObject getBaseObj() {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("type", type);
-        obj.addProperty("origin_server_ts", timestamp.toEpochMilli());
-        return obj;
-    }
-
-    protected abstract JsonObject produce(JsonObject o);
 
     @Override
-    public Instant getTimestamp() {
-        return timestamp;
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public long getDepth() {
+        return depth;
     }
 
     @Override
@@ -60,7 +53,7 @@ public abstract class SimpleEvent implements ISimpleEvent {
 
     @Override
     public JsonObject getJson() {
-        return produce(getBaseObj());
+        return GsonUtil.get().fromJson(raw, JsonObject.class);
     }
 
 }

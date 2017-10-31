@@ -25,18 +25,13 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix.codec.MxSha256;
 import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.IEventBuilder;
-import io.kamax.mxhsd.api.event.IEventManager;
-import io.kamax.mxhsd.api.event.ISimpleEvent;
+import io.kamax.mxhsd.api.event.*;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.HomeserverState;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 public class EventManager implements IEventManager {
 
@@ -47,27 +42,28 @@ public class EventManager implements IEventManager {
     private Gson gson = GsonUtil.build();
     private MxSha256 sha256 = new MxSha256();
 
-    private Map<String, IEvent> events = new ConcurrentHashMap<>();
+    private Map<String, ISignedEvent> events = new ConcurrentHashMap<>();
 
+    // FIXME enums
     public EventManager(HomeserverState hsState) {
         this.hsState = hsState;
 
         essentialTopKeys = Arrays.asList(
-                "auth_events",
-                "content",
-                "depth",
-                "event_id",
-                "hashes",
+                EventKey.AuthEvents.get(),
+                EventKey.Content.get(),
+                EventKey.Depth.get(),
+                EventKey.Id.get(),
+                EventKey.Hashes.get(),
                 "membership",
-                "origin",
-                "origin_server_ts",
-                "prev_events",
-                "prev_state",
-                "room_id",
-                "sender",
-                "signatures",
-                "states_key",
-                "type"
+                EventKey.Origin.get(),
+                EventKey.Timestamp.get(),
+                EventKey.PreviousEvents.get(),
+                EventKey.PreviousState.get(),
+                EventKey.RoomId.get(),
+                EventKey.Sender.get(),
+                EventKey.Signatures.get(),
+                EventKey.StateKey.get(),
+                EventKey.Type.get()
         );
 
         essentialContentKeys.put(RoomEventType.Aliases.getId(), Collections.singletonList("aliases"));
@@ -87,82 +83,62 @@ public class EventManager implements IEventManager {
         ));
     }
 
-    private synchronized String getNextId() { // TODO find a better way than synchronized
-        return ("$" + Long.toString(System.currentTimeMillis()) +
-                RandomStringUtils.randomAscii(4) + ":" + hsState.getDomain()).toLowerCase();
+    // TODO find a better way than synchronized
+    // TODO Externalize into dedicated class
+    private synchronized String getNextId() {
+        return "$" + Long.toString(System.currentTimeMillis()) +
+                RandomStringUtils.randomAlphabetic(4).toLowerCase() + ":" + hsState.getDomain();
     }
 
-    private IEventBuilder createEventImpl(Consumer<IEventBuilder> c) {
-        IEventBuilder builder = new EventBuilder(hsState.getDomain());
-        c.accept(builder);
-        return builder;
+    @Override
+    public IEvent populate(ISimpleEvent ev, Collection<ISignedEvent> parents) {
+        return new EventBuilder(hsState.getDomain(), ev.getJson()).addParents(parents).build(getNextId());
     }
 
-    private JsonObject hashEvent(JsonObject o) {
-        o.remove("signatures");
-        o.remove("unsigned");
-        o.remove("hashes");
-        String canonical = MatrixJson.encodeCanonical(o);
+    private JsonObject hash(JsonObject base) {
+        base.remove(EventKey.Hashes.get());
+        base.remove(EventKey.Signatures.get());
+        base.remove(EventKey.Unsigned.get());
+        String canonical = MatrixJson.encodeCanonical(base);
 
         JsonObject hashes = new JsonObject();
-        hashes.addProperty("sha256", sha256.hash(canonical));
-        o.add("hashes", hashes);
-        return o;
+        hashes.addProperty("sha256", sha256.hash(canonical)); // FIXME do not hardcode
+        base.add(EventKey.Hashes.get(), hashes);
+        return base;
     }
 
-    private JsonObject signEvent(JsonObject original) {
-        if (!original.has("hashes")) {
-            throw new IllegalStateException("Event cannot be signed: missing hashes key");
-        }
+    private JsonObject sign(JsonObject base) {
+        JsonObject signBase = gson.fromJson(gson.toJson(base), JsonObject.class); // TODO how to do better?
 
-        JsonObject o = gson.fromJson(gson.toJson(original), JsonObject.class);
-        o.keySet().forEach(key -> {
-            if (!essentialTopKeys.contains(key)) o.remove(key);
+        signBase.keySet().forEach(key -> {
+            if (!essentialTopKeys.contains(key)) signBase.remove(key);
         });
 
-        if (o.has("content")) {
-            JsonObject content = o.get("content").getAsJsonObject();
-            List<String> essentials = essentialContentKeys.getOrDefault(content.get("type").getAsString(), Collections.emptyList());
-            content.keySet().forEach(key -> {
-                if (!essentials.contains(key)) content.remove(key);
-            });
-        }
+        JsonObject content = EventKey.Content.getObj(signBase);
+        List<String> essentials = essentialContentKeys.getOrDefault(EventKey.Type.getString(signBase), Collections.emptyList());
+        content.keySet().forEach(key -> {
+            if (!essentials.contains(key)) content.remove(key);
+        });
 
-        JsonObject signs = hsState.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(o));
-        original.add("signatures", signs);
-        return original;
-    }
-
-    public IEvent createEvent(Consumer<IEventBuilder> c) {
-        IEventBuilder builder = createEventImpl(c);
-        String id = getNextId();
-        JsonObject obj = signEvent(hashEvent(builder.build(id)));
-        return new Event(id, gson.toJson(obj));
+        return hsState.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(base));
     }
 
     @Override
-    public IEvent buildEvent(Consumer<IEventBuilder> c) {
-        throw new NotImplementedException("");
+    public ISignedEvent sign(IEvent ev) {
+        JsonObject base = hash(ev.getJson());
+        JsonObject signs = sign(base);
+        base.add(EventKey.Signatures.get(), signs);
+        return new SignedEvent(ev.getId(), MatrixJson.encodeCanonical(base));
     }
 
     @Override
-    public IEvent buildEvent(JsonObject o) {
-        throw new NotImplementedException("");
+    public synchronized void store(ISignedEvent ev) { // FIXME use RWLock
+        events.put(ev.getId(), ev);
     }
 
     @Override
-    public IEvent buildEvent(ISimpleEvent ev) {
-        throw new NotImplementedException("");
-    }
-
-    @Override
-    public void storeEvent(IEvent ev) {
-        throw new NotImplementedException("");
-    }
-
-    @Override
-    public IEvent getEvent(String id) {
-        IEvent ev = events.get(id);
+    public ISignedEvent get(String id) {
+        ISignedEvent ev = events.get(id);
         if (ev == null) {
             throw new IllegalArgumentException("Event ID " + id + " does not exist");
         }

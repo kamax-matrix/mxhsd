@@ -20,35 +20,6 @@
 
 package io.kamax.mxhsd.api.event;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
-import java.time.Instant;
-import java.util.Collection;
-
-public interface IEventBuilder {
-
-    IEventBuilder setTimestamp(Instant instant);
-
-    IEventBuilder setType(String type);
-
-    IEventBuilder addParent(ISignedEvent parent);
-
-    default IEventBuilder addParents(Collection<ISignedEvent> parents) {
-        parents.forEach(this::addParent);
-        return this;
-    }
-
-    Collection<String> getParents();
-
-    JsonArray getAuthEvents();
-
-    JsonObject getContent();
-
-    JsonObject getPrevState();
-
-    JsonObject getJson();
-
-    IEvent build(String id);
+public interface ISignedEvent extends IEvent {
 
 }

@@ -20,20 +20,31 @@
 
 package io.kamax.mxhsd.api.event;
 
-import com.google.gson.JsonObject;
-
-import java.util.function.Consumer;
+import java.util.Collection;
+import java.util.Collections;
 
 public interface IEventManager {
 
-    IEvent buildEvent(Consumer<IEventBuilder> c);
+    IEvent populate(ISimpleEvent ev, Collection<ISignedEvent> parents);
 
-    IEvent buildEvent(JsonObject o);
+    default IEvent populate(ISimpleEvent ev) {
+        return populate(ev, Collections.emptyList());
+    }
 
-    IEvent buildEvent(ISimpleEvent ev);
+    default IEvent populate(ISimpleEvent ev, ISignedEvent parent) {
+        return populate(ev, parent != null ? Collections.singleton(parent) : Collections.emptyList());
+    }
 
-    void storeEvent(IEvent ev);
+    ISignedEvent sign(IEvent ev);
 
-    IEvent getEvent(String id);
+    default ISignedEvent store(IEvent ev) {
+        ISignedEvent evSigned = sign(ev);
+        store(evSigned);
+        return evSigned;
+    }
+
+    void store(ISignedEvent ev);
+
+    ISignedEvent get(String id);
 
 }

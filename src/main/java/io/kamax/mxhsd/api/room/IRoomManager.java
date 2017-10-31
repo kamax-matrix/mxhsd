@@ -20,8 +20,15 @@
 
 package io.kamax.mxhsd.api.room;
 
+import java.util.List;
+import java.util.Optional;
+
 public interface IRoomManager {
 
     IRoom createRoom(IRoomCreateOptions options);
+
+    Optional<IRoom> findRoom(String id);
+
+    List<IRoom> listRooms();
 
 }

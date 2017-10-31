@@ -20,35 +20,41 @@
 
 package io.kamax.mxhsd.api.event;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.kamax.mxhsd.core.JsonUtil;
 
-import java.time.Instant;
-import java.util.Collection;
+public abstract class SimpleEvent implements ISimpleEvent {
 
-public interface IEventBuilder {
+    private String type;
 
-    IEventBuilder setTimestamp(Instant instant);
-
-    IEventBuilder setType(String type);
-
-    IEventBuilder addParent(ISignedEvent parent);
-
-    default IEventBuilder addParents(Collection<ISignedEvent> parents) {
-        parents.forEach(this::addParent);
-        return this;
+    public SimpleEvent(String type) {
+        this.type = type;
     }
 
-    Collection<String> getParents();
+    protected JsonObject getBaseObj() {
+        JsonObject obj = new JsonObject();
+        obj.addProperty(EventKey.Type.get(), type);
+        return obj;
+    }
 
-    JsonArray getAuthEvents();
+    protected abstract void produceBody(JsonObject o);
 
-    JsonObject getContent();
+    protected abstract void produceContent(JsonObject o);
 
-    JsonObject getPrevState();
+    protected JsonObject produce(JsonObject o) {
+        produceContent(JsonUtil.getObjOrCompute(o, EventKey.Content.get()));
+        produceBody(o);
+        return o;
+    }
 
-    JsonObject getJson();
+    @Override
+    public String getType() {
+        return type;
+    }
 
-    IEvent build(String id);
+    @Override
+    public JsonObject getJson() {
+        return produce(getBaseObj());
+    }
 
 }

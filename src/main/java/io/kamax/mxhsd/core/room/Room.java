@@ -21,13 +21,17 @@
 package io.kamax.mxhsd.core.room;
 
 import com.google.gson.JsonObject;
+import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.event.ISimpleRoomEvent;
+import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.RoomEventKey;
 import io.kamax.mxhsd.api.room.RoomEventType;
+import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -47,7 +51,7 @@ public class Room implements IRoom {
         private RoomMembership membership = RoomMembership.Leave;
         private long powerLevel = Long.MIN_VALUE;
 
-        public RoomMembership getMembership() {
+        RoomMembership getMembership() {
             return membership;
         }
 
@@ -55,7 +59,7 @@ public class Room implements IRoom {
             this.membership = membership;
         }
 
-        public long getPowerLevel() {
+        long getPowerLevel() {
             return powerLevel;
         }
 
@@ -75,11 +79,11 @@ public class Room implements IRoom {
             this.reason = reason;
         }
 
-        public boolean isValid() {
+        boolean isValid() {
             return isValid;
         }
 
-        public String getReason() {
+        String getReason() {
             return reason;
         }
 
@@ -91,11 +95,11 @@ public class Room implements IRoom {
 
     private String id;
     private Map<String, RoomMemberState> members = new HashMap<>();
-    private IEvent joinRules;
+    private ISignedEvent joinRules;
     private RoomPowerLevels powerlevels;
-    private IEvent latestEvent;
+    private ISignedEvent latestEvent;
 
-    public Room(HomeserverState globalState, String id) {
+    Room(HomeserverState globalState, String id) {
         this.globalState = globalState;
         this.id = id;
     }
@@ -126,16 +130,10 @@ public class Room implements IRoom {
 
 
     // https://matrix.org/speculator/spec/HEAD/server_server/unstable.html#rules
-    private synchronized EventValidation validate(IEvent ev) { // FIXME use a better locking mechanism
+    private synchronized EventValidation isAuthorized(IEvent ev) { // FIXME use a better locking mechanism
         JsonObject evJson = ev.getJson();
         String type = evJson.get(EventKey.Type.get()).getAsString();
         long depth = evJson.get(EventKey.Depth.get()).getAsLong();
-        String sender = EventKey.Sender.getString(evJson);
-        RoomMemberState senderState = getMemberState(sender);
-        RoomMembership senderMs = senderState.getMembership();
-        long senderPl = senderState.getPowerLevel();
-        String target = EventKey.StateKey.getString(evJson);
-        long targetPl = getMemberState(target).getPowerLevel();
 
         if (RoomEventType.Creation.is(type)) {
             if (depth != 0) {
@@ -148,6 +146,14 @@ public class Room implements IRoom {
 
             return valid();
         }
+
+        String sender = EventKey.Sender.getString(evJson);
+        RoomMemberState senderState = getMemberState(sender);
+        RoomMembership senderMs = senderState.getMembership();
+        long senderPl = senderState.getPowerLevel();
+
+        String target = EventKey.StateKey.getString(evJson);
+        long targetPl = getMemberState(target).getPowerLevel();
 
         if (RoomEventType.Membership.is(type)) {
             String membership = evJson.get(RoomEventKey.Membership.get()).getAsString();
@@ -268,8 +274,21 @@ public class Room implements IRoom {
     }
 
     @Override
-    public IEvent inject(ISimpleRoomEvent ev) {
-        return null;
+    public synchronized ISignedEvent inject(ISimpleRoomEvent evSimple) {
+        log.info("Room {}: Injecting new event of type {}", id, evSimple.getType());
+        IEvent ev = globalState.getEvMgr().populate(evSimple, latestEvent);
+        EventValidation val = isAuthorized(ev);
+        if (!val.isValid()) {
+            log.error(val.getReason());
+            throw new ForbiddenException("Illegal event");
+        } else {
+            log.info("Room {}: storing new event ", id, ev.getId());
+            return latestEvent = globalState.getEvMgr().store(ev);
+        }
+    }
+
+    public ISignedEvent setCreator(_MatrixID creator) {
+        return inject(new RoomCreateEvent(id, creator));
     }
 
 }

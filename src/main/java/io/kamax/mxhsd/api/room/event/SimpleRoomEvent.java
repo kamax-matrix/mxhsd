@@ -18,37 +18,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.api.room.event;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.kamax.mxhsd.api.event.EventKey;
+import io.kamax.mxhsd.api.event.ISimpleRoomEvent;
+import io.kamax.mxhsd.api.event.SimpleEvent;
+import io.kamax.mxhsd.api.room.RoomEventType;
 
-import java.time.Instant;
-import java.util.Collection;
+public abstract class SimpleRoomEvent extends SimpleEvent implements ISimpleRoomEvent {
 
-public interface IEventBuilder {
+    private String roomId;
 
-    IEventBuilder setTimestamp(Instant instant);
-
-    IEventBuilder setType(String type);
-
-    IEventBuilder addParent(ISignedEvent parent);
-
-    default IEventBuilder addParents(Collection<ISignedEvent> parents) {
-        parents.forEach(this::addParent);
-        return this;
+    public SimpleRoomEvent(String roomId, String type) {
+        super(type);
+        this.roomId = roomId;
     }
 
-    Collection<String> getParents();
+    public SimpleRoomEvent(String roomId, RoomEventType type) {
+        this(roomId, type.getId());
+    }
 
-    JsonArray getAuthEvents();
+    @Override
+    public String getRoomId() {
+        return roomId;
+    }
 
-    JsonObject getContent();
-
-    JsonObject getPrevState();
-
-    JsonObject getJson();
-
-    IEvent build(String id);
+    @Override
+    protected void produceBody(JsonObject o) {
+        o.addProperty(EventKey.RoomId.get(), getRoomId());
+    }
 
 }

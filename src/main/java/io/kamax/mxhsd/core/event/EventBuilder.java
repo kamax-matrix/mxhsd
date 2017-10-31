@@ -24,8 +24,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.IEventBuilder;
+import io.kamax.mxhsd.api.event.ISignedEvent;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,19 +39,21 @@ public class EventBuilder implements IEventBuilder {
 
     private String domain;
 
+    private JsonObject base;
     private Instant timestamp = Instant.now();
     private String type;
-    private long depth = 1;
+    private long depth = 0;
     private Set<String> parents = new HashSet<>();
     private JsonArray authEv = new JsonArray();
     private JsonObject content = new JsonObject();
     private JsonObject prevState = new JsonObject();
-    private JsonObject ev = new JsonObject();
 
     private Gson gson = GsonUtil.build();
 
-    public EventBuilder(String domain) {
+    public EventBuilder(String domain, JsonObject base) {
         this.domain = domain;
+        this.base = base;
+        EventKey.Type.findString(base).ifPresent(v -> type = v);
     }
 
     @Override
@@ -65,9 +69,9 @@ public class EventBuilder implements IEventBuilder {
     }
 
     @Override
-    public IEventBuilder addParent(IEvent ev) {
+    public IEventBuilder addParent(ISignedEvent ev) {
         parents.add(ev.getId());
-        if (depth <= ev.getDepth()) depth++;
+        if (depth <= ev.getDepth()) depth = ev.getDepth() + 1;
         return this;
     }
 
@@ -93,22 +97,22 @@ public class EventBuilder implements IEventBuilder {
 
     @Override
     public JsonObject getJson() {
-        return ev;
+        return base;
     }
 
     @Override
-    public JsonObject build(String eventId) {
+    public IEvent build(String id) {
         JsonArray pEv = new JsonArray();
-        this.parents.forEach(pEv::add);
+        parents.forEach(pEv::add);
 
-        ev.add("auth_events", getAuthEvents());
-        ev.addProperty("depth", depth);
-        ev.addProperty("event_id", eventId);
-        ev.addProperty("origin", domain);
-        ev.addProperty("origin_server_ts", timestamp.toEpochMilli());
-        ev.add("prev_state", getPrevState());
-        ev.addProperty("type", type);
-        return ev;
+        base.add(EventKey.AuthEvents.get(), getAuthEvents());
+        base.addProperty(EventKey.Depth.get(), depth);
+        base.addProperty(EventKey.Id.get(), id);
+        base.addProperty(EventKey.Origin.get(), domain);
+        base.addProperty(EventKey.Timestamp.get(), timestamp.toEpochMilli());
+        base.add(EventKey.PreviousState.get(), getPrevState());
+        base.addProperty(EventKey.Type.get(), type);
+        return new Event(id, type, depth, gson.toJson(base));
     }
 
 }

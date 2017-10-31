@@ -20,20 +20,10 @@
 
 package io.kamax.mxhsd.api.event;
 
-import com.google.gson.JsonObject;
-
-import java.util.List;
-
-public interface IEvent {
+public interface IEvent extends ISimpleEvent {
 
     String getId();
 
     long getDepth();
-
-    String getType();
-
-    List<IEvent> getParents();
-
-    JsonObject getJson();
 
 }

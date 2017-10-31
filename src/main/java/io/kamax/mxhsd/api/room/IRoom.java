@@ -20,13 +20,13 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.event.ISimpleRoomEvent;
 
 public interface IRoom {
 
     String getId();
 
-    IEvent inject(ISimpleRoomEvent ev);
+    ISignedEvent inject(ISimpleRoomEvent ev);
 
 }
