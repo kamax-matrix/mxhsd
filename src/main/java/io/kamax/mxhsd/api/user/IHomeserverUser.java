@@ -18,39 +18,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+package io.kamax.mxhsd.api.user;
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
+import io.kamax.matrix._MatrixID;
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.7.RELEASE'
-    }
-}
+import java.util.Optional;
 
-repositories {
-    maven { url "https://kamax.io/maven/releases" }
-    maven { url "https://kamax.io/maven/snapshots" }
-    mavenCentral()
-}
+public interface IHomeserverUser {
 
-dependencies {
-    compile 'io.kamax:matrix-java-sdk:0.0.2-21-gf012a90'
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
+    _MatrixID getId();
 
-    // Various utilities
-    compile 'org.apache.commons:commons-lang3:3.5'
+    IUserFilter createFilter(String content);
 
-    testCompile 'junit:junit:4.12'
-}
+    Optional<IUserFilter> findFilter(String id);
 
-springBoot {
-    executable = true
-
-    embeddedLaunchScriptProperties = [
-            confFolder: "/etc/default"
-    ]
 }

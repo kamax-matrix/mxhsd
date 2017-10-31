@@ -18,39 +18,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+package io.kamax.mxhsd.api.room;
 
-buildscript {
-    repositories {
-        mavenCentral()
+import org.apache.commons.lang.StringUtils;
+
+public enum RoomEventType {
+
+    Aliases("m.room.aliases"),
+    CanonicalAliases("m.room.canonical_alias"),
+    Creation("m.room.create"),
+    HistoryVisiblity("m.room.history_visibility"),
+    JoinRules("m.room.join_rules"),
+    Membership("m.room.member"),
+    PowerLevels("m.room.power_levels"),
+    Redaction("m.room.redaction");
+
+    private String id;
+
+    RoomEventType(String id) {
+        this.id = id;
     }
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.7.RELEASE'
+    public String getId() {
+        return id;
     }
-}
 
-repositories {
-    maven { url "https://kamax.io/maven/releases" }
-    maven { url "https://kamax.io/maven/snapshots" }
-    mavenCentral()
-}
+    public boolean is(String id) {
+        return StringUtils.equals(this.id, id);
+    }
 
-dependencies {
-    compile 'io.kamax:matrix-java-sdk:0.0.2-21-gf012a90'
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
-
-    // Various utilities
-    compile 'org.apache.commons:commons-lang3:3.5'
-
-    testCompile 'junit:junit:4.12'
-}
-
-springBoot {
-    executable = true
-
-    embeddedLaunchScriptProperties = [
-            confFolder: "/etc/default"
-    ]
 }

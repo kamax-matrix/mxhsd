@@ -66,4 +66,5 @@ public class SyncController {
         reply.addProperty("next_batch", data.getNextBatchToken());
         return gson.toJson(reply);
     }
+
 }

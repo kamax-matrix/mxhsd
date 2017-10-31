@@ -26,11 +26,17 @@ import com.google.gson.GsonBuilder;
 
 public class GsonUtil { // FIXME refactor into matrix-java-sdk
 
+    private static Gson instance = build();
+
     public static Gson build() {
         return new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .disableHtmlEscaping()
                 .create();
+    }
+
+    public static Gson get() {
+        return instance;
     }
 
 }

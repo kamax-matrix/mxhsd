@@ -22,16 +22,13 @@ package io.kamax.mxhsd.core;
 
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.IHomeserverConfig;
-import io.kamax.mxhsd.api.auth.IAuthProvider;
 import io.kamax.mxhsd.api.device.IDevice;
-import io.kamax.mxhsd.api.device.IDeviceManager;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.exception.InvalidTokenException;
 import io.kamax.mxhsd.api.session.IUserSession;
-import io.kamax.mxhsd.api.user.IUser;
+import io.kamax.mxhsd.api.user.IHomeserverUser;
 import io.kamax.mxhsd.core.session.UserSession;
-import io.kamax.mxhsd.core.user.User;
+import io.kamax.mxhsd.core.user.HomeserverUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,34 +39,30 @@ public class Homeserver implements IHomeServer {
 
     private Logger log = LoggerFactory.getLogger(Homeserver.class);
 
-    private IHomeserverConfig cfg;
-    private IAuthProvider authMgr;
-    private IDeviceManager devMgr;
+    private HomeserverState state;
 
     private Map<String, IUserSession> sessions = new ConcurrentHashMap<>(); // FIXME need session manager
 
-    public Homeserver(IHomeserverConfig cfg, IAuthProvider authMgr, IDeviceManager devMgr) {
-        this.cfg = cfg;
-        this.authMgr = authMgr;
-        this.devMgr = devMgr;
+    public Homeserver(HomeserverState state) {
+        this.state = state;
     }
 
     @Override
     public String getDomain() {
-        return cfg.getDomain();
+        return state.getDomain();
     }
 
     @Override
     public IUserSession login(String username, char[] password) {
-        _MatrixID mxid = authMgr.login(cfg.getDomain(), username, password);
+        _MatrixID mxid = state.getAuthMgr().login(getDomain(), username, password);
         if (!mxid.isValid()) {
             log.warn("Invalid Matrix ID from auth backend: {}", mxid);
             throw new ForbiddenException("authentication returned invalid Matrix ID");
         }
 
-        IDevice dev = devMgr.create(mxid, Long.toString(System.currentTimeMillis())); // FIXME createOrFind() ?
-        IUser user = new User(mxid);
-        IUserSession session = new UserSession(user, dev);
+        IDevice dev = state.getDevMgr().create(mxid, Long.toString(System.currentTimeMillis())); // FIXME createOrFind() ?
+        IHomeserverUser user = new HomeserverUser(mxid);
+        IUserSession session = new UserSession(state.getRoomMgr(), user, dev);
 
         sessions.put(dev.getToken(), session);
         return session;

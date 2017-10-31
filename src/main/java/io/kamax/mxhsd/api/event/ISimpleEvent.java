@@ -18,39 +18,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+package io.kamax.mxhsd.api.event;
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
+import com.google.gson.JsonObject;
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.7.RELEASE'
-    }
-}
+import java.time.Instant;
 
-repositories {
-    maven { url "https://kamax.io/maven/releases" }
-    maven { url "https://kamax.io/maven/snapshots" }
-    mavenCentral()
-}
+public interface ISimpleEvent {
 
-dependencies {
-    compile 'io.kamax:matrix-java-sdk:0.0.2-21-gf012a90'
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
+    Instant getTimestamp();
 
-    // Various utilities
-    compile 'org.apache.commons:commons-lang3:3.5'
+    String getType();
 
-    testCompile 'junit:junit:4.12'
-}
+    JsonObject getJson();
 
-springBoot {
-    executable = true
-
-    embeddedLaunchScriptProperties = [
-            confFolder: "/etc/default"
-    ]
 }

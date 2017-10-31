@@ -21,20 +21,19 @@
 package io.kamax.mxhsd.core.user;
 
 import io.kamax.matrix._MatrixID;
-import io.kamax.mxhsd.api.user.IFilter;
-import io.kamax.mxhsd.api.user.IUser;
+import io.kamax.mxhsd.api.user.IHomeserverUser;
+import io.kamax.mxhsd.api.user.IUserFilter;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
-public class User implements IUser {
+public class HomeserverUser implements IHomeserverUser {
 
     private _MatrixID id;
-    private Map<String, IFilter> filters;
+    private Map<String, IUserFilter> filters;
 
-    public User(_MatrixID id) {
+    public HomeserverUser(_MatrixID id) {
         this.id = id;
         filters = new HashMap<>();
     }
@@ -45,17 +44,12 @@ public class User implements IUser {
     }
 
     @Override
-    public synchronized IFilter createFilter(String content) { // FIXME use RWLock
-        return filters.computeIfAbsent(Long.toString(System.currentTimeMillis()), new Function<String, IFilter>() {
-            @Override
-            public IFilter apply(String s) {
-                return new Filter(s, content);
-            }
-        });
+    public synchronized IUserFilter createFilter(String content) { // FIXME use RWLock
+        return filters.computeIfAbsent(Long.toString(System.currentTimeMillis()), s -> new UserFilter(s, content));
     }
 
     @Override
-    public synchronized Optional<IFilter> findFilter(String id) { // FIXME use RWLock
+    public synchronized Optional<IUserFilter> findFilter(String id) { // FIXME use RWLock
         return Optional.ofNullable(filters.get(id));
     }
 

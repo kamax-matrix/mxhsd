@@ -18,28 +18,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.user;
+package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.user.IFilter;
+import org.apache.commons.lang.StringUtils;
 
-public class Filter implements IFilter {
+public enum RoomEventKey {
+
+    Membership("membership");
 
     private String id;
-    private String content;
 
-    public Filter(String id, String content) {
+    RoomEventKey(String id) {
         this.id = id;
-        this.content = content;
     }
 
-    @Override
-    public String getId() {
+    public String get() {
         return id;
     }
 
-    @Override
-    public String getContent() {
-        return content;
+    public boolean is(String id) {
+        return StringUtils.equals(this.id, id);
     }
 
 }

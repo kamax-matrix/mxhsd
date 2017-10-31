@@ -18,12 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.user;
+package io.kamax.mxhsd.api.event;
 
-public interface IFilter {
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
-    String getId();
+import java.time.Instant;
+import java.util.Collection;
 
-    String getContent();
+public interface IEventBuilder {
+
+    IEventBuilder setTimestamp(Instant instant);
+
+    IEventBuilder setType(String type);
+
+    IEventBuilder addParent(IEvent ev);
+
+    Collection<String> getParents();
+
+    JsonArray getAuthEvents();
+
+    JsonObject getContent();
+
+    JsonObject getPrevState();
+
+    JsonObject getJson();
+
+    JsonObject build(String id);
 
 }

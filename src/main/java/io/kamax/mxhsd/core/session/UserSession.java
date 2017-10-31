@@ -22,18 +22,23 @@ package io.kamax.mxhsd.core.session;
 
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.device.IDevice;
+import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.room.IRoomCreateOptions;
+import io.kamax.mxhsd.api.room.IRoomManager;
 import io.kamax.mxhsd.api.session.IUserSession;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncOptions;
-import io.kamax.mxhsd.api.user.IUser;
+import io.kamax.mxhsd.api.user.IHomeserverUser;
 import io.kamax.mxhsd.core.sync.SyncData;
 
 public class UserSession implements IUserSession {
 
+    private IRoomManager roomMgr;
     private IDevice device;
-    private IUser user;
+    private IHomeserverUser user;
 
-    public UserSession(IUser user, IDevice dev) {
+    public UserSession(IRoomManager roomMgr, IHomeserverUser user, IDevice dev) {
+        this.roomMgr = roomMgr;
         this.user = user;
         this.device = dev;
     }
@@ -44,7 +49,7 @@ public class UserSession implements IUserSession {
     }
 
     @Override
-    public IUser getUser() {
+    public IHomeserverUser getUser() {
         return user;
     }
 
@@ -67,6 +72,11 @@ public class UserSession implements IUserSession {
         }
 
         return new SyncData(Long.toString(System.currentTimeMillis()));
+    }
+
+    @Override
+    public IRoom createRoom(IRoomCreateOptions options) {
+        return null;
     }
 
     @Override

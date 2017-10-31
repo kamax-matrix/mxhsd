@@ -20,10 +20,15 @@
 
 package io.kamax.mxhsd.spring.service;
 
+import io.kamax.matrix.sign.KeyManager;
+import io.kamax.matrix.sign.SignatureManager;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.IHomeserverConfig;
 import io.kamax.mxhsd.core.Homeserver;
-import io.kamax.mxhsd.core.device.DeviceManager;
+import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.event.EventManager;
+import io.kamax.mxhsd.core.room.RoomManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,8 +36,15 @@ public class HomeserverService {
 
     private IHomeServer srv;
 
+    @Autowired
     public HomeserverService(IHomeserverConfig cfg) {
-        srv = new Homeserver(cfg, new DumbAuthProvider(), new DeviceManager());
+        HomeserverState state = new HomeserverState();
+        state.setDomain(cfg.getDomain());
+        state.setKeyMgr(new KeyManager("data/sign.key"));
+        state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));
+        state.setEvMgr(new EventManager(state));
+        state.setRoomMgr(new RoomManager(state));
+        srv = new Homeserver(state);
     }
 
     public IHomeServer get() {

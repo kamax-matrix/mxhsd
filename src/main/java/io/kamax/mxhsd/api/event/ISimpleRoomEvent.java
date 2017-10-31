@@ -18,39 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+package io.kamax.mxhsd.api.event;
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
+public interface ISimpleRoomEvent extends ISimpleEvent {
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.7.RELEASE'
-    }
-}
+    String getRoomId();
 
-repositories {
-    maven { url "https://kamax.io/maven/releases" }
-    maven { url "https://kamax.io/maven/snapshots" }
-    mavenCentral()
-}
-
-dependencies {
-    compile 'io.kamax:matrix-java-sdk:0.0.2-21-gf012a90'
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
-
-    // Various utilities
-    compile 'org.apache.commons:commons-lang3:3.5'
-
-    testCompile 'junit:junit:4.12'
-}
-
-springBoot {
-    executable = true
-
-    embeddedLaunchScriptProperties = [
-            confFolder: "/etc/default"
-    ]
 }

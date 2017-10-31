@@ -18,18 +18,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.user;
+package io.kamax.mxhsd.api.room;
 
 import io.kamax.matrix._MatrixID;
 
 import java.util.Optional;
 
-public interface IUser {
+public interface IRoomCreateOptions {
 
-    _MatrixID getId();
+    _MatrixID getCreator();
 
-    IFilter createFilter(String content);
+    Optional<String> getName();
 
-    Optional<IFilter> findFilter(String id);
+    Optional<String> getTopic();
+
+    Optional<String> getPreset();
 
 }

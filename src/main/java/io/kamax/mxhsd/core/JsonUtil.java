@@ -26,6 +26,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import io.kamax.mxhsd.api.exception.InvalidJsonException;
 
+import java.util.Optional;
+
 public class JsonUtil {
 
     public static JsonElement parse(String s) {
@@ -42,6 +44,26 @@ public class JsonUtil {
         }
 
         return obj.get(member).getAsString();
+    }
+
+    public static JsonObject getObj(JsonObject o, String key) {
+        return findObj(o, key).orElseGet(JsonObject::new);
+    }
+
+    public static long getLong(JsonObject o, String key, long failover) {
+        if (!o.has(key)) {
+            return failover;
+        }
+
+        return o.get(key).getAsLong();
+    }
+
+    public static Optional<JsonObject> findObj(JsonObject o, String key) {
+        if (!o.has(key)) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(o.getAsJsonObject(key));
     }
 
 }

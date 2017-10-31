@@ -22,21 +22,25 @@ package io.kamax.mxhsd.api.session;
 
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.device.IDevice;
+import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.room.IRoomCreateOptions;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncOptions;
-import io.kamax.mxhsd.api.user.IUser;
+import io.kamax.mxhsd.api.user.IHomeserverUser;
 
 public interface IUserSession {
 
     IUserSession getForUser(_MatrixID mxId);
 
-    IUser getUser();
+    IHomeserverUser getUser();
 
     IDevice getDevice();
 
     void setPresence(String presence);
 
     ISyncData fetchData(ISyncOptions options);
+
+    IRoom createRoom(IRoomCreateOptions options);
 
     void logout();
 
