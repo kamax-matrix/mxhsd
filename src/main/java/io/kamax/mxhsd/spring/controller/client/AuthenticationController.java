@@ -26,7 +26,6 @@ import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.exception.NoJsonException;
 import io.kamax.mxhsd.api.session.IUserSession;
-import io.kamax.mxhsd.core.JsonUtil;
 import io.kamax.mxhsd.spring.controller.ClientAPIr0;
 import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.service.HomeserverService;
@@ -78,9 +77,9 @@ public class AuthenticationController {
 
     @RequestMapping(method = POST, path = "/login")
     public String postLogin(HttpServletRequest req) throws IOException {
-        JsonObject obj = JsonUtil.parse(getJson(req)).getAsJsonObject();
-        String username = JsonUtil.getOrThrow(obj, "user");
-        char[] password = JsonUtil.getOrThrow(obj, "password").toCharArray();
+        JsonObject obj = GsonUtil.parse(getJson(req)).getAsJsonObject();
+        String username = GsonUtil.getOrThrow(obj, "user");
+        char[] password = GsonUtil.getOrThrow(obj, "password").toCharArray();
         IUserSession session = hs.login(username, password);
 
         JsonObject reply = new JsonObject();

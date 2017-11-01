@@ -28,12 +28,14 @@ public class Event implements IEvent {
 
     private String id;
     private String type;
+    private String sender;
     private long depth;
     private String json;
 
-    public Event(String id, String type, long depth, String json) {
+    public Event(String id, String type, String sender, long depth, String json) {
         this.id = id;
         this.type = type;
+        this.sender = sender;
         this.depth = depth;
         this.json = json;
     }
@@ -44,18 +46,28 @@ public class Event implements IEvent {
     }
 
     @Override
-    public long getDepth() {
-        return depth;
-    }
-
-    @Override
     public String getType() {
         return type;
     }
 
     @Override
+    public String getSender() {
+        return sender;
+    }
+
+    @Override
+    public long getDepth() {
+        return depth;
+    }
+
+    @Override
+    public String getBody() {
+        return json;
+    }
+
+    @Override
     public JsonObject getJson() {
-        return GsonUtil.get().fromJson(json, JsonObject.class);
+        return GsonUtil.parseObj(json);
     }
 
 }

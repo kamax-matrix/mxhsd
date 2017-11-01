@@ -21,17 +21,15 @@
 package io.kamax.mxhsd.core.room;
 
 import com.google.gson.JsonObject;
-import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.ISimpleRoomEvent;
+import io.kamax.mxhsd.api.event.NakedRoomEvent;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.RoomEventKey;
 import io.kamax.mxhsd.api.room.RoomEventType;
-import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -102,6 +100,7 @@ public class Room implements IRoom {
     Room(HomeserverState globalState, String id) {
         this.globalState = globalState;
         this.id = id;
+        this.powerlevels = new RoomPowerLevels();
     }
 
     private RoomMemberState getMemberState(String member) {
@@ -132,12 +131,13 @@ public class Room implements IRoom {
     // https://matrix.org/speculator/spec/HEAD/server_server/unstable.html#rules
     private synchronized EventValidation isAuthorized(IEvent ev) { // FIXME use a better locking mechanism
         JsonObject evJson = ev.getJson();
+        JsonObject content = EventKey.Content.getObj(evJson);
         String type = evJson.get(EventKey.Type.get()).getAsString();
         long depth = evJson.get(EventKey.Depth.get()).getAsLong();
 
         if (RoomEventType.Creation.is(type)) {
-            if (depth != 0) {
-                return invalid(ev, "depth is not 0");
+            if (depth != 1) { // FIXME rules talk about depth 0, but synapse (and dendrite?) set 1
+                return invalid(ev, "depth is not 1");
             }
 
             if (latestEvent != null) {
@@ -156,14 +156,15 @@ public class Room implements IRoom {
         long targetPl = getMemberState(target).getPowerLevel();
 
         if (RoomEventType.Membership.is(type)) {
-            String membership = evJson.get(RoomEventKey.Membership.get()).getAsString();
+            String membership = content.get(RoomEventKey.Membership.get()).getAsString();
             if (Join.is(membership)) {
                 if (RoomEventType.Creation.is(latestEvent.getType())) {
-                    if (depth != 1) {
-                        return invalid(ev, "depth is not 1");
+                    if (depth != 2) { // FIXME rules talk about depth 1, but synapse (and dendrite?) set 2
+                        return invalid(ev, "depth is not 2");
                     }
 
-                    if (!StringUtils.equals(EventKey.StateKey.getString(latestEvent.getJson()), sender)) {
+                    String creator = EventKey.Content.getObj(latestEvent.getJson()).get("creator").getAsString();
+                    if (!StringUtils.equals(EventKey.StateKey.getString(evJson), creator)) {
                         return invalid(ev, "sender is not creator");
                     }
 
@@ -240,10 +241,12 @@ public class Room implements IRoom {
         }
 
         if (!isMembership(senderMs, Join)) {
-            return invalid(ev, "sender is not in the room");
+            return invalid(ev, "sender " + sender + " is not in the room");
         }
 
-        if (!powerlevels.canForEvent(type, senderPl)) {
+        // State events definition: https://matrix.org/speculator/spec/HEAD/client_server/unstable.html#state-event-fields
+        // FIXME must clarify spec that state_key is mandatory on state events, and only there
+        if (!powerlevels.canForEvent(evJson.has(EventKey.StateKey.get()), type, senderPl)) {
             return invalid(ev, "sender does not have minimum PL for event type " + type);
         }
 
@@ -274,9 +277,10 @@ public class Room implements IRoom {
     }
 
     @Override
-    public synchronized ISignedEvent inject(ISimpleRoomEvent evSimple) {
-        log.info("Room {}: Injecting new event of type {}", id, evSimple.getType());
-        IEvent ev = globalState.getEvMgr().populate(evSimple, latestEvent);
+    public synchronized ISignedEvent inject(NakedRoomEvent evNaked) {
+        log.info("Room {}: Injecting new event of type {}", id, evNaked.getType());
+        IEvent ev = globalState.getEvMgr().populate(evNaked, latestEvent);
+        log.debug("Formalized event: {}", ev.getBody());
         EventValidation val = isAuthorized(ev);
         if (!val.isValid()) {
             log.error(val.getReason());
@@ -285,10 +289,6 @@ public class Room implements IRoom {
             log.info("Room {}: storing new event ", id, ev.getId());
             return latestEvent = globalState.getEvMgr().store(ev);
         }
-    }
-
-    public ISignedEvent setCreator(_MatrixID creator) {
-        return inject(new RoomCreateEvent(id, creator));
     }
 
 }

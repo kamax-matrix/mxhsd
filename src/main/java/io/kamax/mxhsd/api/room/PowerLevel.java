@@ -20,13 +20,15 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
+public class PowerLevel {
 
-public interface IRoom {
+    public static final long Admin = 100;
+    public static final long Moderator = 50;
+    public static final long Voice = 10;
+    public static final long None = 0;
 
-    String getId();
-
-    ISignedEvent inject(NakedRoomEvent ev);
+    private PowerLevel() {
+        // only as a helper class;
+    }
 
 }

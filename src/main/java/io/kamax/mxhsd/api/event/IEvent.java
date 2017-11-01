@@ -20,10 +20,12 @@
 
 package io.kamax.mxhsd.api.event;
 
-public interface IEvent extends ISimpleEvent {
+public interface IEvent extends INakedEvent {
 
     String getId();
 
     long getDepth();
+
+    String getBody();
 
 }

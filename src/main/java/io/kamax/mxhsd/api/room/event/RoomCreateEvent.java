@@ -20,29 +20,34 @@
 
 package io.kamax.mxhsd.api.room.event;
 
-import com.google.gson.JsonObject;
-import io.kamax.matrix._MatrixID;
-import io.kamax.mxhsd.api.event.EventKey;
+import io.kamax.mxhsd.api.event.NakedRoomEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
-public class RoomCreateEvent extends SimpleRoomEvent {
+public class RoomCreateEvent extends NakedRoomEvent {
 
-    private String creator;
+    public class Content {
 
-    public RoomCreateEvent(String roomId, _MatrixID creator) {
-        super(roomId, RoomEventType.Creation);
-        this.creator = creator.getId();
+        private String creator;
+
+        Content(String creator) {
+            this.creator = creator;
+        }
+
+        public String getCreator() {
+            return creator;
+        }
+
     }
 
-    @Override
-    protected void produceBody(JsonObject o) {
-        super.produceBody(o);
-        o.addProperty(EventKey.StateKey.get(), "");
+    private Content content;
+
+    public RoomCreateEvent(String creator, String roomId) {
+        super(RoomEventType.Creation.get(), creator, roomId);
+        content = new Content(getSender());
     }
 
-    @Override
-    protected void produceContent(JsonObject o) {
-        o.addProperty("creator", creator);
+    public Content getContent() {
+        return content;
     }
 
 }

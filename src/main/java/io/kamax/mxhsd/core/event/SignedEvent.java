@@ -28,11 +28,15 @@ public class SignedEvent implements ISignedEvent {
 
     private String id;
     private String type;
+    private String sender;
     private long depth;
     private String raw;
 
-    public SignedEvent(String id, String raw) {
+    public SignedEvent(String id, String type, String sender, long depth, String raw) {
         this.id = id;
+        this.type = type;
+        this.sender = sender;
+        this.depth = depth;
         this.raw = raw;
     }
 
@@ -41,10 +45,6 @@ public class SignedEvent implements ISignedEvent {
         return id;
     }
 
-    @Override
-    public long getDepth() {
-        return depth;
-    }
 
     @Override
     public String getType() {
@@ -52,8 +52,23 @@ public class SignedEvent implements ISignedEvent {
     }
 
     @Override
+    public String getSender() {
+        return sender;
+    }
+
+    @Override
+    public long getDepth() {
+        return depth;
+    }
+
+    @Override
+    public String getBody() {
+        return raw;
+    }
+
+    @Override
     public JsonObject getJson() {
-        return GsonUtil.get().fromJson(raw, JsonObject.class);
+        return GsonUtil.parseObj(raw);
     }
 
 }

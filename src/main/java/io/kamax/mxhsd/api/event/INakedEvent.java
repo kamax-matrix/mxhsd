@@ -21,40 +21,13 @@
 package io.kamax.mxhsd.api.event;
 
 import com.google.gson.JsonObject;
-import io.kamax.mxhsd.core.JsonUtil;
 
-public abstract class SimpleEvent implements ISimpleEvent {
+public interface INakedEvent {
 
-    private String type;
+    String getSender();
 
-    public SimpleEvent(String type) {
-        this.type = type;
-    }
+    String getType();
 
-    protected JsonObject getBaseObj() {
-        JsonObject obj = new JsonObject();
-        obj.addProperty(EventKey.Type.get(), type);
-        return obj;
-    }
-
-    protected abstract void produceBody(JsonObject o);
-
-    protected abstract void produceContent(JsonObject o);
-
-    protected JsonObject produce(JsonObject o) {
-        produceContent(JsonUtil.getObjOrCompute(o, EventKey.Content.get()));
-        produceBody(o);
-        return o;
-    }
-
-    @Override
-    public String getType() {
-        return type;
-    }
-
-    @Override
-    public JsonObject getJson() {
-        return produce(getBaseObj());
-    }
+    JsonObject getJson();
 
 }

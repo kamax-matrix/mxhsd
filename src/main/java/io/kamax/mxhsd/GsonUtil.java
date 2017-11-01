@@ -20,9 +20,10 @@
 
 package io.kamax.mxhsd;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
+import io.kamax.mxhsd.api.exception.InvalidJsonException;
+
+import java.util.Optional;
 
 public class GsonUtil { // FIXME refactor into matrix-java-sdk
 
@@ -35,8 +36,61 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
                 .create();
     }
 
+    public static JsonObject getObj(Object o) {
+        return instance.toJsonTree(o).getAsJsonObject();
+    }
+
     public static Gson get() {
         return instance;
+    }
+
+    public static JsonElement parse(String s) {
+        try {
+            return new JsonParser().parse(s);
+        } catch (JsonParseException e) {
+            throw new InvalidJsonException(e);
+        }
+    }
+
+    public static JsonObject parseObj(String s) {
+        try {
+            return parse(s).getAsJsonObject();
+        } catch (IllegalStateException e) {
+            throw new InvalidJsonException("Not an object");
+        }
+    }
+
+    public static String getOrThrow(JsonObject obj, String member) {
+        if (!obj.has(member)) {
+            throw new InvalidJsonException(member + " key is missing");
+        }
+
+        return obj.get(member).getAsString();
+    }
+
+    public static String getString(JsonObject o, String key) {
+        JsonElement el = o.get(key);
+        if (el != null && el.isJsonPrimitive()) {
+            return el.getAsString();
+        } else {
+            return null;
+        }
+    }
+
+    public static long getLong(JsonObject o, String key, long failover) {
+        if (!o.has(key)) {
+            return failover;
+        }
+
+        return o.get(key).getAsLong();
+    }
+
+    public static Optional<JsonObject> findObj(JsonObject o, String key) {
+        if (!o.has(key)) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(o.getAsJsonObject(key));
     }
 
 }

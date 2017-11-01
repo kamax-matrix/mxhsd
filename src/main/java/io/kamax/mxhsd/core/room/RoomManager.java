@@ -20,9 +20,11 @@
 
 package io.kamax.mxhsd.core.room;
 
-import io.kamax.mxhsd.api.room.IRoom;
-import io.kamax.mxhsd.api.room.IRoomCreateOptions;
-import io.kamax.mxhsd.api.room.IRoomManager;
+import io.kamax.matrix.hs.RoomMembership;
+import io.kamax.mxhsd.api.room.*;
+import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
+import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
+import io.kamax.mxhsd.api.room.event.RoomPowerLevelEvent;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -56,11 +58,37 @@ public class RoomManager implements IRoomManager {
         return id;
     }
 
+    // TODO make it configurable via JSON data
+    private RoomPowerLevels getPowerLevelEvent(IRoomCreateOptions options) {
+        return new RoomPowerLevels.Builder()
+                // Default state PL, moderator is a good compromise
+                .setStateDefault(PowerLevel.Moderator)
+
+                // Anyone can send any message events by default
+                .setEventsDefault(PowerLevel.None)
+                .addEvent(RoomEventType.HistoryVisiblity.get(), PowerLevel.Admin)
+                .addEvent(RoomEventType.PowerLevels.get(), PowerLevel.Admin)
+
+                // Users don't get any PL by default, adding creator
+                .setUsersDefault(PowerLevel.None)
+                .addUser(options.getCreator().getId(), PowerLevel.Admin)
+
+                // Define some basic room management, anyone can invite
+                .setBan(PowerLevel.Moderator)
+                .setInvite(PowerLevel.None)
+                .setKick(PowerLevel.Moderator)
+                .setRedact(PowerLevel.Moderator)
+                .build();
+    }
+
     @Override
     public synchronized IRoom createRoom(IRoomCreateOptions options) { // FIXME use RWLock
+        String creator = options.getCreator().getId();
         String id = getId();
         Room room = new Room(state, id);
-        room.setCreator(options.getCreator());
+        room.inject(new RoomCreateEvent(creator, id));
+        room.inject(new RoomMembershipEvent(creator, id, RoomMembership.Join.get(), creator));
+        room.inject(new RoomPowerLevelEvent(creator, id, getPowerLevelEvent(options)));
         rooms.put(id, room);
 
         log.info("Room {} created", id);

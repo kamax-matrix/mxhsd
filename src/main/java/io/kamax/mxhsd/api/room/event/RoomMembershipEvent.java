@@ -20,33 +20,39 @@
 
 package io.kamax.mxhsd.api.room.event;
 
-import com.google.gson.JsonObject;
-import io.kamax.mxhsd.api.event.EventKey;
-import io.kamax.mxhsd.api.event.ISimpleRoomEvent;
-import io.kamax.mxhsd.api.event.SimpleEvent;
+import io.kamax.mxhsd.api.event.NakedRoomEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
-public abstract class SimpleRoomEvent extends SimpleEvent implements ISimpleRoomEvent {
+public class RoomMembershipEvent extends NakedRoomEvent {
 
-    private String roomId;
+    public class Content {
 
-    public SimpleRoomEvent(String roomId, String type) {
-        super(type);
-        this.roomId = roomId;
+        private String membership;
+
+        Content(String membership) {
+            this.membership = membership;
+        }
+
+        public String getMembership() {
+            return membership;
+        }
     }
 
-    public SimpleRoomEvent(String roomId, RoomEventType type) {
-        this(roomId, type.getId());
+    private Content content;
+    private String stateKey;
+
+    public RoomMembershipEvent(String sender, String roomId, String membership, String target) {
+        super(RoomEventType.Membership.get(), sender, roomId);
+        this.stateKey = target;
+        content = new Content(membership);
     }
 
-    @Override
-    public String getRoomId() {
-        return roomId;
+    public Content getContent() {
+        return content;
     }
 
-    @Override
-    protected void produceBody(JsonObject o) {
-        o.addProperty(EventKey.RoomId.get(), getRoomId());
+    public String getStateKey() {
+        return stateKey;
     }
 
 }

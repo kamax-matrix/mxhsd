@@ -24,27 +24,36 @@ import org.apache.commons.lang.StringUtils;
 
 public enum RoomEventType {
 
-    Aliases("m.room.aliases"),
-    CanonicalAliases("m.room.canonical_alias"),
-    Creation("m.room.create"),
-    HistoryVisiblity("m.room.history_visibility"),
-    JoinRules("m.room.join_rules"),
-    Membership("m.room.member"),
-    PowerLevels("m.room.power_levels"),
-    Redaction("m.room.redaction");
+    Aliases("m.room.aliases", true),
+    Avatar("m.room.avatar", true),
+    CanonicalAliases("m.room.canonical_alias", true),
+    Creation("m.room.create", true),
+    GuestAccess("m.room.guest_access", true),
+    HistoryVisiblity("m.room.history_visibility", true),
+    JoinRules("m.room.join_rules", true),
+    Membership("m.room.member", true),
+    PowerLevels("m.room.power_levels", true),
+    Redaction("m.room.redaction", false),
+    ThirdPartyInvite("m.room.third_party_invite", true);
 
     private String id;
+    private boolean isState;
 
-    RoomEventType(String id) {
+    RoomEventType(String id, boolean isState) {
         this.id = id;
+        this.isState = isState;
     }
 
-    public String getId() {
+    public String get() {
         return id;
     }
 
     public boolean is(String id) {
         return StringUtils.equals(this.id, id);
+    }
+
+    public boolean isState() {
+        return isState;
     }
 
 }

@@ -22,6 +22,7 @@ package io.kamax.mxhsd.core.event;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import io.kamax.matrix.codec.MxBase64;
 import io.kamax.matrix.codec.MxSha256;
 import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
@@ -66,12 +67,12 @@ public class EventManager implements IEventManager {
                 EventKey.Type.get()
         );
 
-        essentialContentKeys.put(RoomEventType.Aliases.getId(), Collections.singletonList("aliases"));
-        essentialContentKeys.put(RoomEventType.Creation.getId(), Collections.singletonList("creator"));
-        essentialContentKeys.put(RoomEventType.HistoryVisiblity.getId(), Collections.singletonList("history_visiblity"));
-        essentialContentKeys.put(RoomEventType.JoinRules.getId(), Collections.singletonList("join_rule"));
-        essentialContentKeys.put(RoomEventType.Membership.getId(), Collections.singletonList("membership"));
-        essentialContentKeys.put(RoomEventType.PowerLevels.getId(), Arrays.asList(
+        essentialContentKeys.put(RoomEventType.Aliases.get(), Collections.singletonList("aliases"));
+        essentialContentKeys.put(RoomEventType.Creation.get(), Collections.singletonList("creator"));
+        essentialContentKeys.put(RoomEventType.HistoryVisiblity.get(), Collections.singletonList("history_visiblity"));
+        essentialContentKeys.put(RoomEventType.JoinRules.get(), Collections.singletonList("join_rule"));
+        essentialContentKeys.put(RoomEventType.Membership.get(), Collections.singletonList("membership"));
+        essentialContentKeys.put(RoomEventType.PowerLevels.get(), Arrays.asList(
                 "ban",
                 "events",
                 "events_default",
@@ -86,12 +87,13 @@ public class EventManager implements IEventManager {
     // TODO find a better way than synchronized
     // TODO Externalize into dedicated class
     private synchronized String getNextId() {
-        return "$" + Long.toString(System.currentTimeMillis()) +
-                RandomStringUtils.randomAlphabetic(4).toLowerCase() + ":" + hsState.getDomain();
+        String local = MxBase64.encode(Long.toString(System.currentTimeMillis()) +
+                RandomStringUtils.randomAlphabetic(4));
+        return "$" + local + ":" + hsState.getDomain();
     }
 
     @Override
-    public IEvent populate(ISimpleEvent ev, Collection<ISignedEvent> parents) {
+    public IEvent populate(INakedEvent ev, Collection<ISignedEvent> parents) {
         return new EventBuilder(hsState.getDomain(), ev.getJson()).addParents(parents).build(getNextId());
     }
 
@@ -128,7 +130,7 @@ public class EventManager implements IEventManager {
         JsonObject base = hash(ev.getJson());
         JsonObject signs = sign(base);
         base.add(EventKey.Signatures.get(), signs);
-        return new SignedEvent(ev.getId(), MatrixJson.encodeCanonical(base));
+        return new SignedEvent(ev.getId(), ev.getType(), ev.getSender(), ev.getDepth(), MatrixJson.encodeCanonical(base));
     }
 
     @Override

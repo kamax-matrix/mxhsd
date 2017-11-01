@@ -18,15 +18,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd.api.event;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
+public class NakedRoomEvent extends NakedEvent {
 
-public interface IRoom {
+    private String roomId;
 
-    String getId();
+    protected NakedRoomEvent(String type, String sender, String roomId) {
+        super(type, sender);
+        this.roomId = roomId;
+    }
 
-    ISignedEvent inject(NakedRoomEvent ev);
+    public String getRoomId() {
+        return roomId;
+    }
 
 }

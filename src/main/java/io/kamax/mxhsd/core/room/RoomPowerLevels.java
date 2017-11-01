@@ -21,10 +21,10 @@
 package io.kamax.mxhsd.core.room;
 
 import io.kamax.matrix.hs.RoomMembership;
+import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.exception.MalformedEventException;
-import io.kamax.mxhsd.core.JsonUtil;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
@@ -33,6 +33,64 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RoomPowerLevels {
+
+    public static class Builder {
+
+        private RoomPowerLevels levels;
+
+        public Builder() {
+            levels = new RoomPowerLevels();
+        }
+
+        public Builder setBan(long pl) {
+            levels.ban = pl;
+            return this;
+        }
+
+        public Builder setEventsDefault(long pl) {
+            levels.eventsDefault = pl;
+            return this;
+        }
+
+        public Builder setInvite(long pl) {
+            levels.invite = pl;
+            return this;
+        }
+
+        public Builder setKick(long pl) {
+            levels.kick = pl;
+            return this;
+        }
+
+        public Builder setRedact(long pl) {
+            levels.redact = pl;
+            return this;
+        }
+
+        public Builder setStateDefault(long pl) {
+            levels.stateDefault = pl;
+            return this;
+        }
+
+        public Builder setUsersDefault(long pl) {
+            levels.usersDefault = pl;
+            return this;
+        }
+
+        public Builder addEvent(String type, long pl) {
+            levels.events.put(type, pl);
+            return this;
+        }
+
+        public Builder addUser(String id, long pl) {
+            levels.users.put(id, pl);
+            return this;
+        }
+
+        public RoomPowerLevels build() {
+            return levels;
+        }
+    }
 
     private long ban;
     private Map<String, Long> events;
@@ -44,28 +102,39 @@ public class RoomPowerLevels {
     private Map<String, Long> users;
     private long usersDefault;
 
+    // https://matrix.org/speculator/spec/HEAD/client_server/unstable.html#m-room-power-levels
+    public RoomPowerLevels(long stateDefault) {
+        this.ban = 50;
+        this.events = new HashMap<>();
+        this.eventsDefault = 0;
+        this.invite = 50;
+        this.kick = 50;
+        this.redact = 50;
+        this.stateDefault = stateDefault;
+        this.users = new HashMap<>();
+        this.usersDefault = 0;
+    }
+
+    // If there was no previous PL event, state default is 0
+    // FIXME this is wrong, state and user defaults can differ depending on their presence. Look at it.
+    public RoomPowerLevels() {
+        this(0);
+    }
+
+    // FIXME this is wrong, state and user defaults can differ depending on their presence. Look at it.
     public RoomPowerLevels(IEvent ev) {
-        ban = 50;
-        events = new HashMap<>();
-        eventsDefault = 0;
-        invite = 50;
-        kick = 50;
-        redact = 50;
-        stateDefault = 0;
-        users = new HashMap<>();
-        usersDefault = 0;
-
+        this(50);
         EventKey.Content.findObj(ev.getJson()).ifPresent(content -> {
-            ban = JsonUtil.getLong(content, RoomMembership.Ban.get(), ban);
-            eventsDefault = JsonUtil.getLong(content, "events_default", eventsDefault);  // FIXME turn into enum
-            invite = JsonUtil.getLong(content, RoomMembership.Invite.get(), invite);
-            kick = JsonUtil.getLong(content, "kick", kick); // FIXME turn into enum
-            redact = JsonUtil.getLong(content, "redact", redact); // FIXME turn into enum
-            stateDefault = JsonUtil.getLong(content, "state_default", stateDefault); // FIXME turn into enum
-            redact = JsonUtil.getLong(content, "redact", redact); // FIXME turn into enum
-            usersDefault = JsonUtil.getLong(content, "users_default", usersDefault); // FIXME turn into enum
+            ban = GsonUtil.getLong(content, RoomMembership.Ban.get(), ban);
+            eventsDefault = GsonUtil.getLong(content, "events_default", eventsDefault);  // FIXME turn into enum
+            invite = GsonUtil.getLong(content, RoomMembership.Invite.get(), invite);
+            kick = GsonUtil.getLong(content, "kick", kick); // FIXME turn into enum
+            redact = GsonUtil.getLong(content, "redact", redact); // FIXME turn into enum
+            stateDefault = GsonUtil.getLong(content, "state_default", stateDefault); // FIXME turn into enum
+            redact = GsonUtil.getLong(content, "redact", redact); // FIXME turn into enum
+            usersDefault = GsonUtil.getLong(content, "users_default", usersDefault); // FIXME turn into enum
 
-            JsonUtil.findObj(content, "events").ifPresent(obj -> obj.entrySet().forEach(e -> {
+            GsonUtil.findObj(content, "events").ifPresent(obj -> obj.entrySet().forEach(e -> {
                 try {
                     events.put(e.getKey(), e.getValue().getAsJsonPrimitive().getAsLong());
                 } catch (IllegalStateException | NumberFormatException ex) {
@@ -73,7 +142,7 @@ public class RoomPowerLevels {
                 }
             }));
 
-            JsonUtil.findObj(content, "users").ifPresent(obj -> obj.entrySet().forEach(e -> {
+            GsonUtil.findObj(content, "users").ifPresent(obj -> obj.entrySet().forEach(e -> {
                 try {
                     users.put(e.getKey(), e.getValue().getAsJsonPrimitive().getAsLong());
                 } catch (IllegalStateException | NumberFormatException ex) {
@@ -142,12 +211,12 @@ public class RoomPowerLevels {
         return can(withPl, getBan());
     }
 
-    public long getForEvent(String type) {
-        return events.getOrDefault(type, getEventsDefault());
+    public long getForEvent(boolean isState, String type) {
+        return events.getOrDefault(type, isState ? getStateDefault() : getEventsDefault());
     }
 
-    public boolean canForEvent(String type, long withPl) {
-        return can(withPl, getForEvent(type));
+    public boolean canForEvent(boolean isState, String type, long withPl) {
+        return can(withPl, getForEvent(isState, type));
     }
 
     public long getEventsDefault() {

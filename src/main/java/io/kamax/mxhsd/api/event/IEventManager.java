@@ -25,13 +25,9 @@ import java.util.Collections;
 
 public interface IEventManager {
 
-    IEvent populate(ISimpleEvent ev, Collection<ISignedEvent> parents);
+    IEvent populate(INakedEvent ev, Collection<ISignedEvent> parents);
 
-    default IEvent populate(ISimpleEvent ev) {
-        return populate(ev, Collections.emptyList());
-    }
-
-    default IEvent populate(ISimpleEvent ev, ISignedEvent parent) {
+    default IEvent populate(INakedEvent ev, ISignedEvent parent) {
         return populate(ev, parent != null ? Collections.singleton(parent) : Collections.emptyList());
     }
 

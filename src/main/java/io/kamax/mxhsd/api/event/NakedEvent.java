@@ -21,11 +21,31 @@
 package io.kamax.mxhsd.api.event;
 
 import com.google.gson.JsonObject;
+import io.kamax.mxhsd.GsonUtil;
 
-public interface ISimpleEvent {
+public class NakedEvent implements INakedEvent {
 
-    String getType();
+    private String type;
+    private String sender;
 
-    JsonObject getJson();
+    public NakedEvent(String type, String sender) {
+        this.type = type;
+        this.sender = sender;
+    }
+
+    @Override
+    public String getSender() {
+        return sender;
+    }
+
+    @Override
+    public String getType() {
+        return type;
+    }
+
+    @Override
+    public JsonObject getJson() {
+        return GsonUtil.getObj(this);
+    }
 
 }

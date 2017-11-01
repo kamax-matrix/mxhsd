@@ -20,9 +20,9 @@
 
 package io.kamax.mxhsd.core.event;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
@@ -42,13 +42,11 @@ public class EventBuilder implements IEventBuilder {
     private JsonObject base;
     private Instant timestamp = Instant.now();
     private String type;
-    private long depth = 0;
+    private long depth = 1;
     private Set<String> parents = new HashSet<>();
     private JsonArray authEv = new JsonArray();
     private JsonObject content = new JsonObject();
     private JsonObject prevState = new JsonObject();
-
-    private Gson gson = GsonUtil.build();
 
     public EventBuilder(String domain, JsonObject base) {
         this.domain = domain;
@@ -112,7 +110,7 @@ public class EventBuilder implements IEventBuilder {
         base.addProperty(EventKey.Timestamp.get(), timestamp.toEpochMilli());
         base.add(EventKey.PreviousState.get(), getPrevState());
         base.addProperty(EventKey.Type.get(), type);
-        return new Event(id, type, depth, gson.toJson(base));
+        return new Event(id, type, GsonUtil.getOrThrow(base, EventKey.Sender.get()), depth, MatrixJson.encodeCanonical(base));
     }
 
 }
