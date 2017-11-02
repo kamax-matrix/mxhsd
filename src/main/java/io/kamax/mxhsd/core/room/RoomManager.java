@@ -66,7 +66,7 @@ public class RoomManager implements IRoomManager {
 
                 // Anyone can send any message events by default
                 .setEventsDefault(PowerLevel.None)
-                .addEvent(RoomEventType.HistoryVisiblity.get(), PowerLevel.Admin)
+                .addEvent(RoomEventType.HistoryVisibility.get(), PowerLevel.Admin)
                 .addEvent(RoomEventType.PowerLevels.get(), PowerLevel.Admin)
 
                 // Users don't get any PL by default, adding creator

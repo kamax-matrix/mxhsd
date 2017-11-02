@@ -30,13 +30,15 @@ public class SignedEvent implements ISignedEvent {
     private String type;
     private String sender;
     private long depth;
+    private String roomId;
     private String raw;
 
-    public SignedEvent(String id, String type, String sender, long depth, String raw) {
+    public SignedEvent(String id, String type, String sender, String roomId, long depth, String raw) {
         this.id = id;
         this.type = type;
         this.sender = sender;
         this.depth = depth;
+        this.roomId = roomId;
         this.raw = raw;
     }
 
@@ -45,6 +47,10 @@ public class SignedEvent implements ISignedEvent {
         return id;
     }
 
+    @Override
+    public String getRoomId() {
+        return roomId;
+    }
 
     @Override
     public String getType() {

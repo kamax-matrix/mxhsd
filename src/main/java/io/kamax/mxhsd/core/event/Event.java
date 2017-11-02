@@ -30,12 +30,14 @@ public class Event implements IEvent {
     private String type;
     private String sender;
     private long depth;
+    private String roomId;
     private String json;
 
-    public Event(String id, String type, String sender, long depth, String json) {
+    public Event(String id, String type, String sender, String roomId, long depth, String json) {
         this.id = id;
         this.type = type;
         this.sender = sender;
+        this.roomId = roomId;
         this.depth = depth;
         this.json = json;
     }
@@ -43,6 +45,11 @@ public class Event implements IEvent {
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public String getRoomId() {
+        return roomId;
     }
 
     @Override

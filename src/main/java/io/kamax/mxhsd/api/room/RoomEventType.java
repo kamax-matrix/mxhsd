@@ -22,6 +22,8 @@ package io.kamax.mxhsd.api.room;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.util.stream.Stream;
+
 public enum RoomEventType {
 
     Aliases("m.room.aliases", true),
@@ -29,12 +31,17 @@ public enum RoomEventType {
     CanonicalAliases("m.room.canonical_alias", true),
     Creation("m.room.create", true),
     GuestAccess("m.room.guest_access", true),
-    HistoryVisiblity("m.room.history_visibility", true),
+    HistoryVisibility("m.room.history_visibility", true),
     JoinRules("m.room.join_rules", true),
     Membership("m.room.member", true),
     PowerLevels("m.room.power_levels", true),
     Redaction("m.room.redaction", false),
-    ThirdPartyInvite("m.room.third_party_invite", true);
+    ThirdPartyInvite("m.room.third_party_invite", true),
+    Unknown(null, false);
+
+    public static RoomEventType from(String id) {
+        return Stream.of(RoomEventType.values()).filter(t -> StringUtils.equals(t.id, id)).findAny().orElse(Unknown);
+    }
 
     private String id;
     private boolean isState;

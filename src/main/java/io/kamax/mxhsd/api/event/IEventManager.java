@@ -21,15 +21,10 @@
 package io.kamax.mxhsd.api.event;
 
 import java.util.Collection;
-import java.util.Collections;
 
 public interface IEventManager {
 
     IEvent populate(INakedEvent ev, Collection<ISignedEvent> parents);
-
-    default IEvent populate(INakedEvent ev, ISignedEvent parent) {
-        return populate(ev, parent != null ? Collections.singleton(parent) : Collections.emptyList());
-    }
 
     ISignedEvent sign(IEvent ev);
 

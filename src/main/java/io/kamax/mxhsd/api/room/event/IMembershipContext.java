@@ -18,16 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.api.room.event;
 
-public interface IEvent extends INakedEvent {
+import io.kamax.mxhsd.api.event.IEventReference;
+import io.kamax.mxhsd.api.event.IStateKeyReference;
 
-    String getId();
+public interface IMembershipContext extends IEventReference, IStateKeyReference {
 
-    String getRoomId();
-
-    long getDepth();
-
-    String getBody();
+    String getMembership();
 
 }

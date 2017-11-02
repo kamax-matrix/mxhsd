@@ -26,6 +26,7 @@ public class MatrixException extends RuntimeException {
     private String error;
 
     public MatrixException(String errorCode, String error) {
+        super(errorCode + ": " + error);
         this.errorCode = errorCode;
         this.error = error;
     }

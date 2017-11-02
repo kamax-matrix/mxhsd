@@ -55,7 +55,7 @@ public class EventManager implements IEventManager {
                 EventKey.Depth.get(),
                 EventKey.Id.get(),
                 EventKey.Hashes.get(),
-                "membership",
+                "membership", // FIXME check this is actually required to hash/sign? and where is this ever set? spec is outdated?
                 EventKey.Origin.get(),
                 EventKey.Timestamp.get(),
                 EventKey.PreviousEvents.get(),
@@ -69,7 +69,7 @@ public class EventManager implements IEventManager {
 
         essentialContentKeys.put(RoomEventType.Aliases.get(), Collections.singletonList("aliases"));
         essentialContentKeys.put(RoomEventType.Creation.get(), Collections.singletonList("creator"));
-        essentialContentKeys.put(RoomEventType.HistoryVisiblity.get(), Collections.singletonList("history_visiblity"));
+        essentialContentKeys.put(RoomEventType.HistoryVisibility.get(), Collections.singletonList("history_visiblity"));
         essentialContentKeys.put(RoomEventType.JoinRules.get(), Collections.singletonList("join_rule"));
         essentialContentKeys.put(RoomEventType.Membership.get(), Collections.singletonList("membership"));
         essentialContentKeys.put(RoomEventType.PowerLevels.get(), Arrays.asList(
@@ -118,9 +118,11 @@ public class EventManager implements IEventManager {
 
         JsonObject content = EventKey.Content.getObj(signBase);
         List<String> essentials = essentialContentKeys.getOrDefault(EventKey.Type.getString(signBase), Collections.emptyList());
+        JsonObject newContent = new JsonObject();
         content.keySet().forEach(key -> {
-            if (!essentials.contains(key)) content.remove(key);
+            if (essentials.contains(key)) newContent.remove(key);
         });
+        signBase.add(EventKey.Content.get(), newContent);
 
         return hsState.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(base));
     }
@@ -130,7 +132,7 @@ public class EventManager implements IEventManager {
         JsonObject base = hash(ev.getJson());
         JsonObject signs = sign(base);
         base.add(EventKey.Signatures.get(), signs);
-        return new SignedEvent(ev.getId(), ev.getType(), ev.getSender(), ev.getDepth(), MatrixJson.encodeCanonical(base));
+        return new SignedEvent(ev.getId(), ev.getType(), ev.getSender(), ev.getRoomId(), ev.getDepth(), MatrixJson.encodeCanonical(base));
     }
 
     @Override

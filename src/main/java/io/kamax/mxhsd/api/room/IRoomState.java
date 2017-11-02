@@ -18,16 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.api.room;
 
-public interface IEvent extends INakedEvent {
+import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.room.event.IMembershipContext;
+import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
-    String getId();
+import java.util.Optional;
+import java.util.Set;
 
-    String getRoomId();
+public interface IRoomState {
 
-    long getDepth();
+    IEvent getCreation(); // FIXME this should be IRoomCreationContext, IEventReference or ISignedEvent
 
-    String getBody();
+    Set<IMembershipContext> getMemberships();
+
+    Optional<IMembershipContext> getMembership(String target);
+
+    default Optional<String> getMembershipValue(String target) {
+        return getMembership(target).map(IMembershipContext::getStateKey);
+    }
+
+    RoomPowerLevels getPowerLevels();
+
+    String getPowerLevelsEventId();
+
+    Set<ISignedEvent> getExtremities();
 
 }

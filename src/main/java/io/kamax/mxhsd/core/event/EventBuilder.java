@@ -110,7 +110,7 @@ public class EventBuilder implements IEventBuilder {
         base.addProperty(EventKey.Timestamp.get(), timestamp.toEpochMilli());
         base.add(EventKey.PreviousState.get(), getPrevState());
         base.addProperty(EventKey.Type.get(), type);
-        return new Event(id, type, GsonUtil.getOrThrow(base, EventKey.Sender.get()), depth, MatrixJson.encodeCanonical(base));
+        return new Event(id, type, GsonUtil.getOrThrow(base, EventKey.Sender.get()), EventKey.RoomId.getString(base), depth, MatrixJson.encodeCanonical(base));
     }
 
 }

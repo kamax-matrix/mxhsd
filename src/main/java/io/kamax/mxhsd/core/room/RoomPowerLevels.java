@@ -20,15 +20,18 @@
 
 package io.kamax.mxhsd.core.room;
 
-import io.kamax.matrix.hs.RoomMembership;
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.exception.MalformedEventException;
+import io.kamax.mxhsd.api.room.RoomEventType;
+import io.kamax.mxhsd.api.room.event.PowerLevelKey;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,49 +95,42 @@ public class RoomPowerLevels {
         }
     }
 
-    private long ban;
-    private Map<String, Long> events;
-    private long eventsDefault;
-    private long invite;
-    private long kick;
-    private long redact;
-    private long stateDefault;
-    private Map<String, Long> users;
-    private long usersDefault;
+    private boolean fromEvent = false;
+    private Long ban;
+    private Map<String, Long> events = new HashMap<>();
+    private Long eventsDefault;
+    private Long invite;
+    private Long kick;
+    private Long redact;
+    private Long stateDefault;
+    private Map<String, Long> users = new HashMap<>();
+    private Long usersDefault;
 
     // https://matrix.org/speculator/spec/HEAD/client_server/unstable.html#m-room-power-levels
-    public RoomPowerLevels(long stateDefault) {
-        this.ban = 50;
-        this.events = new HashMap<>();
-        this.eventsDefault = 0;
-        this.invite = 50;
-        this.kick = 50;
-        this.redact = 50;
-        this.stateDefault = stateDefault;
-        this.users = new HashMap<>();
-        this.usersDefault = 0;
-    }
-
     // If there was no previous PL event, state default is 0
     // FIXME this is wrong, state and user defaults can differ depending on their presence. Look at it.
     public RoomPowerLevels() {
-        this(0);
     }
 
     // FIXME this is wrong, state and user defaults can differ depending on their presence. Look at it.
     public RoomPowerLevels(IEvent ev) {
-        this(50);
-        EventKey.Content.findObj(ev.getJson()).ifPresent(content -> {
-            ban = GsonUtil.getLong(content, RoomMembership.Ban.get(), ban);
-            eventsDefault = GsonUtil.getLong(content, "events_default", eventsDefault);  // FIXME turn into enum
-            invite = GsonUtil.getLong(content, RoomMembership.Invite.get(), invite);
-            kick = GsonUtil.getLong(content, "kick", kick); // FIXME turn into enum
-            redact = GsonUtil.getLong(content, "redact", redact); // FIXME turn into enum
-            stateDefault = GsonUtil.getLong(content, "state_default", stateDefault); // FIXME turn into enum
-            redact = GsonUtil.getLong(content, "redact", redact); // FIXME turn into enum
-            usersDefault = GsonUtil.getLong(content, "users_default", usersDefault); // FIXME turn into enum
+        if (!RoomEventType.PowerLevels.is(ev.getType())) {
+            throw new IllegalArgumentException(ev.getId() + " is not a PL event type, but " + ev.getType());
+        }
 
-            GsonUtil.findObj(content, "events").ifPresent(obj -> obj.entrySet().forEach(e -> {
+        fromEvent = true;
+
+        JsonObject json = ev.getJson();
+        EventKey.Content.findObj(json).ifPresent(content -> {
+            GsonUtil.findLong(content, PowerLevelKey.Ban).ifPresent(v -> ban = v);
+            GsonUtil.findLong(content, PowerLevelKey.EventsDefault).ifPresent(v -> eventsDefault = v);
+            GsonUtil.findLong(content, PowerLevelKey.Invite).ifPresent(v -> invite = v);
+            GsonUtil.findLong(content, PowerLevelKey.Kick).ifPresent(v -> kick = v);
+            GsonUtil.findLong(content, PowerLevelKey.Redact).ifPresent(v -> redact = v);
+            GsonUtil.findLong(content, PowerLevelKey.StateDefault).ifPresent(v -> stateDefault = v);
+            GsonUtil.findLong(content, PowerLevelKey.UsersDefault).ifPresent(v -> usersDefault = v);
+
+            GsonUtil.findObj(content, PowerLevelKey.Events).ifPresent(obj -> obj.entrySet().forEach(e -> {
                 try {
                     events.put(e.getKey(), e.getValue().getAsJsonPrimitive().getAsLong());
                 } catch (IllegalStateException | NumberFormatException ex) {
@@ -142,7 +138,7 @@ public class RoomPowerLevels {
                 }
             }));
 
-            GsonUtil.findObj(content, "users").ifPresent(obj -> obj.entrySet().forEach(e -> {
+            GsonUtil.findObj(content, PowerLevelKey.Users).ifPresent(obj -> obj.entrySet().forEach(e -> {
                 try {
                     users.put(e.getKey(), e.getValue().getAsJsonPrimitive().getAsLong());
                 } catch (IllegalStateException | NumberFormatException ex) {
@@ -155,27 +151,44 @@ public class RoomPowerLevels {
     private boolean canReplace(long wihtPl, Map<String, Long> oldPls, Map<String, Long> newPls) {
         return Stream.concat(oldPls.keySet().stream(), newPls.keySet()
                 .stream()).collect(Collectors.toSet()).stream()
-                .noneMatch(type -> {
-                    long oldPl = oldPls.getOrDefault(type, Long.MIN_VALUE);
-                    long newPl = newPls.getOrDefault(type, Long.MIN_VALUE);
-                    return oldPl != newPl && (oldPl > wihtPl || newPl > wihtPl);
+                .allMatch(type -> {
+                    if (!oldPls.containsKey(type)) {
+                        return true;
+                    }
+                    long oldPl = oldPls.get(type);
+
+                    if (oldPl > wihtPl) {
+                        return false;
+                    }
+
+                    if (!newPls.containsKey(type)) {
+                        return true;
+                    }
+                    long newPl = newPls.get(type);
+
+                    return wihtPl >= newPl;
                 });
     }
 
     // OK to do as obj is immutable
     // matrix-doc@c7c08ea - https://matrix.org/speculator/spec/HEAD/server_server/unstable.html#rules @ 5.
     public boolean canReplace(String sender, long withPl, RoomPowerLevels newPls) {
-        boolean basic = can(withPl, eventsDefault) && can(withPl, stateDefault) && can(withPl, usersDefault);
+        boolean basic = canSetTo(getUsersDefault(), newPls.getUsersDefault(), withPl) &&
+                canSetTo(getEventsDefault(), newPls.getEventsDefault(), withPl) &&
+                canSetTo(getStateDefault(), newPls.getStateDefault(), withPl);
         if (!basic) {
             return false;
         }
 
-        boolean member = canBan(withPl) && canKick(withPl) && canInvite(withPl);
-        if (!member) {
+
+        boolean membership = canSetTo(getBan(), newPls.getBan(), withPl) &&
+                canSetTo(getKick(), newPls.getKick(), withPl) &&
+                canSetTo(getInvite(), newPls.getInvite(), withPl);
+        if (!membership) {
             return false;
         }
 
-        if (!can(withPl, getRedact())) {
+        if (!canSetTo(getRedact(), newPls.getRedact(), withPl)) {
             return false;
         }
 
@@ -199,64 +212,96 @@ public class RoomPowerLevels {
                 });
     }
 
-    public boolean can(long withPl, long requiredPl) {
-        return withPl >= requiredPl;
+    public boolean can(long withPl, Long requiredPl) {
+        return requiredPl == null || withPl >= requiredPl;
     }
 
-    public long getBan() {
-        return ban;
+    public boolean canSetTo(Optional<Long> oldPl, Optional<Long> newPl, long withPl) {
+        return oldPl.map(o -> canSetTo(o, newPl.orElse(Long.MIN_VALUE), withPl)).orElse(true);
+    }
+
+    public boolean canSetTo(long oldPl, long newPl, long withPl) {
+        if (oldPl == newPl) {
+            return true;
+        }
+
+        if (oldPl > withPl) {
+            return false;
+        }
+
+        return withPl >= newPl;
+    }
+
+    public Optional<Long> getBan() {
+        return Optional.ofNullable(ban);
     }
 
     public boolean canBan(long withPl) {
-        return can(withPl, getBan());
+        return can(withPl, getBan().orElse(50L));
     }
 
-    public long getForEvent(boolean isState, String type) {
-        return events.getOrDefault(type, isState ? getStateDefault() : getEventsDefault());
+    public Long getForEvent(boolean isState, String type) {
+        return events.getOrDefault(type, isState ? getStateDefaultOrCompute() : getEventsDefaultOrCompute());
     }
 
     public boolean canForEvent(boolean isState, String type, long withPl) {
         return can(withPl, getForEvent(isState, type));
     }
 
-    public long getEventsDefault() {
-        return eventsDefault;
+    public Optional<Long> getEventsDefault() {
+        return Optional.ofNullable(eventsDefault);
     }
 
-    public long getInvite() {
-        return invite;
+    public long getEventsDefaultOrCompute() {
+        if (!fromEvent) {
+            return 0;
+        } else {
+            return getEventsDefault().orElse(50L);
+        }
+    }
+
+    public Optional<Long> getInvite() {
+        return Optional.ofNullable(invite);
     }
 
     public boolean canInvite(long withPl) {
-        return can(withPl, getInvite());
+        return can(withPl, getInvite().orElse(50L));
     }
 
-    public long getKick() {
-        return kick;
+    public Optional<Long> getKick() {
+        return Optional.ofNullable(kick);
     }
 
     public boolean canKick(long withPl) {
-        return can(withPl, getKick());
+        return can(withPl, getKick().orElse(50L));
     }
 
-    public long getRedact() {
-        return redact;
+    public Optional<Long> getRedact() {
+        return Optional.ofNullable(redact);
     }
 
     public boolean canRedact(long withPl) {
-        return can(withPl, getRedact());
+        return can(withPl, getRedact().orElse(50L));
     }
 
-    public long getStateDefault() {
-        return stateDefault;
+    public Optional<Long> getStateDefault() {
+        return Optional.ofNullable(stateDefault);
+    }
+
+    public long getStateDefaultOrCompute() {
+        if (!fromEvent) {
+            return 0;
+        } else {
+            return getStateDefault().orElse(50L);
+        }
     }
 
     public long getForUser(String id) {
-        return users.getOrDefault(id, getUsersDefault());
+        return users.getOrDefault(id, getUsersDefault().orElse(0L));
     }
 
-    public long getUsersDefault() {
-        return usersDefault;
+    public Optional<Long> getUsersDefault() {
+        return Optional.ofNullable(usersDefault);
     }
 
 }

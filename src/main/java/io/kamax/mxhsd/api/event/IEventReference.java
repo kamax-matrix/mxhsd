@@ -20,14 +20,7 @@
 
 package io.kamax.mxhsd.api.event;
 
-public interface IEvent extends INakedEvent {
+public interface IEventReference {
 
-    String getId();
-
-    String getRoomId();
-
-    long getDepth();
-
-    String getBody();
-
+    String getEventId();
 }

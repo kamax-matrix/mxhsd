@@ -28,12 +28,20 @@ import java.util.Optional;
 public class GsonUtil { // FIXME refactor into matrix-java-sdk
 
     private static Gson instance = build();
+    private static Gson instancePretty = buildPretty();
 
-    public static Gson build() {
+    private static GsonBuilder buildImpl() {
         return new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                .disableHtmlEscaping()
-                .create();
+                .disableHtmlEscaping();
+    }
+
+    public static Gson buildPretty() {
+        return buildImpl().setPrettyPrinting().create();
+    }
+
+    public static Gson build() {
+        return buildImpl().create();
     }
 
     public static JsonObject getObj(Object o) {
@@ -42,6 +50,14 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
 
     public static Gson get() {
         return instance;
+    }
+
+    public static Gson getPretty() {
+        return instancePretty;
+    }
+
+    public static String getPrettyForLog(Object o) {
+        return System.lineSeparator() + getPretty().toJson(o);
     }
 
     public static JsonElement parse(String s) {
@@ -77,12 +93,12 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
         }
     }
 
-    public static long getLong(JsonObject o, String key, long failover) {
-        if (!o.has(key)) {
-            return failover;
-        }
+    public static Optional<JsonElement> findElement(JsonObject o, String key) {
+        return Optional.ofNullable(o.get(key));
+    }
 
-        return o.get(key).getAsLong();
+    public static Optional<Long> findLong(JsonObject o, String key) {
+        return findElement(o, key).map(el -> o.get(key)).map(JsonElement::getAsLong);
     }
 
     public static Optional<JsonObject> findObj(JsonObject o, String key) {
