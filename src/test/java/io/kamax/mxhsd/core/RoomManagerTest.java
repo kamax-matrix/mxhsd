@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.core;
 
+import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.session.IUserSession;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
@@ -34,8 +35,11 @@ public class RoomManagerTest extends GenericHomeserverTest {
     public void createRoom() {
         IUserSession session = hs.login("test", "test".toCharArray());
         RoomCreateOptions opts = new RoomCreateOptions(session.getUser().getId());
+        opts.setPreset("trusted_private_chat");
+        opts.addInvitee(new MatrixID("@john:example.org"));
         IRoom room = session.createRoom(opts);
         assertTrue(StringUtils.isNotBlank(room.getId()));
+        // TODO check preset events and invite events
     }
 
 }

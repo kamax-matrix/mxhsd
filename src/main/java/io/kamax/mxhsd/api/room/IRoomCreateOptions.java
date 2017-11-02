@@ -22,6 +22,7 @@ package io.kamax.mxhsd.api.room;
 
 import io.kamax.matrix._MatrixID;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface IRoomCreateOptions {
@@ -33,5 +34,7 @@ public interface IRoomCreateOptions {
     Optional<String> getTopic();
 
     Optional<String> getPreset();
+
+    List<_MatrixID> getInvitees();
 
 }

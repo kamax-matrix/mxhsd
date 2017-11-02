@@ -111,8 +111,8 @@ public class RoomState implements IRoomState {
             return this;
         }
 
-        private Builder withPower(String id, RoomPowerLevels p) {
-            r.pId = id;
+        public Builder withPower(String evenId, RoomPowerLevels p) {
+            r.pId = evenId;
             r.powerLevels = p;
             return this;
         }
@@ -320,12 +320,14 @@ public class RoomState implements IRoomState {
         if (!powerLevels.canForEvent(evJson.has(EventKey.StateKey.get()), type, senderPl)) {
             return auth.deny(ev, "sender does not have minimum PL for event type " + type);
         }
-        stateBuilder.withPower(powerLevels);
 
         if (RoomEventType.PowerLevels.is(ev.getType())) {
-            if (!powerLevels.canReplace(sender, senderPl, new RoomPowerLevels(ev))) {
+            RoomPowerLevels newPls = new RoomPowerLevels(ev);
+            if (!powerLevels.canReplace(sender, senderPl, newPls)) {
                 return auth.deny(ev, "sender is missing minimum PL to change room PLs");
             }
+
+            return auth.allow(stateBuilder.withPower(ev.getId(), newPls));
         }
 
         if (RoomEventType.Redaction.is(ev.getType())) {

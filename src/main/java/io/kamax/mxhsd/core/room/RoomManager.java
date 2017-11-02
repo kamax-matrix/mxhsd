@@ -22,10 +22,9 @@ package io.kamax.mxhsd.core.room;
 
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.api.room.*;
-import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
-import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
-import io.kamax.mxhsd.api.room.event.RoomPowerLevelEvent;
+import io.kamax.mxhsd.api.room.event.*;
 import io.kamax.mxhsd.core.HomeserverState;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +88,43 @@ public class RoomManager implements IRoomManager {
         room.inject(new RoomCreateEvent(creator, id));
         room.inject(new RoomMembershipEvent(creator, id, RoomMembership.Join.get(), creator));
         room.inject(new RoomPowerLevelEvent(creator, id, getPowerLevelEvent(options)));
+
+        options.getPreset().ifPresent(p -> {
+            log.info("Checking presets for room  {} creation", id);
+
+            if (StringUtils.equals(p, "public_chat")) {
+                log.info("Applying preset {} for room {}", p, id);
+                room.inject(new RoomJoinRulesEvent(creator, id, "public"));
+                room.inject(new RoomHistoryVisibilityEvent(creator, id, "shared"));
+            } else if (StringUtils.equals(p, "private_chat")) {
+                log.info("Applying preset {} for room {}", p, id);
+                room.inject(new RoomJoinRulesEvent(creator, id, "invite"));
+                room.inject(new RoomHistoryVisibilityEvent(creator, id, "shared"));
+            } else if (StringUtils.equals(p, "trusted_private_chat")) {
+                log.info("Applying preset {} for room {}", p, id);
+                room.inject(new RoomJoinRulesEvent(creator, id, "invite"));
+                room.inject(new RoomHistoryVisibilityEvent(creator, id, "shared"));
+
+                RoomPowerLevels pls = room.getCurrentState().getPowerLevels();
+                long creatorPl = pls.getForUser(creator);
+                RoomPowerLevels.Builder plsBuilder = RoomPowerLevels.Builder.from(pls);
+                options.getInvitees().forEach(iId -> plsBuilder.addUser(iId.getId(), creatorPl));
+                room.inject(new RoomPowerLevelEvent(creator, id, plsBuilder.build()));
+            } else {
+                log.info("Ignoring unknown preset {} for room {}", p, id);
+            }
+        });
+
+        // FIXME handle initial_state
+
+        // TODO handle name
+
+        // TODO handle topic
+
+        // FIXME handle invite
+
+        // TODO handle invite_3pid
+
         rooms.put(id, room);
 
         log.info("Room {} created", id);

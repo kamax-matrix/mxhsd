@@ -18,17 +18,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd.api.room.event;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.event.NakedRoomEvent;
+import io.kamax.mxhsd.api.room.RoomEventType;
 
-public interface IRoom {
+public class RoomJoinRulesEvent extends NakedRoomEvent {
 
-    String getId();
+    private JsonObject content = new JsonObject();
 
-    IRoomState getCurrentState();
-
-    ISignedEvent inject(NakedRoomEvent ev);
+    public RoomJoinRulesEvent(String sender, String roomId, String rule) {
+        super(RoomEventType.JoinRules.get(), sender, roomId);
+        content.addProperty("join_rule", rule);
+    }
 
 }

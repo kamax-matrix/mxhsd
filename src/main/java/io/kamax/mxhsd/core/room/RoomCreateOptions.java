@@ -23,6 +23,9 @@ package io.kamax.mxhsd.core.room;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.room.IRoomCreateOptions;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 public class RoomCreateOptions implements IRoomCreateOptions {
@@ -31,6 +34,7 @@ public class RoomCreateOptions implements IRoomCreateOptions {
     private String name;
     private String topic;
     private String preset;
+    private List<_MatrixID> invitees = new ArrayList<>();
 
     public RoomCreateOptions(_MatrixID creator) {
         this.creator = creator;
@@ -56,6 +60,11 @@ public class RoomCreateOptions implements IRoomCreateOptions {
         return Optional.ofNullable(preset);
     }
 
+    @Override
+    public List<_MatrixID> getInvitees() {
+        return Collections.unmodifiableList(invitees);
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -66,6 +75,10 @@ public class RoomCreateOptions implements IRoomCreateOptions {
 
     public void setPreset(String preset) {
         this.preset = preset;
+    }
+
+    public void addInvitee(_MatrixID id) {
+        invitees.add(id);
     }
 
 }

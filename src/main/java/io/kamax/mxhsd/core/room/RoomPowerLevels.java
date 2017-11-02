@@ -39,10 +39,18 @@ public class RoomPowerLevels {
 
     public static class Builder {
 
-        private RoomPowerLevels levels;
+        private RoomPowerLevels levels = new RoomPowerLevels();
 
-        public Builder() {
-            levels = new RoomPowerLevels();
+        public static RoomPowerLevels initial() {
+            Builder b = new Builder();
+            b.levels.isFirstEvent = true;
+            return b.build();
+        }
+
+        public static Builder from(RoomPowerLevels orignal) {
+            Builder b = new Builder();
+            b.levels = new RoomPowerLevels(GsonUtil.get().toJsonTree(orignal).getAsJsonObject());
+            return b;
         }
 
         public Builder setBan(long pl) {
@@ -95,7 +103,7 @@ public class RoomPowerLevels {
         }
     }
 
-    private boolean fromEvent = false;
+    private transient boolean isFirstEvent = false;
     private Long ban;
     private Map<String, Long> events = new HashMap<>();
     private Long eventsDefault;
@@ -109,7 +117,11 @@ public class RoomPowerLevels {
     // https://matrix.org/speculator/spec/HEAD/client_server/unstable.html#m-room-power-levels
     // If there was no previous PL event, state default is 0
     // FIXME this is wrong, state and user defaults can differ depending on their presence. Look at it.
-    public RoomPowerLevels() {
+    private RoomPowerLevels() {
+    }
+
+    public RoomPowerLevels(JsonObject json) {
+        init(json);
     }
 
     // FIXME this is wrong, state and user defaults can differ depending on their presence. Look at it.
@@ -118,34 +130,34 @@ public class RoomPowerLevels {
             throw new IllegalArgumentException(ev.getId() + " is not a PL event type, but " + ev.getType());
         }
 
-        fromEvent = true;
+        init(ev.getId(), ev.getJson());
+    }
 
-        JsonObject json = ev.getJson();
-        EventKey.Content.findObj(json).ifPresent(content -> {
-            GsonUtil.findLong(content, PowerLevelKey.Ban).ifPresent(v -> ban = v);
-            GsonUtil.findLong(content, PowerLevelKey.EventsDefault).ifPresent(v -> eventsDefault = v);
-            GsonUtil.findLong(content, PowerLevelKey.Invite).ifPresent(v -> invite = v);
-            GsonUtil.findLong(content, PowerLevelKey.Kick).ifPresent(v -> kick = v);
-            GsonUtil.findLong(content, PowerLevelKey.Redact).ifPresent(v -> redact = v);
-            GsonUtil.findLong(content, PowerLevelKey.StateDefault).ifPresent(v -> stateDefault = v);
-            GsonUtil.findLong(content, PowerLevelKey.UsersDefault).ifPresent(v -> usersDefault = v);
+    private void init(String eventId, JsonObject json) {
+        try {
+            EventKey.Content.findObj(json).ifPresent(this::init);
+        } catch (IllegalStateException | NumberFormatException ex) {
+            throw MalformedEventException.forId(eventId);
+        }
+    }
 
-            GsonUtil.findObj(content, PowerLevelKey.Events).ifPresent(obj -> obj.entrySet().forEach(e -> {
-                try {
-                    events.put(e.getKey(), e.getValue().getAsJsonPrimitive().getAsLong());
-                } catch (IllegalStateException | NumberFormatException ex) {
-                    throw MalformedEventException.forId(ev.getId());
-                }
-            }));
+    private void init(JsonObject content) {
+        GsonUtil.findLong(content, PowerLevelKey.Ban).ifPresent(v -> ban = v);
+        GsonUtil.findLong(content, PowerLevelKey.EventsDefault).ifPresent(v -> eventsDefault = v);
+        GsonUtil.findLong(content, PowerLevelKey.Invite).ifPresent(v -> invite = v);
+        GsonUtil.findLong(content, PowerLevelKey.Kick).ifPresent(v -> kick = v);
+        GsonUtil.findLong(content, PowerLevelKey.Redact).ifPresent(v -> redact = v);
+        GsonUtil.findLong(content, PowerLevelKey.StateDefault).ifPresent(v -> stateDefault = v);
+        GsonUtil.findLong(content, PowerLevelKey.UsersDefault).ifPresent(v -> usersDefault = v);
 
-            GsonUtil.findObj(content, PowerLevelKey.Users).ifPresent(obj -> obj.entrySet().forEach(e -> {
-                try {
-                    users.put(e.getKey(), e.getValue().getAsJsonPrimitive().getAsLong());
-                } catch (IllegalStateException | NumberFormatException ex) {
-                    throw MalformedEventException.forId(ev.getId());
-                }
-            }));
-        });
+        GsonUtil.findObj(content, PowerLevelKey.Events).ifPresent(obj -> obj.entrySet().forEach(e -> {
+            events.put(e.getKey(), e.getValue().getAsJsonPrimitive().getAsLong());
+        }));
+
+        GsonUtil.findObj(content, PowerLevelKey.Users).ifPresent(obj -> obj.entrySet().forEach(e -> {
+            users.put(e.getKey(), e.getValue().getAsJsonPrimitive().getAsLong());
+        }));
+
     }
 
     private boolean canReplace(long wihtPl, Map<String, Long> oldPls, Map<String, Long> newPls) {
@@ -253,7 +265,7 @@ public class RoomPowerLevels {
     }
 
     public long getEventsDefaultOrCompute() {
-        if (!fromEvent) {
+        if (isFirstEvent) {
             return 0;
         } else {
             return getEventsDefault().orElse(50L);
@@ -289,7 +301,7 @@ public class RoomPowerLevels {
     }
 
     public long getStateDefaultOrCompute() {
-        if (!fromEvent) {
+        if (isFirstEvent) {
             return 0;
         } else {
             return getStateDefault().orElse(50L);

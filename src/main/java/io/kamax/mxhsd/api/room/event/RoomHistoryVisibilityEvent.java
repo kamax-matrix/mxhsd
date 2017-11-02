@@ -18,17 +18,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd.api.room.event;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.event.NakedRoomEvent;
+import io.kamax.mxhsd.api.room.RoomEventType;
 
-public interface IRoom {
+public class RoomHistoryVisibilityEvent extends NakedRoomEvent {
 
-    String getId();
+    private JsonObject content = new JsonObject();
 
-    IRoomState getCurrentState();
-
-    ISignedEvent inject(NakedRoomEvent ev);
+    public RoomHistoryVisibilityEvent(String sender, String roomId, String visibility) {
+        super(RoomEventType.HistoryVisibility.get(), sender, roomId);
+        content.addProperty("history_visibility", visibility);
+    }
 
 }

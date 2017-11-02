@@ -26,6 +26,7 @@ import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.event.NakedRoomEvent;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class Room implements IRoom {
     Room(HomeserverState globalState, String id) {
         this.globalState = globalState;
         this.id = id;
-        state = new RoomState.Builder(globalState, id).withPower(new RoomPowerLevels()).build();
+        state = new RoomState.Builder(globalState, id).withPower(RoomPowerLevels.Builder.initial()).build();
     }
 
     @Override
@@ -52,10 +53,15 @@ public class Room implements IRoom {
     }
 
     @Override
-    public synchronized ISignedEvent inject(NakedRoomEvent evNaked) {
+    public synchronized IRoomState getCurrentState() { // FIXME use RWLock
+        return state;
+    }
+
+    @Override
+    public synchronized ISignedEvent inject(NakedRoomEvent evNaked) { // FIXME use RWLock
         log.info("Room {}: Injecting new event of type {}", id, evNaked.getType());
         IEvent ev = globalState.getEvMgr().populate(evNaked, state.getExtremities());
-        //log.debug("Formalized event: {}", GsonUtil.getPrettyForLog(ev.getJson()));
+        log.debug("Formalized event: {}", GsonUtil.getPrettyForLog(ev.getJson()));
         RoomEventAuthorization val = state.isAuthorized(ev);
         if (!val.isAuthorized()) {
             log.debug("Room current state: {}", GsonUtil.getPrettyForLog(state));
