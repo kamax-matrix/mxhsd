@@ -22,14 +22,14 @@ package io.kamax.mxhsd.spring.controller.client;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import io.kamax.mxhsd.spring.controller.ClientAPIr0;
-import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.controller.JsonController;
 import io.kamax.mxhsd.spring.service.HomeserverService;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,55 +37,39 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
 @RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class AuthenticationController extends JsonController {
-
-    private Gson gson = GsonUtil.build();
+public class RoomController extends JsonController {
 
     private IHomeServer hs;
 
+    private Gson gson = GsonUtil.build();
+
     @Autowired
-    public AuthenticationController(HomeserverService svc) {
+    public RoomController(HomeserverService svc) {
         this.hs = svc.get();
     }
 
-    @RequestMapping(method = GET, path = "/login")
-    public String getLogin() {
-        return "{\"flows\":[{\"type\":\"m.login.password\"}]}";
-    }
+    @RequestMapping(method = POST, path = "/createRoom")
+    public String createRoom(HttpServletRequest req, @RequestParam("access_token") String token) {
+        JsonObject o = getJsonObject(req);
+        RoomCreateOptions options = new RoomCreateOptions(); // FIXME handle all options correctly
 
-    @RequestMapping(method = POST, path = "/login")
-    public String postLogin(HttpServletRequest req) throws IOException {
-        JsonObject obj = GsonUtil.parse(getJson(req)).getAsJsonObject();
-        String username = GsonUtil.getOrThrow(obj, "user");
-        char[] password = GsonUtil.getOrThrow(obj, "password").toCharArray();
-        IUserSession session = hs.login(username, password);
+        // FIXME no hardcoding!
+        GsonUtil.findArray(o, "invite").ifPresent(v ->
+                v.forEach(i -> options.addInvitee(new MatrixID(i.getAsString()))));
+
+        // FIXME no hardcoding!
+        GsonUtil.findString(o, "preset").ifPresent(options::setPreset);
+
+        IRoom room = hs.getUserSession(token).createRoom(options);
 
         JsonObject reply = new JsonObject();
-        reply.addProperty("user_id", session.getUser().getId().getId());
-        reply.addProperty("access_token", session.getDevice().getToken());
-        reply.addProperty("home_server", hs.getDomain());
-        reply.addProperty("device_id", session.getDevice().getId());
-
+        reply.addProperty("room_id", room.getId());
         return gson.toJson(reply);
-    }
-
-    @RequestMapping(method = POST, path = "/tokenrefresh")
-    public String tokenRefresh() {
-        throw new NotImplementedException("tokenrefresh");
-    }
-
-    @RequestMapping(method = POST, path = "/logout")
-    public String logout(@RequestParam("access_token") String accessToken) {
-        hs.getUserSession(accessToken).logout();
-
-        return EmptyJsonResponse.stringify();
     }
 
 }

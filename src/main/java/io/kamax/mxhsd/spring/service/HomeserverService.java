@@ -26,6 +26,7 @@ import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.IHomeserverConfig;
 import io.kamax.mxhsd.core.Homeserver;
 import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
 import io.kamax.mxhsd.core.room.RoomManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,8 @@ public class HomeserverService {
         state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));
         state.setEvMgr(new EventManager(state));
         state.setRoomMgr(new RoomManager(state));
+        state.setAuthMgr(new DumbAuthProvider());
+        state.setDevMgr(new DeviceManager());
         srv = new Homeserver(state);
     }
 

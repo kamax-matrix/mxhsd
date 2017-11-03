@@ -109,4 +109,12 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
         return Optional.ofNullable(o.getAsJsonObject(key));
     }
 
+    public static Optional<JsonArray> findArray(JsonObject o, String key) {
+        return findElement(o, key).filter(JsonElement::isJsonArray).map(JsonElement::getAsJsonArray);
+    }
+
+    public static Optional<String> findString(JsonObject o, String key) {
+        return Optional.ofNullable(getString(o, key));
+    }
+
 }

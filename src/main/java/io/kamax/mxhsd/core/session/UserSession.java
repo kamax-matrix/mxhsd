@@ -29,6 +29,7 @@ import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncOptions;
 import io.kamax.mxhsd.api.user.IHomeserverUser;
 import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import io.kamax.mxhsd.core.sync.SyncData;
 
 public class UserSession implements IUserSession {
@@ -76,7 +77,12 @@ public class UserSession implements IUserSession {
 
     @Override
     public IRoom createRoom(IRoomCreateOptions options) {
-        return stateHs.getRoomMgr().createRoom(options);
+        RoomCreateOptions validOptions = new RoomCreateOptions();
+        validOptions.setCreator(user.getId());
+        options.getInvitees().forEach(validOptions::addInvitee);
+        options.getPreset().ifPresent(validOptions::setPreset);
+
+        return stateHs.getRoomMgr().createRoom(validOptions);
     }
 
     @Override

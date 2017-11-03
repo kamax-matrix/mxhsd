@@ -36,10 +36,6 @@ public class RoomCreateOptions implements IRoomCreateOptions {
     private String preset;
     private List<_MatrixID> invitees = new ArrayList<>();
 
-    public RoomCreateOptions(_MatrixID creator) {
-        this.creator = creator;
-    }
-
     @Override
     public _MatrixID getCreator() {
         return creator;
@@ -63,6 +59,10 @@ public class RoomCreateOptions implements IRoomCreateOptions {
     @Override
     public List<_MatrixID> getInvitees() {
         return Collections.unmodifiableList(invitees);
+    }
+
+    public void setCreator(_MatrixID creator) {
+        this.creator = creator;
     }
 
     public void setName(String name) {
