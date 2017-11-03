@@ -18,11 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core;
+package io.kamax.mxhsd_test.core;
 
 import io.kamax.matrix.MatrixID;
 import io.kamax.matrix.sign.KeyManager;
 import io.kamax.matrix.sign.SignatureManager;
+import io.kamax.mxhsd.core.Homeserver;
+import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
 import io.kamax.mxhsd.core.room.RoomManager;

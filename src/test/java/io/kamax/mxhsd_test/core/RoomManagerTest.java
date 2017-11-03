@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core;
+package io.kamax.mxhsd_test.core;
 
 import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.api.room.IRoom;
