@@ -121,7 +121,9 @@ public class RoomManager implements IRoomManager {
 
         // TODO handle topic
 
-        // FIXME handle invite
+        options.getInvitees().forEach(mxId -> {
+            room.inject(new RoomMembershipEvent(creator, id, RoomMembership.Invite.get(), mxId.getId()));
+        });
 
         // TODO handle invite_3pid
 

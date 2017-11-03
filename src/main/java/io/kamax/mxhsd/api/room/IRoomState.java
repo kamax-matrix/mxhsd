@@ -37,7 +37,7 @@ public interface IRoomState {
     Optional<IMembershipContext> getMembership(String target);
 
     default Optional<String> getMembershipValue(String target) {
-        return getMembership(target).map(IMembershipContext::getStateKey);
+        return getMembership(target).map(IMembershipContext::getMembership);
     }
 
     RoomPowerLevels getPowerLevels();

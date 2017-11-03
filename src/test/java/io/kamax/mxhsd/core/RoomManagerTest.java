@@ -33,10 +33,10 @@ public class RoomManagerTest extends GenericHomeserverTest {
 
     @Test
     public void createRoom() {
-        IUserSession session = hs.login("test", "test".toCharArray());
+        IUserSession session = hs.login("test01", "test".toCharArray());
         RoomCreateOptions opts = new RoomCreateOptions(session.getUser().getId());
         opts.setPreset("trusted_private_chat");
-        opts.addInvitee(new MatrixID("@john:example.org"));
+        opts.addInvitee(new MatrixID("@test02:localhost"));
         IRoom room = session.createRoom(opts);
         assertTrue(StringUtils.isNotBlank(room.getId()));
         // TODO check preset events and invite events

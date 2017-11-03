@@ -31,6 +31,8 @@ import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -132,6 +134,7 @@ public class RoomState implements IRoomState {
 
     }
 
+    private transient Logger log = LoggerFactory.getLogger(RoomState.class);
     private transient HomeserverState globalState;
 
     private String roomId;
@@ -255,7 +258,7 @@ public class RoomState implements IRoomState {
 
                 return auth.allow(stateBuilder);
             } else if (Invite.is(membership)) {
-                if (!isMembership(senderMs, Join)) {
+                if (!hasMembership(sender, Join)) {
                     return auth.deny(ev, "sender cannot invite without being in the room");
                 }
 
@@ -310,7 +313,7 @@ public class RoomState implements IRoomState {
             }
         }
 
-        if (!isMembership(getMembershipOrDefault(senderMs), Join)) {
+        if (!isMembership(senderMs, Join)) {
             return auth.deny(ev, "sender " + sender + " is not in the room");
         }
 
