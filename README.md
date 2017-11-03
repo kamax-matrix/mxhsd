@@ -23,10 +23,18 @@ Version 0.1 aims to include the following features/abilities:
   - [ ] Event-based module framework
 
 - User side
-  - [ ] Login/Logout
-  - [ ] Set display name
-  - [ ] Create, Join, Leave, Forget rooms
-  - [ ] Send events in rooms - Only `m.room.message` will be supported
+  - Session
+    - [X] Login
+    - [ ] Logout
+    - [ ] Sync from client
+  - User profiles
+    - [ ] Set display name
+  - Rooms
+    - [X] Create
+    - [ ] Join
+    - [ ] Leave
+    - [ ] Forget
+    - [ ] Send events - Only `m.room.message` will be supported
 
 - Admin side
   - [ ] Administration page(s)
