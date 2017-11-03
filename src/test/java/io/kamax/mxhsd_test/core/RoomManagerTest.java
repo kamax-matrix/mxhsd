@@ -34,7 +34,8 @@ public class RoomManagerTest extends GenericHomeserverTest {
     @Test
     public void createRoom() {
         IUserSession session = hs.login("test01", "test".toCharArray());
-        RoomCreateOptions opts = new RoomCreateOptions(session.getUser().getId());
+        RoomCreateOptions opts = new RoomCreateOptions();
+        opts.setCreator(session.getUser().getId());
         opts.setPreset("trusted_private_chat");
         opts.addInvitee(new MatrixID("@test02:localhost"));
         IRoom room = session.createRoom(opts);
