@@ -23,6 +23,7 @@ package io.kamax.mxhsd.core.room;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
 import io.kamax.mxhsd.api.event.NakedRoomEvent;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.room.IRoom;
@@ -68,8 +69,10 @@ public class Room implements IRoom {
             log.error(val.getReason());
             throw new ForbiddenException("Unauthorized event");
         } else {
-            log.info("Room {}: storing new event ", id, ev.getId());
-            ISignedEvent evSigned = globalState.getEvMgr().store(ev);
+            log.info("Room {}: storing new event {}", id, ev.getId());
+            ISignedEventStreamEntry entry = globalState.getEvMgr().store(ev);
+            ISignedEvent evSigned = entry.get();
+            log.info("Room {}: event {} stored at index {}", id, evSigned.getId(), entry.streamIndex());
             if (RoomEventType.from(evSigned.getType()).isState()) {
                 log.info("Room {}: updating state", id);
                 log.debug("Room current state: {}", GsonUtil.getPrettyForLog(state));

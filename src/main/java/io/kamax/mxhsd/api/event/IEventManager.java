@@ -28,14 +28,16 @@ public interface IEventManager {
 
     ISignedEvent sign(IEvent ev);
 
-    default ISignedEvent store(IEvent ev) {
-        ISignedEvent evSigned = sign(ev);
-        store(evSigned);
-        return evSigned;
+    default ISignedEventStreamEntry store(IEvent ev) {
+        return store(sign(ev));
     }
 
-    void store(ISignedEvent ev);
+    ISignedEventStreamEntry store(ISignedEvent ev);
 
-    ISignedEvent get(String id);
+    ISignedEventStreamEntry get(String id);
+
+    ISignedEventStreamEntry getStream(int id);
+
+    int getStreamIndex();
 
 }

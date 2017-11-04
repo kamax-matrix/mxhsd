@@ -43,7 +43,8 @@ public class EventManager implements IEventManager {
     private Gson gson = GsonUtil.build();
     private MxSha256 sha256 = new MxSha256();
 
-    private Map<String, ISignedEvent> events = new ConcurrentHashMap<>();
+    private List<ISignedEventStreamEntry> eventsStream = Collections.synchronizedList(new ArrayList<>());
+    private Map<String, ISignedEventStreamEntry> events = new ConcurrentHashMap<>();
 
     // FIXME enums
     public EventManager(HomeserverState hsState) {
@@ -136,18 +137,31 @@ public class EventManager implements IEventManager {
     }
 
     @Override
-    public synchronized void store(ISignedEvent ev) { // FIXME use RWLock
-        events.put(ev.getId(), ev);
+    public synchronized ISignedEventStreamEntry store(ISignedEvent ev) { // FIXME use RWLock
+        ISignedEventStreamEntry entry = new SignedEventStreamEntry(eventsStream.size(), ev);
+        eventsStream.add(entry);
+        events.put(ev.getId(), entry);
+        return entry;
     }
 
     @Override
-    public ISignedEvent get(String id) {
-        ISignedEvent ev = events.get(id);
+    public ISignedEventStreamEntry get(String id) {
+        ISignedEventStreamEntry ev = events.get(id);
         if (ev == null) {
-            throw new IllegalArgumentException("Event ID " + id + " does not exist");
+            throw new IllegalArgumentException("Event ID " + id + " does not exist"); // FIXME we should do optional or something?
         }
 
         return ev;
+    }
+
+    @Override
+    public ISignedEventStreamEntry getStream(int index) {
+        return eventsStream.get(index);
+    }
+
+    @Override
+    public int getStreamIndex() {
+        return eventsStream.size();
     }
 
 }

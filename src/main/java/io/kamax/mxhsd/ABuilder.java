@@ -18,16 +18,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.sync;
+package io.kamax.mxhsd;
 
-import java.util.List;
+public abstract class ABuilder<T> {
 
-public interface ISyncData {
+    protected T obj;
 
-    String getNextBatchToken();
+    public ABuilder() {
+        obj = buildObj();
+    }
 
-    List<ISyncRoomData> getInvitedRooms();
+    protected abstract T buildObj();
 
-    List<ISyncRoomData> getJoinedRooms();
+    public T get() {
+        T obj = this.obj;
+        this.obj = null;
+        return obj;
+    }
 
 }

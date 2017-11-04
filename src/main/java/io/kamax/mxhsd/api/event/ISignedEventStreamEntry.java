@@ -18,16 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.sync;
+package io.kamax.mxhsd.api.event;
 
-import java.util.List;
+public interface ISignedEventStreamEntry {
 
-public interface ISyncData {
+    int streamIndex();
 
-    String getNextBatchToken();
-
-    List<ISyncRoomData> getInvitedRooms();
-
-    List<ISyncRoomData> getJoinedRooms();
+    ISignedEvent get();
 
 }

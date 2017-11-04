@@ -20,26 +20,34 @@
 
 package io.kamax.mxhsd_test.core;
 
-import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
+import io.kamax.mxhsd.core.sync.SyncOptions;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
 
+import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
 
-public class RoomManagerTest extends GenericHomeserverTest {
+public class UserSyncTest extends GenericHomeserverTest {
 
-    //@Test
-    public void createRoom() {
-        IUserSession session = hs.login("test01", "test".toCharArray());
+    @Test
+    public void syncAfterRoomCreate() {
+        IUserSession session = hs.login("john", "john".toCharArray());
+
         RoomCreateOptions opts = new RoomCreateOptions();
         opts.setCreator(session.getUser().getId());
-        opts.setPreset("trusted_private_chat");
-        opts.addInvitee(new MatrixID("@test02:localhost"));
+        opts.setPreset("private_chat");
         IRoom room = session.createRoom(opts);
-        assertTrue(StringUtils.isNotBlank(room.getId()));
-        // TODO check preset events and invite events
+
+        SyncOptions syncOptions = new SyncOptions();
+        syncOptions.setTimeout(0);
+        ISyncData syncData = session.fetchData(syncOptions);
+
+        assertNotNull(syncData);
+        assertTrue(StringUtils.isNotBlank(syncData.getNextBatchToken()));
     }
 
 }

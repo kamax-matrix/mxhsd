@@ -18,10 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client;
+package io.kamax.mxhsd.spring.controller.client.sync;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.sync.ISyncData;
@@ -61,10 +60,7 @@ public class SyncController {
     ) {
         SyncOptions options = new SyncOptions().setFilterId(filter).setSince(since).setTimeout(timeout);
         ISyncData data = hs.getUserSession(token).fetchData(options);
-
-        JsonObject reply = new JsonObject();
-        reply.addProperty("next_batch", data.getNextBatchToken());
-        return gson.toJson(reply);
+        return gson.toJson(new SyncResponse(data));
     }
 
 }

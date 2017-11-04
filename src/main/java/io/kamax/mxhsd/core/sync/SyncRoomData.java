@@ -21,34 +21,35 @@
 package io.kamax.mxhsd.core.sync;
 
 import io.kamax.mxhsd.ABuilder;
-import io.kamax.mxhsd.api.sync.ISyncData;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class SyncData implements ISyncData {
+public class SyncRoomData implements ISyncRoomData {
 
-    public static class Builder extends ABuilder<SyncData> {
+    public static class Builder extends ABuilder<SyncRoomData> {
 
         @Override
-        protected SyncData buildObj() {
-            return new SyncData();
+        protected SyncRoomData buildObj() {
+            return new SyncRoomData();
         }
 
-        public Builder setToken(String token) {
-            obj.token = token;
+        public Builder setRoomId(String roomId) {
+            obj.roomId = roomId;
             return this;
         }
 
-        public Builder setInvited(List<ISyncRoomData> invited) {
-            obj.invited = new ArrayList<>(invited);
+        public Builder setState(Collection<IEvent> state) {
+            obj.state = new ArrayList<>(state);
             return this;
         }
 
-        public Builder setJoined(List<ISyncRoomData> joined) {
-            obj.joined = new ArrayList<>(joined);
+        public Builder setTimeline(Collection<? extends IEvent> timeline) {
+            obj.timeline = new ArrayList<>(timeline);
             return this;
         }
 
@@ -58,23 +59,23 @@ public class SyncData implements ISyncData {
         return new Builder();
     }
 
-    private String token;
-    private List<ISyncRoomData> invited = Collections.emptyList();
-    private List<ISyncRoomData> joined = Collections.emptyList();
+    private String roomId;
+    private List<IEvent> state;
+    private List<IEvent> timeline;
 
     @Override
-    public String getNextBatchToken() {
-        return token;
+    public String getRoomId() {
+        return roomId;
     }
 
     @Override
-    public List<ISyncRoomData> getInvitedRooms() {
-        return Collections.unmodifiableList(invited);
+    public List<IEvent> getState() {
+        return Collections.unmodifiableList(state);
     }
 
     @Override
-    public List<ISyncRoomData> getJoinedRooms() {
-        return Collections.unmodifiableList(joined);
+    public List<IEvent> getTimeline() {
+        return Collections.unmodifiableList(timeline);
     }
 
 }

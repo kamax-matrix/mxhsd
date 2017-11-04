@@ -20,14 +20,15 @@
 
 package io.kamax.mxhsd.api.sync;
 
+import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.room.event.IRoomReference;
+
 import java.util.List;
 
-public interface ISyncData {
+public interface ISyncRoomData extends IRoomReference {
 
-    String getNextBatchToken();
+    List<IEvent> getState();
 
-    List<ISyncRoomData> getInvitedRooms();
-
-    List<ISyncRoomData> getJoinedRooms();
+    List<IEvent> getTimeline();
 
 }
