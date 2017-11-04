@@ -42,7 +42,7 @@ public class EventBuilder implements IEventBuilder {
     private JsonObject base;
     private Instant timestamp = Instant.now();
     private String type;
-    private long depth = 1;
+    private long depth = 0;
     private Set<String> parents = new HashSet<>();
     private JsonArray authEv = new JsonArray();
     private JsonObject content = new JsonObject();

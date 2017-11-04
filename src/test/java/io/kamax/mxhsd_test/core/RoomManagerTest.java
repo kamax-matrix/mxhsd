@@ -25,12 +25,13 @@ import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.session.IUserSession;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
 
 import static junit.framework.TestCase.assertTrue;
 
 public class RoomManagerTest extends GenericHomeserverTest {
 
-    //@Test
+    @Test
     public void createRoom() {
         IUserSession session = hs.login("test01", "test".toCharArray());
         RoomCreateOptions opts = new RoomCreateOptions();
