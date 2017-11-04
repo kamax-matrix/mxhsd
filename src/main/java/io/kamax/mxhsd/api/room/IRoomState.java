@@ -40,7 +40,11 @@ public interface IRoomState {
         return getMembership(target).map(IMembershipContext::getMembership);
     }
 
-    RoomPowerLevels getPowerLevels();
+    boolean hasPowerLevels();
+
+    Optional<RoomPowerLevels> getPowerLevels();
+
+    RoomPowerLevels getEffectivePowerLevels();
 
     String getPowerLevelsEventId();
 

@@ -45,7 +45,7 @@ public class Room implements IRoom {
     Room(HomeserverState globalState, String id) {
         this.globalState = globalState;
         this.id = id;
-        state = new RoomState.Builder(globalState, id).withPower(RoomPowerLevels.Builder.initial()).build();
+        state = new RoomState.Builder(globalState, id).build();
     }
 
     @Override

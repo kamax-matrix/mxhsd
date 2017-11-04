@@ -87,10 +87,15 @@ public class RoomState implements IRoomState {
         }
 
         public Builder from(IRoomState state) {
-            return withCreation(state.getCreation())
-                    .withPower(state.getPowerLevelsEventId(), state.getPowerLevels())
+            Builder b = withCreation(state.getCreation())
                     .setMembers(state.getMemberships())
                     .setExtremities(state.getExtremities());
+
+            if (state.hasPowerLevels()) {
+                b.withPower(state.getPowerLevelsEventId(), state.getEffectivePowerLevels());
+            }
+
+            return b;
         }
 
         public Builder withCreation(IEvent c) {
@@ -117,10 +122,6 @@ public class RoomState implements IRoomState {
             r.pId = evenId;
             r.powerLevels = p;
             return this;
-        }
-
-        public Builder withPower(RoomPowerLevels p) {
-            return withPower(null, p);
         }
 
         public Builder setExtremities(ISignedEvent... evs) {
@@ -160,8 +161,18 @@ public class RoomState implements IRoomState {
     }
 
     @Override
-    public RoomPowerLevels getPowerLevels() {
-        return powerLevels;
+    public boolean hasPowerLevels() {
+        return powerLevels != null;
+    }
+
+    @Override
+    public Optional<RoomPowerLevels> getPowerLevels() {
+        return Optional.ofNullable(powerLevels);
+    }
+
+    @Override
+    public RoomPowerLevels getEffectivePowerLevels() {
+        return getPowerLevels().orElse(RoomPowerLevels.Builder.initial());
     }
 
     @Override
@@ -215,12 +226,13 @@ public class RoomState implements IRoomState {
             return auth.allow(stateBuilder.withCreation(ev));
         }
 
+        RoomPowerLevels effectivePls = getEffectivePowerLevels();
         String sender = EventKey.Sender.getString(evJson);
         String senderMs = getMembershipValue(sender).orElseGet(RoomMembership.Leave::get);
-        long senderPl = powerLevels.getForUser(sender);
+        long senderPl = getEffectivePowerLevels().getForUser(sender);
 
         String target = EventKey.StateKey.getString(evJson);
-        long targetPl = powerLevels.getForUser(target);
+        long targetPl = getEffectivePowerLevels().getForUser(target);
 
         if (RoomEventType.Membership.is(type)) {
             String membership = content.get(RoomEventKey.Membership.get()).getAsString();
@@ -266,7 +278,7 @@ public class RoomState implements IRoomState {
                     return auth.deny(ev, "invitee is already in the room or is banned from the room");
                 }
 
-                if (!powerLevels.canInvite(senderPl)) {
+                if (!effectivePls.canInvite(senderPl)) {
                     return auth.deny(ev, "sender does not have minimum invite PL");
                 }
 
@@ -281,11 +293,11 @@ public class RoomState implements IRoomState {
                     return auth.deny(ev, "sender cannot leave a room they are not in");
                 }
 
-                if (isMembership(getMembershipOrDefault(target), Ban) && !powerLevels.canBan(senderPl)) {
+                if (isMembership(getMembershipOrDefault(target), Ban) && !effectivePls.canBan(senderPl)) {
                     return auth.deny(ev, "sender does not have minimum ban PL");
                 }
 
-                if (!powerLevels.canKick(senderPl)) {
+                if (!effectivePls.canKick(senderPl)) {
                     return auth.deny(ev, "sender does not have minimum kick PL");
                 }
 
@@ -299,7 +311,7 @@ public class RoomState implements IRoomState {
                     return auth.deny(ev, "sender cannot ban in a room they are not in");
                 }
 
-                if (!powerLevels.canBan(senderPl)) {
+                if (!effectivePls.canBan(senderPl)) {
                     return auth.deny(ev, "sender does not have minimum ban PL");
                 }
 
@@ -320,13 +332,18 @@ public class RoomState implements IRoomState {
         // State events definition: https://matrix.org/speculator/spec/HEAD/client_server/unstable.html#state-event-fields
         // FIXME must clarify spec that state_key is mandatory on state events, and only there
         // FIXME yes, "state_key" turns any event into a state event, update Matrix.org spec to be clear
-        if (!powerLevels.canForEvent(evJson.has(EventKey.StateKey.get()), type, senderPl)) {
+        if (!getEffectivePowerLevels().canForEvent(evJson.has(EventKey.StateKey.get()), type, senderPl)) {
             return auth.deny(ev, "sender does not have minimum PL for event type " + type);
         }
 
+
         if (RoomEventType.PowerLevels.is(ev.getType())) {
             RoomPowerLevels newPls = new RoomPowerLevels(ev);
-            if (!powerLevels.canReplace(sender, senderPl, newPls)) {
+            if (effectivePls.isInitialState()) { // Because https://github.com/matrix-org/synapse/issues/2644
+                return auth.allow(stateBuilder.withPower(ev.getId(), newPls));
+            }
+
+            if (!effectivePls.canReplace(sender, senderPl, newPls)) {
                 return auth.deny(ev, "sender is missing minimum PL to change room PLs");
             }
 

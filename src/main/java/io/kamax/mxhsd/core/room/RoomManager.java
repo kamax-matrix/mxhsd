@@ -105,7 +105,7 @@ public class RoomManager implements IRoomManager {
                 room.inject(new RoomJoinRulesEvent(creator, id, "invite"));
                 room.inject(new RoomHistoryVisibilityEvent(creator, id, "shared"));
 
-                RoomPowerLevels pls = room.getCurrentState().getPowerLevels();
+                RoomPowerLevels pls = room.getCurrentState().getEffectivePowerLevels();
                 long creatorPl = pls.getForUser(creator);
                 RoomPowerLevels.Builder plsBuilder = RoomPowerLevels.Builder.from(pls);
                 options.getInvitees().forEach(iId -> plsBuilder.addUser(iId.getId(), creatorPl));

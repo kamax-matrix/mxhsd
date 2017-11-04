@@ -43,13 +43,14 @@ public class RoomPowerLevels {
 
         public static RoomPowerLevels initial() {
             Builder b = new Builder();
-            b.levels.isFirstEvent = true;
+            b.levels.isInitialState = true;
             return b.build();
         }
 
         public static Builder from(RoomPowerLevels orignal) {
             Builder b = new Builder();
             b.levels = new RoomPowerLevels(GsonUtil.get().toJsonTree(orignal).getAsJsonObject());
+            b.levels.isInitialState = orignal.isInitialState;
             return b;
         }
 
@@ -103,7 +104,7 @@ public class RoomPowerLevels {
         }
     }
 
-    private transient boolean isFirstEvent = false;
+    private transient boolean isInitialState = false;
     private Long ban;
     private Map<String, Long> events = new HashMap<>();
     private Long eventsDefault;
@@ -160,25 +161,13 @@ public class RoomPowerLevels {
 
     }
 
-    private boolean canReplace(long wihtPl, Map<String, Long> oldPls, Map<String, Long> newPls) {
+    private boolean canReplace(long wihtPl, Map<String, Long> oldPls, Map<String, Long> newPls, long defaultPl) {
         return Stream.concat(oldPls.keySet().stream(), newPls.keySet()
                 .stream()).collect(Collectors.toSet()).stream()
                 .allMatch(type -> {
-                    if (!oldPls.containsKey(type)) {
-                        return true;
-                    }
-                    long oldPl = oldPls.get(type);
-
-                    if (oldPl > wihtPl) {
-                        return false;
-                    }
-
-                    if (!newPls.containsKey(type)) {
-                        return true;
-                    }
-                    long newPl = newPls.get(type);
-
-                    return wihtPl >= newPl;
+                    long oldPl = oldPls.getOrDefault(type, defaultPl);
+                    long newPl = newPls.getOrDefault(type, defaultPl);
+                    return wihtPl >= oldPl && wihtPl >= newPl;
                 });
     }
 
@@ -204,23 +193,24 @@ public class RoomPowerLevels {
             return false;
         }
 
-        if (!canReplace(withPl, events, newPls.events)) {
+        long evPl = getEventsDefaultOrCompute();
+        if (!canReplace(withPl, events, newPls.events, evPl)) {
             return false;
         }
 
-        if (!canReplace(withPl, users, newPls.users)) {
+        long userPl = getUsersDefaultOrCompute();
+        if (!canReplace(withPl, users, newPls.users, userPl)) {
             return false;
         }
 
-        return Stream.concat(events.keySet().stream(), newPls.events.keySet().stream()).collect(Collectors.toSet()).stream()
+        return Stream.concat(users.keySet().stream(), newPls.users.keySet().stream()).collect(Collectors.toSet()).stream()
                 .noneMatch(id -> {
                     if (StringUtils.equals(sender, id)) {
-                        return true;
+                        return false;
                     }
 
-                    long oldPl = events.getOrDefault(id, Long.MIN_VALUE);
-                    long newPl = newPls.events.getOrDefault(id, Long.MIN_VALUE);
-                    return oldPl != newPl && withPl == newPl;
+                    long oldPl = getForUser(id);
+                    return oldPl == withPl;
                 });
     }
 
@@ -265,7 +255,7 @@ public class RoomPowerLevels {
     }
 
     public long getEventsDefaultOrCompute() {
-        if (isFirstEvent) {
+        if (isInitialState) {
             return 0;
         } else {
             return getEventsDefault().orElse(50L);
@@ -301,7 +291,7 @@ public class RoomPowerLevels {
     }
 
     public long getStateDefaultOrCompute() {
-        if (isFirstEvent) {
+        if (isInitialState) {
             return 0;
         } else {
             return getStateDefault().orElse(50L);
@@ -309,11 +299,19 @@ public class RoomPowerLevels {
     }
 
     public long getForUser(String id) {
-        return users.getOrDefault(id, getUsersDefault().orElse(0L));
+        return users.getOrDefault(id, getUsersDefaultOrCompute());
     }
 
     public Optional<Long> getUsersDefault() {
         return Optional.ofNullable(usersDefault);
+    }
+
+    public long getUsersDefaultOrCompute() {
+        return getUsersDefault().orElse(0L);
+    }
+
+    public boolean isInitialState() {
+        return isInitialState;
     }
 
 }
