@@ -204,8 +204,8 @@ public class RoomState implements IRoomState {
         RoomEventAuthorization.Builder auth = new RoomEventAuthorization.Builder(roomId, ev);
         Builder stateBuilder = new Builder(globalState, roomId).from(this); // we'll only make an update to our current state
         if (RoomEventType.Creation.is(type)) {
-            if (depth != 1) { // FIXME rules talk about depth 0, but synapse (and dendrite?) set 1
-                return auth.deny(ev, "depth is not 1");
+            if (depth != 0) {
+                return auth.deny(ev, "depth is not 0 for room creation event");
             }
 
             if (!extremities.isEmpty()) {
@@ -228,8 +228,8 @@ public class RoomState implements IRoomState {
             if (Join.is(membership)) {
                 IEvent firstParentEv = extremities.get(0);
                 if (RoomEventType.Creation.is(firstParentEv.getType()) && extremities.size() == 1) {
-                    if (depth != 2) { // FIXME rules talk about depth 1, but synapse (and dendrite?) set 2
-                        return auth.deny(ev, "depth is not 2");
+                    if (depth != 1) {
+                        return auth.deny(ev, "depth is not 1 for creator join");
                     }
 
                     String creator = EventKey.Content.getObj(firstParentEv.getJson()).get("creator").getAsString();
