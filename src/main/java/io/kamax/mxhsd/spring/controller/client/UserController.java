@@ -20,17 +20,15 @@
 
 package io.kamax.mxhsd.spring.controller.client;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.kamax.matrix.MatrixID;
-import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.user.IUserFilter;
 import io.kamax.mxhsd.spring.controller.ClientAPIr0;
 import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.controller.InvalidRequestException;
+import io.kamax.mxhsd.spring.controller.JsonController;
 import io.kamax.mxhsd.spring.service.HomeserverService;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,31 +38,28 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
 @RequestMapping(path = ClientAPIr0.Base + "/user/{userId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class UserController {
+public class UserController extends JsonController {
 
     private IHomeServer hs;
-    private Gson gson;
 
     @Autowired
     public UserController(HomeserverService svc) {
         this.hs = svc.get();
-        gson = GsonUtil.build();
     }
 
     @RequestMapping(method = POST, path = "/filter")
     public String createFilter(HttpServletRequest req, @PathVariable String userId, @RequestParam("access_token") String token) throws IOException {
-        String body = IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8);
+        String body = getBody(req);
         IUserFilter filter = hs.getUserSession(token).getForUser(new MatrixID(userId)).getUser().createFilter(body);
 
         JsonObject reply = new JsonObject();
         reply.addProperty("filter_id", filter.getId());
-        return gson.toJson(reply);
+        return toJson(reply);
     }
 
     @RequestMapping(method = GET, path = "/filter/{filterId:.+}")

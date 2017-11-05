@@ -20,11 +20,15 @@
 
 package io.kamax.mxhsd.spring.controller;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.exception.NoJsonException;
+import io.kamax.mxhsd.api.exception.UnknownException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -32,20 +36,33 @@ import java.nio.charset.StandardCharsets;
 
 public class JsonController {
 
-    protected String getJson(HttpServletRequest req) {
+    private final Logger log = LoggerFactory.getLogger(JsonController.class);
+
+    protected Gson gson = GsonUtil.build();
+
+    protected String getBody(HttpServletRequest req) {
         try {
-            String data = IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8);
-            if (StringUtils.isBlank(data)) {
-                throw new NoJsonException("Document is empty");
-            }
-            return data;
+            return IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new NoJsonException(e);
+            log.error("Unable to get body from request {} {}", req.getMethod(), req.getRequestURL(), e);
+            throw new UnknownException(e.getMessage());
         }
+    }
+
+    protected String getJson(HttpServletRequest req) {
+        String data = getBody(req);
+        if (StringUtils.isBlank(data)) {
+            throw new NoJsonException("Document is empty");
+        }
+        return data;
     }
 
     protected JsonObject getJsonObject(HttpServletRequest req) {
         return GsonUtil.parseObj(getJson(req));
+    }
+
+    protected String toJson(JsonObject o) {
+        return gson.toJson(o);
     }
 
 }
