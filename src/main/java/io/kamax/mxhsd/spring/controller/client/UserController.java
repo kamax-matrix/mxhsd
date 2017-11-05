@@ -27,6 +27,7 @@ import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.user.IUserFilter;
 import io.kamax.mxhsd.spring.controller.ClientAPIr0;
+import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.controller.InvalidRequestException;
 import io.kamax.mxhsd.spring.service.HomeserverService;
 import org.apache.commons.io.IOUtils;
@@ -41,8 +42,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
 @RequestMapping(path = ClientAPIr0.Base + "/user/{userId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -78,6 +78,18 @@ public class UserController {
                 .findFilter(filterId).orElseThrow(() -> new InvalidRequestException("M_UKNOWN", "Invalid filter ID"));
 
         return filter.getContent();
+    }
+
+    // Required so Riot can create 1:1 room
+    // TODO implement
+    @RequestMapping(method = PUT, path = "/account_data/{type:.+}")
+    public String setAccountData(
+            HttpServletRequest req,
+            @RequestParam("access_token") String token,
+            @PathVariable String userId,
+            @PathVariable String type
+    ) {
+        return EmptyJsonResponse.stringify();
     }
 
 }
