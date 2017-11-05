@@ -30,6 +30,7 @@ import io.kamax.mxhsd.api.event.*;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.HomeserverState;
+import net.engio.mbassy.bus.MBassador;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.*;
@@ -46,6 +47,8 @@ public class EventManager implements IEventManager {
 
     private List<ISignedEventStreamEntry> eventsStream = Collections.synchronizedList(new ArrayList<>());
     private Map<String, ISignedEventStreamEntry> events = new ConcurrentHashMap<>();
+
+    private MBassador<ISignedEventStreamEntry> eventBus = new MBassador<>();
 
     // FIXME enums
     public EventManager(HomeserverState hsState) {
@@ -142,6 +145,9 @@ public class EventManager implements IEventManager {
         ISignedEventStreamEntry entry = new SignedEventStreamEntry(eventsStream.size(), ev);
         eventsStream.add(entry);
         events.put(ev.getId(), entry);
+
+        eventBus.post(entry).now(); // TODO we might want to do this async?
+
         return entry;
     }
 
@@ -191,6 +197,11 @@ public class EventManager implements IEventManager {
     @Override
     public int getStreamIndex() {
         return eventsStream.size();
+    }
+
+    @Override
+    public void addListener(Object o) {
+        eventBus.subscribe(o);
     }
 
 }

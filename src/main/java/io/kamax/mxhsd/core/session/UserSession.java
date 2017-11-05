@@ -36,8 +36,11 @@ import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import io.kamax.mxhsd.core.sync.SyncData;
 import io.kamax.mxhsd.core.sync.SyncRoomData;
+import net.engio.mbassy.listener.Handler;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -65,6 +68,20 @@ public class UserSession implements IUserSession {
         this.global = global;
         this.user = user;
         this.device = dev;
+
+        init();
+    }
+
+    private void init() {
+        global.getEvMgr().addListener(this);
+    }
+
+    // TODO consider refactoring this into a consumer (functional interface)
+    @Handler
+    private void getEvent(ISignedEventStreamEntry ev) {
+        synchronized (this) {
+            notifyAll(); // let's wake up waiting threads
+        }
     }
 
     @Override
@@ -90,22 +107,32 @@ public class UserSession implements IUserSession {
     private SyncRoomData buildInviteState(IRoom room, IRoomState state) {
         return SyncRoomData.build()
                 .setRoomId(room.getId())
-                .setState(state.getMemberships().stream() // we process every membership
-                        .map(context -> global.getEvMgr().get(context.getEventId()).get()) // we fetch the event to include it
+                .addState(state.getMemberships().stream() // we process every membership
+                        .filter(e -> StringUtils.equals(user.getId().getId(), e.getStateKey())) // only our own join
+                        .map(e -> global.getEvMgr().get(e.getEventId()).get())
                         .collect(Collectors.toList()))
                 .get();
     }
 
     private SyncRoomData buildJoinState(IRoom room, IRoomState state) {
         return SyncRoomData.build()
+
+                // we set the room ID
                 .setRoomId(room.getId())
 
                 // we process every membership
-                .setState(state.getMemberships().stream()
+                .addState(state.getMemberships().stream()
                         // we fetch the event to include it
                         .map(context -> global.getEvMgr().get(context.getEventId()).get())
                         // we collect them back into a list
                         .collect(Collectors.toList()))
+
+                // we process the room creation
+                .addState(state.getCreation())
+
+                // we process power levels
+                .addState(global.getEvMgr().get(state.getPowerLevelsEventId()).get())
+
 
                 // we create the timeline for the most recent events - FIXME missing previous events token
                 .setTimeline(
@@ -118,7 +145,8 @@ public class UserSession implements IUserSession {
                                 .map(ISignedEventStreamEntry::get)
                                 // we collect them back into a list
                                 .collect(Collectors.toList()))
-                .get();
+
+                .get(); // get final immutable object
     }
 
     private ISyncData fetchInitial(ISyncOptions options) {
@@ -152,28 +180,34 @@ public class UserSession implements IUserSession {
     }
 
     private ISyncData fetchNext(ISyncOptions options, String since) {
+        // FIXME catch exception and throw appropriate error in case of parse error
+        // TODO SPEC - Possible errors
+        int sinceIndex = Integer.parseInt(since);
+        Instant endTs = Instant.now().plus(options.getTimeout(), ChronoUnit.MILLIS);
         SyncData.Builder syncBuild = SyncData.build();
-        try {
-            // FIXME catch exception and throw appropriate error in case of parse error
-            // TODO SPEC - Possible errors
-            int sinceIndex = Integer.parseInt(since);
+
+        do { // at least one time
             int currentIndex = global.getEvMgr().getStreamIndex();
             int amount = currentIndex - sinceIndex;
+
             if (amount < 0) { // something went wrong, we send initial data instead
                 return fetchInitial(options);
             }
 
-            if (amount > 0) { // we get the new data
+            if (amount > 0) { // we got new data
                 return fetchInitial(options);
-            } else { // we just wait for new data
-                // FIXME use timeout, hardcoded for testing purposes until a trigger is created
-                Thread.sleep(1000L);
-                return syncBuild.get();
+            } else { // no new data, let's wait
+                synchronized (this) {
+                    try {
+                        wait(Math.max(endTs.toEpochMilli() - Instant.now().toEpochMilli(), 1)); // we wait at least 1 ms
+                    } catch (InterruptedException e) {
+                        // we got interrupted, let's try to fetch again
+                    }
+                }
             }
-        } catch (InterruptedException e) {
-            // TODO do better?
-            return syncBuild.get();
-        }
+        } while (Instant.now().isBefore(endTs));
+
+        return syncBuild.setToken(since).get(); // no new data, we just send the same token
     }
 
     @Override

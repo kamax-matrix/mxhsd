@@ -48,6 +48,16 @@ public class SyncRoomData implements ISyncRoomData {
             return this;
         }
 
+        public Builder addState(Collection<IEvent> state) {
+            obj.state.addAll(state);
+            return this;
+        }
+
+        public Builder addState(IEvent state) {
+            obj.state.add(state);
+            return this;
+        }
+
         public Builder setTimeline(Collection<? extends IEvent> timeline) {
             obj.timeline = new ArrayList<>(timeline);
             return this;
@@ -60,8 +70,8 @@ public class SyncRoomData implements ISyncRoomData {
     }
 
     private String roomId;
-    private List<IEvent> state;
-    private List<IEvent> timeline;
+    private List<IEvent> state = new ArrayList<>();
+    private List<IEvent> timeline = new ArrayList<>();
 
     @Override
     public String getRoomId() {

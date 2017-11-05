@@ -41,4 +41,8 @@ public interface IEventManager {
 
     int getStreamIndex();
 
+    // MBassador bus
+    // TODO consider refactoring this into accepting a consumer (functional interface) to abstract MBassador
+    void addListener(Object o);
+
 }
