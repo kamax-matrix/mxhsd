@@ -22,6 +22,8 @@ package io.kamax.mxhsd.api;
 
 import io.kamax.mxhsd.api.session.IUserSession;
 
+import java.util.Optional;
+
 /**
  * Represent a Matrix Homeserver
  */
@@ -45,5 +47,13 @@ public interface IHomeServer {
      * @return The user session
      */
     IUserSession getUserSession(String token);
+
+    /**
+     * Find a possible authenticated user session with an access token.
+     *
+     * @param token Access token mapped to a user session
+     * @return The user session, if one exists
+     */
+    Optional<IUserSession> findUserSession(String token);
 
 }

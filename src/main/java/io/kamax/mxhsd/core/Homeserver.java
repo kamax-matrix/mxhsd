@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Homeserver implements IHomeServer {
@@ -71,12 +72,12 @@ public class Homeserver implements IHomeServer {
 
     @Override
     public IUserSession getUserSession(String token) {
-        IUserSession session = sessions.get(token);
-        if (session == null) {
-            throw new InvalidTokenException();
-        }
+        return findUserSession(token).orElseThrow(InvalidTokenException::new);
+    }
 
-        return session;
+    @Override
+    public Optional<IUserSession> findUserSession(String token) {
+        return Optional.ofNullable(sessions.get(token));
     }
 
 }

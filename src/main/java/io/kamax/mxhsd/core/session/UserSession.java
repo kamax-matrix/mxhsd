@@ -38,6 +38,7 @@ import io.kamax.mxhsd.core.sync.SyncData;
 import io.kamax.mxhsd.core.sync.SyncRoomData;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -110,9 +111,11 @@ public class UserSession implements IUserSession {
                 .setTimeline(
                         global.getEvMgr()
                                 // latest 10 events - FIXME make it configurable / use client filters
-                                .getBackwardStreamFrom(state.getStreamIndex()).getNext(10)
+                                .getBackwardStreamFrom(state.getStreamIndex()).getNext(10).stream()
+                                // We sort by oldest to newest
+                                .sorted(Comparator.comparing(ISignedEventStreamEntry::streamIndex))
                                 // We get the actual event
-                                .stream().map(ISignedEventStreamEntry::get)
+                                .map(ISignedEventStreamEntry::get)
                                 // we collect them back into a list
                                 .collect(Collectors.toList()))
                 .get();
