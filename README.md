@@ -34,7 +34,7 @@ Version 0.1 aims to include the following features/abilities:
     - [ ] Join
     - [ ] Leave
     - [ ] Forget
-    - [ ] Send events - Only `m.room.message` will be supported
+    - [X] Send events - Only `m.room.message` will be supported
 
 - Admin side
   - [ ] Administration page(s)
