@@ -27,6 +27,7 @@ import io.kamax.matrix.codec.MxSha256;
 import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.*;
+import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -94,8 +95,8 @@ public class EventManager implements IEventManager {
     }
 
     @Override
-    public IEvent populate(INakedEvent ev, Collection<ISignedEvent> parents) {
-        return new EventBuilder(hsState.getDomain(), ev.getJson()).addParents(parents).build(getNextId());
+    public IEvent populate(INakedEvent ev, IRoomState roomState) {
+        return new EventBuilder(hsState.getDomain(), ev.getJson()).addParents(roomState.getExtremities()).build(getNextId());
     }
 
     private JsonObject hash(JsonObject base) {
@@ -155,8 +156,36 @@ public class EventManager implements IEventManager {
     }
 
     @Override
-    public ISignedEventStreamEntry getStream(int index) {
-        return eventsStream.get(index);
+    public ISignedEventStream getBackwardStreamFrom(int id) {
+        if (id < 0) {
+            throw new IllegalArgumentException("stream index must be greater or equal to 0");
+        }
+
+        return new ISignedEventStream() {
+
+            private int index = id;
+
+            @Override
+            public int getIndex() {
+                return index;
+            }
+
+            @Override
+            public List<ISignedEventStreamEntry> getNext(int amount) {
+                if (amount <= 0) {
+                    throw new IllegalArgumentException("amount must be greater than 0");
+                }
+
+                // TODO Streams could help if we provide a supplier with the values we want?
+                List<ISignedEventStreamEntry> events = new ArrayList<>();
+                int destination = Math.max(0, index - amount);
+                for (int i = index; i >= destination && i >= 0; i--) {
+                    events.add(EventManager.this.eventsStream.get(i)); // FIXME might change under concurrent access
+                }
+                index = destination;
+                return events;
+            }
+        };
     }
 
     @Override

@@ -20,13 +20,10 @@
 
 package io.kamax.mxhsd.api.room.event;
 
-import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.event.NakedRoomEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
 public class RoomJoinRulesEvent extends NakedRoomEvent {
-
-    private JsonObject content = new JsonObject();
 
     public RoomJoinRulesEvent(String sender, String roomId, String rule) {
         super(RoomEventType.JoinRules.get(), sender, roomId);

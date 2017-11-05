@@ -18,16 +18,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room.event;
+package io.kamax.mxhsd.api.event;
 
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
-import io.kamax.mxhsd.api.room.RoomEventType;
+import java.util.List;
 
-public class RoomHistoryVisibilityEvent extends NakedRoomEvent {
+// NO THREAD-SAFE GUARANTEES
+public interface ISignedEventStream {
 
-    public RoomHistoryVisibilityEvent(String sender, String roomId, String visibility) {
-        super(RoomEventType.HistoryVisibility.get(), sender, roomId);
-        content.addProperty("history_visibility", visibility);
-    }
+    int getIndex();
+
+    List<ISignedEventStreamEntry> getNext(int amount);
 
 }

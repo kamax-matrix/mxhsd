@@ -25,6 +25,7 @@ import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,12 +43,12 @@ public class SyncData implements ISyncData {
             return this;
         }
 
-        public Builder setInvited(List<ISyncRoomData> invited) {
+        public Builder setInvited(Collection<ISyncRoomData> invited) {
             obj.invited = new ArrayList<>(invited);
             return this;
         }
 
-        public Builder setJoined(List<ISyncRoomData> joined) {
+        public Builder setJoined(Collection<ISyncRoomData> joined) {
             obj.joined = new ArrayList<>(joined);
             return this;
         }

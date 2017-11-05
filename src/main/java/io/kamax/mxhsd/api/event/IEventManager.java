@@ -20,11 +20,11 @@
 
 package io.kamax.mxhsd.api.event;
 
-import java.util.Collection;
+import io.kamax.mxhsd.api.room.IRoomState;
 
 public interface IEventManager {
 
-    IEvent populate(INakedEvent ev, Collection<ISignedEvent> parents);
+    IEvent populate(INakedEvent ev, IRoomState parents);
 
     ISignedEvent sign(IEvent ev);
 
@@ -36,7 +36,8 @@ public interface IEventManager {
 
     ISignedEventStreamEntry get(String id);
 
-    ISignedEventStreamEntry getStream(int id);
+    // From newest to oldest in a linear graph
+    ISignedEventStream getBackwardStreamFrom(int id);
 
     int getStreamIndex();
 

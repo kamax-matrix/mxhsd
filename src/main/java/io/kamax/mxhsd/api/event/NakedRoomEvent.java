@@ -20,17 +20,29 @@
 
 package io.kamax.mxhsd.api.event;
 
+import com.google.gson.JsonObject;
+
 public class NakedRoomEvent extends NakedEvent {
 
     private String roomId;
+    protected JsonObject content = new JsonObject();
 
     protected NakedRoomEvent(String type, String sender, String roomId) {
         super(type, sender);
         this.roomId = roomId;
     }
 
+    public NakedRoomEvent(String type, String sender, JsonObject content) {
+        super(type, sender);
+        this.content = content;
+    }
+
     public String getRoomId() {
         return roomId;
+    }
+
+    public JsonObject getContent() {
+        return content;
     }
 
 }

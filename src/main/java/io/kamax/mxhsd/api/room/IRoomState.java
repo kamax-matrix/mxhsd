@@ -50,4 +50,6 @@ public interface IRoomState {
 
     Set<ISignedEvent> getExtremities();
 
+    int getStreamIndex();
+
 }

@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.api.room.event;
 
+import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.NakedRoomEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
@@ -39,15 +40,9 @@ public class RoomCreateEvent extends NakedRoomEvent {
 
     }
 
-    private Content content;
-
     public RoomCreateEvent(String creator, String roomId) {
         super(RoomEventType.Creation.get(), creator, roomId);
-        content = new Content(getSender());
-    }
-
-    public Content getContent() {
-        return content;
+        content = GsonUtil.getObj(new Content(getSender()));
     }
 
 }

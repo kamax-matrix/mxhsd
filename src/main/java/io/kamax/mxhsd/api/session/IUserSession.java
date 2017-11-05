@@ -42,6 +42,8 @@ public interface IUserSession {
 
     IRoom createRoom(IRoomCreateOptions options);
 
+    IRoom getRoom(String id);
+
     void logout();
 
 }

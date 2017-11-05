@@ -31,8 +31,6 @@ import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -70,6 +68,7 @@ public class RoomState implements IRoomState {
         public String getMembership() {
             return membership;
         }
+
     }
 
     public static class Builder {
@@ -89,7 +88,8 @@ public class RoomState implements IRoomState {
         public Builder from(IRoomState state) {
             Builder b = withCreation(state.getCreation())
                     .setMembers(state.getMemberships())
-                    .setExtremities(state.getExtremities());
+                    .setExtremities(state.getExtremities())
+                    .withStreamIndex(state.getStreamIndex());
 
             if (state.hasPowerLevels()) {
                 b.withPower(state.getPowerLevelsEventId(), state.getEffectivePowerLevels());
@@ -133,9 +133,13 @@ public class RoomState implements IRoomState {
             return this;
         }
 
+        public Builder withStreamIndex(int streamIndex) {
+            r.streamIndex = streamIndex;
+            return this;
+        }
+
     }
 
-    private transient Logger log = LoggerFactory.getLogger(RoomState.class);
     private transient HomeserverState globalState;
 
     private String roomId;
@@ -144,6 +148,7 @@ public class RoomState implements IRoomState {
     private RoomPowerLevels powerLevels;
     private String pId;
     private List<ISignedEvent> extremities = new ArrayList<>();
+    private int streamIndex = 0;
 
     @Override
     public IEvent getCreation() {
@@ -183,6 +188,11 @@ public class RoomState implements IRoomState {
     @Override
     public Set<ISignedEvent> getExtremities() {
         return new HashSet<>(extremities);
+    }
+
+    @Override
+    public int getStreamIndex() {
+        return streamIndex;
     }
 
     private String getMembershipOrDefault(String member) {

@@ -45,7 +45,7 @@ public class Room implements IRoom {
     Room(HomeserverState globalState, String id) {
         this.globalState = globalState;
         this.id = id;
-        state = new RoomState.Builder(globalState, id).build();
+        setCurrentState(new RoomState.Builder(globalState, id).build());
     }
 
     @Override
@@ -53,15 +53,22 @@ public class Room implements IRoom {
         return id;
     }
 
+    // FIXME use RWLock
+    private synchronized void setCurrentState(RoomState state) {
+        this.state = state;
+    }
+
+    // FIXME use RWLock
     @Override
-    public synchronized IRoomState getCurrentState() { // FIXME use RWLock
+    public synchronized IRoomState getCurrentState() {
         return state;
     }
 
+    // FIXME use RWLock
     @Override
-    public synchronized ISignedEvent inject(NakedRoomEvent evNaked) { // FIXME use RWLock
+    public synchronized ISignedEvent inject(NakedRoomEvent evNaked) {
         log.info("Room {}: Injecting new event of type {}", id, evNaked.getType());
-        IEvent ev = globalState.getEvMgr().populate(evNaked, state.getExtremities());
+        IEvent ev = globalState.getEvMgr().populate(evNaked, state);
         log.debug("Formalized event: {}", GsonUtil.getPrettyForLog(ev.getJson()));
         RoomEventAuthorization val = state.isAuthorized(ev);
         if (!val.isAuthorized()) {
@@ -69,16 +76,22 @@ public class Room implements IRoom {
             log.error(val.getReason());
             throw new ForbiddenException("Unauthorized event");
         } else {
+            RoomState.Builder stateBuilder = new RoomState.Builder(globalState, id).from(val.getNewState());
             log.info("Room {}: storing new event {}", id, ev.getId());
             ISignedEventStreamEntry entry = globalState.getEvMgr().store(ev);
+            stateBuilder.withStreamIndex(entry.streamIndex());
+
             ISignedEvent evSigned = entry.get();
             log.info("Room {}: event {} stored at index {}", id, evSigned.getId(), entry.streamIndex());
             if (RoomEventType.from(evSigned.getType()).isState()) {
                 log.info("Room {}: updating state", id);
                 log.debug("Room current state: {}", GsonUtil.getPrettyForLog(state));
-                state = new RoomState.Builder(globalState, id).from(val.getNewState()).setExtremities(evSigned).build();
+                stateBuilder.setExtremities(evSigned).build();
                 log.debug("Room new state: {}", GsonUtil.getPrettyForLog(state));
             }
+
+            setCurrentState(stateBuilder.build());
+
             return evSigned;
         }
     }
