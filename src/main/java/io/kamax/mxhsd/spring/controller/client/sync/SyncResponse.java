@@ -41,6 +41,21 @@ public class SyncResponse {
 
     }
 
+    private class RoomTimeline {
+
+        private boolean limited = false;
+        private List<JsonObject> events = new ArrayList<>();
+
+        public List<JsonObject> getEvents() {
+            return events;
+        }
+
+        public boolean isLimited() {
+            return limited;
+        }
+
+    }
+
     private class InviteRoom {
 
         private RoomState inviteState = new RoomState();
@@ -58,7 +73,7 @@ public class SyncResponse {
     private class JoinRoom {
 
         private RoomState state = new RoomState();
-        private RoomState timeline = new RoomState();
+        private RoomTimeline timeline = new RoomTimeline();
 
         public JoinRoom(ISyncRoomData r) {
             r.getState().forEach(ev -> state.events.add(ev.getJson()));
@@ -69,7 +84,7 @@ public class SyncResponse {
             return state;
         }
 
-        public RoomState getTimeline() {
+        public RoomTimeline getTimeline() {
             return timeline;
         }
 

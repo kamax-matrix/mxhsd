@@ -27,10 +27,12 @@ public class NakedEvent implements INakedEvent {
 
     private String type;
     private String sender;
+    private JsonObject unsigned;
 
     public NakedEvent(String type, String sender) {
         this.type = type;
         this.sender = sender;
+        this.unsigned = new JsonObject();
     }
 
     @Override
@@ -41,6 +43,10 @@ public class NakedEvent implements INakedEvent {
     @Override
     public String getType() {
         return type;
+    }
+
+    public JsonObject getUnsigned() {
+        return unsigned;
     }
 
     @Override

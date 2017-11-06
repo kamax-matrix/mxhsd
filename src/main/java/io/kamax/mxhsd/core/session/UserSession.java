@@ -224,10 +224,10 @@ public class UserSession implements IUserSession {
 
                     if (RoomMembership.Join.is(membership)) {
                         SyncRoomData.Builder roomBuilder = syncData.getJoined(r.getId());
-                        if (evType.isState()) {
+                        roomBuilder.addTimeline(ev);
+
+                        if (evType.isState()) { // FIXME and valid
                             roomBuilder.addState(ev);
-                        } else {
-                            roomBuilder.addTimeline(ev);
                         }
                     }
                 });
@@ -260,7 +260,8 @@ public class UserSession implements IUserSession {
             } else { // no new data, let's wait
                 synchronized (this) {
                     try {
-                        wait(Math.max(endTs.toEpochMilli() - Instant.now().toEpochMilli(), 1)); // we wait at least 1 ms
+                        // we wait at least 1ms and at most 500ms
+                        wait(Math.max(Math.min(endTs.toEpochMilli() - Instant.now().toEpochMilli(), 500), 1));
                     } catch (InterruptedException e) {
                         // we got interrupted, let's try to fetch again
                     }

@@ -21,6 +21,7 @@
 package io.kamax.mxhsd.core.event;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.matrix.codec.MxBase64;
 import io.kamax.matrix.codec.MxSha256;
@@ -112,12 +113,13 @@ public class EventManager implements IEventManager {
     private JsonObject hash(JsonObject base) {
         base.remove(EventKey.Hashes.get());
         base.remove(EventKey.Signatures.get());
-        base.remove(EventKey.Unsigned.get());
+        JsonElement unsigned = base.remove(EventKey.Unsigned.get());
         String canonical = MatrixJson.encodeCanonical(base);
 
         JsonObject hashes = new JsonObject();
         hashes.addProperty("sha256", sha256.hash(canonical)); // FIXME do not hardcode
         base.add(EventKey.Hashes.get(), hashes);
+        base.add(EventKey.Unsigned.get(), unsigned);
         return base;
     }
 

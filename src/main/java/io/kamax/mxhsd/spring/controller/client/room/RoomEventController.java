@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client;
+package io.kamax.mxhsd.spring.controller.client.room;
 
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
@@ -61,6 +61,7 @@ public class RoomEventController extends JsonController {
         long before = System.currentTimeMillis();
         JsonObject json = getJsonObject(req);
         NakedContentEvent ev = new NakedContentEvent(eventType, hs.getUserSession(token).getUser().getId().getId(), json);
+        ev.getUnsigned().addProperty("transaction_id", txnId);
         ISignedEvent fullEv = hs.getUserSession(token).getRoom(roomId).inject(ev);
 
         JsonObject response = new JsonObject();

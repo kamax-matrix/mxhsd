@@ -50,7 +50,7 @@ public class Room implements IRoom {
     private RoomState state;
     private Map<String, RoomState> prevStates; // FIXME caching
 
-    private BlockingQueue<ISignedEvent> extremeties = new LinkedBlockingQueue<>();
+    private BlockingQueue<ISignedEvent> extremities = new LinkedBlockingQueue<>();
 
     Room(HomeserverState globalState, String id) {
         this.globalState = globalState;
@@ -80,7 +80,7 @@ public class Room implements IRoom {
     @Override
     public synchronized ISignedEvent inject(NakedContentEvent evNaked) {
         List<ISignedEvent> parents = new ArrayList<>();
-        extremeties.drainTo(parents);
+        extremities.drainTo(parents);
         try {
             log.info("Room {}: Injecting new event of type {}", id, evNaked.getType());
             IEvent ev = globalState.getEvMgr().populate(evNaked, getId(), state, parents);
@@ -97,7 +97,7 @@ public class Room implements IRoom {
                 stateBuilder.withStreamIndex(entry.streamIndex());
 
                 // We update extremities info
-                extremeties.add(entry.get());
+                extremities.add(entry.get());
                 parents.clear();
 
                 ISignedEvent evSigned = entry.get();
@@ -115,13 +115,19 @@ public class Room implements IRoom {
                 return evSigned;
             }
         } finally {
-            extremeties.addAll(parents);
+            extremities.addAll(parents);
         }
     }
 
     @Override
-    public IRoomState getStateFor(String id) {
-        return prevStates.get(id); // FIXME this is dumb, we need a way to calculate the state for an arbitrary event
+    public synchronized IRoomState getStateFor(String id) {
+        // FIXME this is dumb, we need a way to calculate the state for an arbitrary event
+        RoomState state = prevStates.get(id);
+        if (state == null) {
+            throw new RuntimeException("No previous state for event " + id + " - how?!");
+        }
+
+        return state;
     }
 
 }
