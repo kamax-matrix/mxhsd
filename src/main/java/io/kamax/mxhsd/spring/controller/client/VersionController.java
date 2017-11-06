@@ -20,19 +20,24 @@
 
 package io.kamax.mxhsd.spring.controller.client;
 
+import io.kamax.mxhsd.spring.controller.JsonController;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @RestController
 @RequestMapping(path = ClientAPI.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class VersionController {
+public class VersionController extends JsonController {
 
     @RequestMapping(method = GET, path = "/versions")
-    public String getVersions() {
-        return "{\"versions\":[\"r0.2.0\", \"unstable\"]}";
+    public String getVersions(HttpServletRequest req) {
+        log(req);
+
+        return "{\"versions\":[\"r0.2.0\",\"unstable\"]}";
     }
 
 }

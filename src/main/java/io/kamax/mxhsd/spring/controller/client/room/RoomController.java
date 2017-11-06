@@ -59,6 +59,8 @@ public class RoomController extends JsonController {
 
     @RequestMapping(method = POST, path = "/createRoom")
     public String createRoom(HttpServletRequest req, @RequestParam("access_token") String token) {
+        log(req);
+
         JsonObject o = getJsonObject(req);
         RoomCreateOptions options = new RoomCreateOptions(); // FIXME handle all options correctly
 
@@ -78,6 +80,8 @@ public class RoomController extends JsonController {
 
     @RequestMapping(method = POST, path = "/rooms/{roomId}/invite")
     public String inviteToRoom(HttpServletRequest req, @PathVariable String roomId, @RequestParam("access_token") String token) {
+        log(req);
+
         JsonObject o = getJsonObject(req);
         String sender = hs.getUserSession(token).getUser().getId().getId();
         String target = GsonUtil.getString(o, "user_id");

@@ -40,6 +40,10 @@ public class JsonController {
 
     protected Gson gson = GsonUtil.build();
 
+    public void log(HttpServletRequest req) {
+        log.info("Request {} {}", req.getMethod(), req.getRequestURL());
+    }
+
     protected String getBody(HttpServletRequest req) {
         try {
             return IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8);
@@ -61,8 +65,10 @@ public class JsonController {
         return GsonUtil.parseObj(getJson(req));
     }
 
-    protected String toJson(JsonObject o) {
-        return gson.toJson(o);
+    protected String toJson(Object o) {
+        String json = gson.toJson(o);
+        log.debug("To json:\n{}", json);
+        return json;
     }
 
 }

@@ -26,6 +26,7 @@ import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.core.sync.SyncOptions;
 import io.kamax.mxhsd.spring.controller.ClientAPIr0;
+import io.kamax.mxhsd.spring.controller.JsonController;
 import io.kamax.mxhsd.spring.service.HomeserverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -39,7 +40,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @RestController
 @RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class SyncController {
+public class SyncController extends JsonController {
 
     private IHomeServer hs;
 
@@ -58,9 +59,11 @@ public class SyncController {
             @RequestParam(required = false) String since,
             @RequestParam(required = false) Long timeout
     ) {
+        log(req);
+
         SyncOptions options = new SyncOptions().setFilterId(filter).setSince(since).setTimeout(timeout);
         ISyncData data = hs.getUserSession(token).fetchData(options);
-        return gson.toJson(new SyncResponse(data));
+        return toJson(new SyncResponse(data));
     }
 
 }

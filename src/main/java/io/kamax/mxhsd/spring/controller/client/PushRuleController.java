@@ -25,20 +25,25 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.spring.controller.ClientAPIr0;
+import io.kamax.mxhsd.spring.controller.JsonController;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @RestController
 @RequestMapping(path = ClientAPIr0.Base + "/pushrules", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class PushRuleController {
+public class PushRuleController extends JsonController {
 
     private Gson gson = GsonUtil.build();
 
     @RequestMapping(method = GET, path = "/")
-    public String list() {
+    public String list(HttpServletRequest req) {
+        log(req);
+
         JsonObject global = new JsonObject();
         global.addProperty("rule_id", "1");
         global.add("default", new JsonArray());
@@ -47,7 +52,7 @@ public class PushRuleController {
         JsonObject reply = new JsonObject();
         reply.add("global", global);
 
-        return gson.toJson(reply);
+        return toJson(reply);
     }
 
 }

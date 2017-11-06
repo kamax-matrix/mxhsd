@@ -56,12 +56,16 @@ public class AuthenticationController extends JsonController {
     }
 
     @RequestMapping(method = GET, path = "/login")
-    public String getLogin() {
+    public String getLogin(HttpServletRequest req) {
+        log(req);
+
         return "{\"flows\":[{\"type\":\"m.login.password\"}]}";
     }
 
     @RequestMapping(method = POST, path = "/login")
     public String postLogin(HttpServletRequest req) throws IOException {
+        log(req);
+
         JsonObject obj = GsonUtil.parse(getJson(req)).getAsJsonObject();
         String username = GsonUtil.getOrThrow(obj, "user");
         char[] password = GsonUtil.getOrThrow(obj, "password").toCharArray();
@@ -73,16 +77,20 @@ public class AuthenticationController extends JsonController {
         reply.addProperty("home_server", hs.getDomain());
         reply.addProperty("device_id", session.getDevice().getId());
 
-        return gson.toJson(reply);
+        return toJson(reply);
     }
 
     @RequestMapping(method = POST, path = "/tokenrefresh")
-    public String tokenRefresh() {
+    public String tokenRefresh(HttpServletRequest req) {
+        log(req);
+
         throw new NotImplementedException("tokenrefresh");
     }
 
     @RequestMapping(method = POST, path = "/logout")
-    public String logout(@RequestParam("access_token") String accessToken) {
+    public String logout(HttpServletRequest req, @RequestParam("access_token") String accessToken) {
+        log(req);
+
         hs.getUserSession(accessToken).logout();
 
         return EmptyJsonResponse.stringify();

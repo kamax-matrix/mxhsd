@@ -56,6 +56,8 @@ public class RoomTypingController extends JsonController {
             @PathVariable String mxId,
             @RequestParam("access_token") String token
     ) {
+        log(req);
+
         return EmptyJsonResponse.stringify();
     }
 

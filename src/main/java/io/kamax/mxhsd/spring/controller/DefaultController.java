@@ -35,12 +35,14 @@ import java.util.Enumeration;
 
 @RestController
 @RequestMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class DefaultController {
+public class DefaultController extends JsonController {
 
     private Logger log = LoggerFactory.getLogger(DefaultController.class);
 
     @RequestMapping("/**")
     public String catchAll(HttpServletRequest req, HttpServletResponse res) {
+        log(req);
+
         StringBuffer postData = new StringBuffer();
         Enumeration<String> postParms = req.getParameterNames();
         while (postParms.hasMoreElements()) {

@@ -24,6 +24,7 @@ import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.spring.controller.ClientAPIr0;
 import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
+import io.kamax.mxhsd.spring.controller.JsonController;
 import io.kamax.mxhsd.spring.service.HomeserverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -33,7 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class PresenceController {
+public class PresenceController extends JsonController {
 
     private IHomeServer hs;
 
@@ -44,6 +45,8 @@ public class PresenceController {
 
     @RequestMapping(method = RequestMethod.PUT, path = "/presence/{userId:.+}/status")
     public String setPresence(HttpServletRequest req, @PathVariable String userId, @RequestParam("access_token") String token) {
+        log(req);
+
         hs.getUserSession(token).getForUser(new MatrixID(userId)).setPresence("");
 
         return EmptyJsonResponse.stringify();

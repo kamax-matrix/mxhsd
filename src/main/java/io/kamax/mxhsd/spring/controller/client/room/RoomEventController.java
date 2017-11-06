@@ -58,6 +58,8 @@ public class RoomEventController extends JsonController {
             @PathVariable String txnId, // FIXME use!
             @RequestParam("access_token") String token
     ) {
+        log(req);
+
         long before = System.currentTimeMillis();
         JsonObject json = getJsonObject(req);
         NakedContentEvent ev = new NakedContentEvent(eventType, hs.getUserSession(token).getUser().getId().getId(), json);

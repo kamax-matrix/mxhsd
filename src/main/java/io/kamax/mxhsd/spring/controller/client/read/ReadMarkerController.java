@@ -51,7 +51,9 @@ public class ReadMarkerController extends JsonController {
     public String setReadMarkerForRoom(
             HttpServletRequest req,
             @RequestParam("access_token") String token,
-            @PathVariable String roomId) {
+            @PathVariable String roomId
+    ) {
+        log(req);
         return EmptyJsonResponse.stringify();
     }
 

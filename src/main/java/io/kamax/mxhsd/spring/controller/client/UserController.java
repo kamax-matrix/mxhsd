@@ -54,6 +54,8 @@ public class UserController extends JsonController {
 
     @RequestMapping(method = POST, path = "/filter")
     public String createFilter(HttpServletRequest req, @PathVariable String userId, @RequestParam("access_token") String token) throws IOException {
+        log(req);
+
         String body = getBody(req);
         IUserFilter filter = hs.getUserSession(token).getForUser(new MatrixID(userId)).getUser().createFilter(body);
 
@@ -69,6 +71,8 @@ public class UserController extends JsonController {
             @PathVariable String userId,
             @PathVariable String filterId
     ) {
+        log(req);
+
         IUserFilter filter = hs.getUserSession(token).getForUser(new MatrixID(userId)).getUser()
                 .findFilter(filterId).orElseThrow(() -> new InvalidRequestException("M_UKNOWN", "Invalid filter ID"));
 
@@ -84,6 +88,8 @@ public class UserController extends JsonController {
             @PathVariable String userId,
             @PathVariable String type
     ) {
+        log(req);
+
         return EmptyJsonResponse.stringify();
     }
 
