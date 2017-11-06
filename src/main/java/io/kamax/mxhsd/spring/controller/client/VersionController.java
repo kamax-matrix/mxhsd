@@ -37,7 +37,7 @@ public class VersionController extends JsonController {
     public String getVersions(HttpServletRequest req) {
         log(req);
 
-        return "{\"versions\":[\"r0.2.0\",\"unstable\"]}";
+        return "{\"versions\":[\"r0.2.0\"]}";
     }
 
 }
