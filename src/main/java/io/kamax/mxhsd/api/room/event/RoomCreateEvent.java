@@ -21,10 +21,10 @@
 package io.kamax.mxhsd.api.room.event;
 
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
+import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
-public class RoomCreateEvent extends NakedRoomEvent {
+public class RoomCreateEvent extends NakedContentEvent {
 
     public class Content {
 
@@ -40,8 +40,12 @@ public class RoomCreateEvent extends NakedRoomEvent {
 
     }
 
-    public RoomCreateEvent(String creator, String roomId) {
-        super(RoomEventType.Creation.get(), creator, roomId);
+    public RoomCreateEvent(String creator) {
+        this(creator, creator);
+    }
+
+    public RoomCreateEvent(String sender, String creator) {
+        super(RoomEventType.Creation.get(), creator);
         content = GsonUtil.getObj(new Content(getSender()));
     }
 

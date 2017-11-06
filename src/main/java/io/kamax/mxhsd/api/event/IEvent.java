@@ -20,14 +20,23 @@
 
 package io.kamax.mxhsd.api.event;
 
+import java.time.Instant;
+import java.util.List;
+
 public interface IEvent extends INakedEvent {
 
     String getId();
 
+    Instant getTimestamp();
+
+    String getOrigin();
+
     String getRoomId();
+
+    List<String> getAuthorization();
 
     long getDepth();
 
-    String getBody();
+    List<String> getParents();
 
 }

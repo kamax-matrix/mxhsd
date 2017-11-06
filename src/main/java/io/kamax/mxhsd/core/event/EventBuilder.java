@@ -25,33 +25,32 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
-import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.IEventBuilder;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 public class EventBuilder implements IEventBuilder {
 
-    private String domain;
-
     private JsonObject base;
-    private Instant timestamp = Instant.now();
-    private String type;
-    private long depth = 0;
+    private String id;
+    private Instant timestamp;
+    private String origin;
+    private String roomId;
+    private long depth;
+    private Set<String> authorization = new HashSet<>();
     private Set<String> parents = new HashSet<>();
-    private JsonArray authEv = new JsonArray();
-    private JsonObject content = new JsonObject();
-    private JsonObject prevState = new JsonObject();
 
-    public EventBuilder(String domain, JsonObject base) {
-        this.domain = domain;
-        this.base = base;
-        EventKey.Type.findString(base).ifPresent(v -> type = v);
+    public EventBuilder(JsonObject base) {
+        this.base = GsonUtil.parseObj(GsonUtil.get().toJson(base));
+    }
+
+    @Override
+    public IEventBuilder setId(String id) {
+        this.id = id;
+        return this;
     }
 
     @Override
@@ -61,8 +60,20 @@ public class EventBuilder implements IEventBuilder {
     }
 
     @Override
-    public IEventBuilder setType(String type) {
-        this.type = type;
+    public IEventBuilder setOrigin(String origin) {
+        this.origin = origin;
+        return this;
+    }
+
+    @Override
+    public IEventBuilder setRoomId(String roomId) {
+        this.roomId = roomId;
+        return this;
+    }
+
+    @Override
+    public IEventBuilder addAuthorization(String evId) {
+        authorization.add(evId);
         return this;
     }
 
@@ -74,43 +85,32 @@ public class EventBuilder implements IEventBuilder {
     }
 
     @Override
-    public Collection<String> getParents() {
-        return new ArrayList<>(parents);
-    }
-
-    @Override
-    public JsonArray getAuthEvents() {
-        return authEv;
-    }
-
-    @Override
-    public JsonObject getContent() {
-        return content;
-    }
-
-    @Override
-    public JsonObject getPrevState() {
-        return prevState;
-    }
-
-    @Override
-    public JsonObject getJson() {
-        return base;
-    }
-
-    @Override
-    public IEvent build(String id) {
+    public Event get() {
+        JsonArray aEv = new JsonArray();
+        authorization.forEach(aEv::add);
         JsonArray pEv = new JsonArray();
         parents.forEach(pEv::add);
 
-        base.add(EventKey.AuthEvents.get(), getAuthEvents());
+        base.add(EventKey.AuthEvents.get(), aEv);
         base.addProperty(EventKey.Depth.get(), depth);
         base.addProperty(EventKey.Id.get(), id);
-        base.addProperty(EventKey.Origin.get(), domain);
+        base.addProperty(EventKey.Origin.get(), origin);
+        base.addProperty(EventKey.RoomId.get(), roomId);
         base.addProperty(EventKey.Timestamp.get(), timestamp.toEpochMilli());
-        base.add(EventKey.PreviousState.get(), getPrevState());
-        base.addProperty(EventKey.Type.get(), type);
-        return new Event(id, type, GsonUtil.getOrThrow(base, EventKey.Sender.get()), EventKey.RoomId.getString(base), depth, MatrixJson.encodeCanonical(base));
+        base.add(EventKey.PreviousEvents.get(), pEv);
+        ;
+
+        String json = MatrixJson.encodeCanonical(base);
+        return new Event(
+                id,
+                GsonUtil.getOrThrow(base, EventKey.Type.get()),
+                GsonUtil.getOrThrow(base, EventKey.Sender.get()),
+                GsonUtil.getOrThrow(base, EventKey.RoomId.get()),
+                depth,
+                new HashSet<>(parents),
+                new HashSet<>(authorization),
+                json
+        );
     }
 
 }

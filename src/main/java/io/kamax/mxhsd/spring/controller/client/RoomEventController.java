@@ -24,7 +24,7 @@ import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
+import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.spring.controller.ClientAPIr0;
 import io.kamax.mxhsd.spring.controller.JsonController;
 import io.kamax.mxhsd.spring.service.HomeserverService;
@@ -60,7 +60,7 @@ public class RoomEventController extends JsonController {
     ) {
         long before = System.currentTimeMillis();
         JsonObject json = getJsonObject(req);
-        NakedRoomEvent ev = new NakedRoomEvent(eventType, hs.getUserSession(token).getUser().getId().getId(), json);
+        NakedContentEvent ev = new NakedContentEvent(eventType, hs.getUserSession(token).getUser().getId().getId(), json);
         ISignedEvent fullEv = hs.getUserSession(token).getRoom(roomId).inject(ev);
 
         JsonObject response = new JsonObject();

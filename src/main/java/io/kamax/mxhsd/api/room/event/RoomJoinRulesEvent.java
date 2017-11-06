@@ -20,14 +20,14 @@
 
 package io.kamax.mxhsd.api.room.event;
 
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
+import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
-public class RoomJoinRulesEvent extends NakedRoomEvent {
+public class RoomJoinRulesEvent extends NakedContentEvent {
 
-    public RoomJoinRulesEvent(String sender, String roomId, String rule) {
-        super(RoomEventType.JoinRules.get(), sender, roomId);
-        content.addProperty("join_rule", rule);
+    public RoomJoinRulesEvent(String sender, String rule) {
+        super(RoomEventType.JoinRules.get(), sender);
+        content.addProperty("join_rule", rule); // FIXME use enum
     }
 
 }

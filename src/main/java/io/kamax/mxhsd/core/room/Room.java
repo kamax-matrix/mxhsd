@@ -24,7 +24,7 @@ import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
+import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomState;
@@ -32,6 +32,13 @@ import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Room implements IRoom {
 
@@ -41,11 +48,16 @@ public class Room implements IRoom {
 
     private String id;
     private RoomState state;
+    private Map<String, RoomState> prevStates; // FIXME caching
+
+    private BlockingQueue<ISignedEvent> extremeties = new LinkedBlockingQueue<>();
 
     Room(HomeserverState globalState, String id) {
         this.globalState = globalState;
         this.id = id;
+        this.prevStates = new ConcurrentHashMap<>();
         setCurrentState(new RoomState.Builder(globalState, id).build());
+
     }
 
     @Override
@@ -66,34 +78,50 @@ public class Room implements IRoom {
 
     // FIXME use RWLock
     @Override
-    public synchronized ISignedEvent inject(NakedRoomEvent evNaked) {
-        log.info("Room {}: Injecting new event of type {}", id, evNaked.getType());
-        IEvent ev = globalState.getEvMgr().populate(evNaked, state);
-        log.debug("Formalized event: {}", GsonUtil.getPrettyForLog(ev.getJson()));
-        RoomEventAuthorization val = state.isAuthorized(ev);
-        if (!val.isAuthorized()) {
-            log.debug("Room current state: {}", GsonUtil.getPrettyForLog(state));
-            log.error(val.getReason());
-            throw new ForbiddenException("Unauthorized event");
-        } else {
-            RoomState.Builder stateBuilder = new RoomState.Builder(globalState, id).from(val.getNewState());
-            log.info("Room {}: storing new event {}", id, ev.getId());
-            ISignedEventStreamEntry entry = globalState.getEvMgr().store(ev);
-            stateBuilder.withStreamIndex(entry.streamIndex());
-
-            ISignedEvent evSigned = entry.get();
-            log.info("Room {}: event {} stored at index {}", id, evSigned.getId(), entry.streamIndex());
-            if (RoomEventType.from(evSigned.getType()).isState()) {
-                log.info("Room {}: updating state", id);
+    public synchronized ISignedEvent inject(NakedContentEvent evNaked) {
+        List<ISignedEvent> parents = new ArrayList<>();
+        extremeties.drainTo(parents);
+        try {
+            log.info("Room {}: Injecting new event of type {}", id, evNaked.getType());
+            IEvent ev = globalState.getEvMgr().populate(evNaked, getId(), state, parents);
+            log.debug("Formalized event: {}", GsonUtil.getPrettyForLog(ev.getJson()));
+            RoomEventAuthorization val = state.isAuthorized(ev);
+            if (!val.isAuthorized()) {
                 log.debug("Room current state: {}", GsonUtil.getPrettyForLog(state));
-                stateBuilder.setExtremities(evSigned).build();
-                log.debug("Room new state: {}", GsonUtil.getPrettyForLog(state));
+                log.error(val.getReason());
+                throw new ForbiddenException("Unauthorized event");
+            } else {
+                RoomState.Builder stateBuilder = new RoomState.Builder(globalState, id).from(val.getNewState());
+                log.info("Room {}: storing new event {}", id, ev.getId());
+                ISignedEventStreamEntry entry = globalState.getEvMgr().store(ev);
+                stateBuilder.withStreamIndex(entry.streamIndex());
+
+                // We update extremities info
+                extremeties.add(entry.get());
+                parents.clear();
+
+                ISignedEvent evSigned = entry.get();
+                log.debug("Signed event: {}", GsonUtil.getPrettyForLog(evSigned.getJson()));
+                log.info("Room {}: event {} stored at index {}", id, evSigned.getId(), entry.streamIndex());
+
+                if (RoomEventType.from(evSigned.getType()).isState()) {
+                    log.debug("Room {} new state: {}", id, GsonUtil.getPrettyForLog(state));
+                }
+
+                RoomState newState = stateBuilder.build();
+                prevStates.put(evSigned.getId(), newState);
+                setCurrentState(newState);
+
+                return evSigned;
             }
-
-            setCurrentState(stateBuilder.build());
-
-            return evSigned;
+        } finally {
+            extremeties.addAll(parents);
         }
+    }
+
+    @Override
+    public IRoomState getStateFor(String id) {
+        return prevStates.get(id); // FIXME this is dumb, we need a way to calculate the state for an arbitrary event
     }
 
 }

@@ -24,27 +24,44 @@ import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.IEvent;
 
+import java.time.Instant;
+import java.util.*;
+
 public class Event implements IEvent {
 
     private String id;
     private String type;
+    private String roomId;
     private String sender;
     private long depth;
-    private String roomId;
+    private Set<String> parents = new HashSet<>();
+    private Set<String> authorization = new HashSet<>();
     private String json;
 
-    public Event(String id, String type, String sender, String roomId, long depth, String json) {
+    public Event(String id, String type, String sender, String roomId, long depth, Collection<String> parents, Collection<String> auth, String json) {
         this.id = id;
         this.type = type;
         this.sender = sender;
         this.roomId = roomId;
         this.depth = depth;
+        this.parents = new HashSet<>(parents);
+        this.authorization = new HashSet<>(auth);
         this.json = json;
     }
 
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public Instant getTimestamp() {
+        return null;
+    }
+
+    @Override
+    public String getOrigin() {
+        return null;
     }
 
     @Override
@@ -68,8 +85,13 @@ public class Event implements IEvent {
     }
 
     @Override
-    public String getBody() {
-        return json;
+    public List<String> getParents() {
+        return Collections.unmodifiableList(new ArrayList<>(parents));
+    }
+
+    @Override
+    public List<String> getAuthorization() {
+        return Collections.unmodifiableList(new ArrayList<>(authorization));
     }
 
     @Override

@@ -85,31 +85,31 @@ public class RoomManager implements IRoomManager {
         String creator = options.getCreator().getId();
         String id = getId();
         Room room = new Room(state, id);
-        room.inject(new RoomCreateEvent(creator, id));
-        room.inject(new RoomMembershipEvent(creator, id, RoomMembership.Join.get(), creator));
-        room.inject(new RoomPowerLevelEvent(creator, id, getPowerLevelEvent(options)));
+        room.inject(new RoomCreateEvent(creator));
+        room.inject(new RoomMembershipEvent(creator, RoomMembership.Join.get(), creator));
+        room.inject(new RoomPowerLevelEvent(creator, getPowerLevelEvent(options)));
 
         options.getPreset().ifPresent(p -> {
             log.info("Checking presets for room  {} creation", id);
 
             if (StringUtils.equals(p, "public_chat")) {
                 log.info("Applying preset {} for room {}", p, id);
-                room.inject(new RoomJoinRulesEvent(creator, id, "public"));
-                room.inject(new RoomHistoryVisibilityEvent(creator, id, "shared"));
+                room.inject(new RoomJoinRulesEvent(creator, "public"));
+                room.inject(new RoomHistoryVisibilityEvent(creator, "shared"));
             } else if (StringUtils.equals(p, "private_chat")) {
                 log.info("Applying preset {} for room {}", p, id);
-                room.inject(new RoomJoinRulesEvent(creator, id, "invite"));
-                room.inject(new RoomHistoryVisibilityEvent(creator, id, "shared"));
+                room.inject(new RoomJoinRulesEvent(creator, "invite"));
+                room.inject(new RoomHistoryVisibilityEvent(creator, "shared"));
             } else if (StringUtils.equals(p, "trusted_private_chat")) {
                 log.info("Applying preset {} for room {}", p, id);
-                room.inject(new RoomJoinRulesEvent(creator, id, "invite"));
-                room.inject(new RoomHistoryVisibilityEvent(creator, id, "shared"));
+                room.inject(new RoomJoinRulesEvent(creator, "invite"));
+                room.inject(new RoomHistoryVisibilityEvent(creator, "shared"));
 
                 RoomPowerLevels pls = room.getCurrentState().getEffectivePowerLevels();
                 long creatorPl = pls.getForUser(creator);
                 RoomPowerLevels.Builder plsBuilder = RoomPowerLevels.Builder.from(pls);
                 options.getInvitees().forEach(iId -> plsBuilder.addUser(iId.getId(), creatorPl));
-                room.inject(new RoomPowerLevelEvent(creator, id, plsBuilder.build()));
+                room.inject(new RoomPowerLevelEvent(creator, plsBuilder.build()));
             } else {
                 log.info("Ignoring unknown preset {} for room {}", p, id);
             }
@@ -122,7 +122,7 @@ public class RoomManager implements IRoomManager {
         // TODO handle topic
 
         options.getInvitees().forEach(mxId -> {
-            room.inject(new RoomMembershipEvent(creator, id, RoomMembership.Invite.get(), mxId.getId()));
+            room.inject(new RoomMembershipEvent(creator, RoomMembership.Invite.get(), mxId.getId()));
         });
 
         // TODO handle invite_3pid

@@ -24,18 +24,32 @@ import io.kamax.mxhsd.ABuilder;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class SyncData implements ISyncData {
 
     public static class Builder extends ABuilder<SyncData> {
 
+        private Map<String, SyncRoomData.Builder> invited = new HashMap<>();
+        private Map<String, SyncRoomData.Builder> joined = new HashMap<>();
+        private Map<String, SyncRoomData.Builder> left = new HashMap<>();
+
+        private SyncRoomData.Builder get(Map<String, SyncRoomData.Builder> map, String id) {
+            return map.computeIfAbsent(id, id1 -> new SyncRoomData.Builder().setRoomId(id1));
+        }
+
         @Override
         protected SyncData buildObj() {
             return new SyncData();
+        }
+
+        @Override
+        public SyncData get() {
+            invited.values().forEach(v -> obj.invited.add(v.get()));
+            joined.values().forEach(v -> obj.joined.add(v.get()));
+            left.values().forEach(v -> obj.left.add(v.get()));
+
+            return super.get();
         }
 
         public Builder setToken(String token) {
@@ -43,14 +57,46 @@ public class SyncData implements ISyncData {
             return this;
         }
 
-        public Builder setInvited(Collection<ISyncRoomData> invited) {
-            obj.invited = new ArrayList<>(invited);
+        public Builder setInvited(Collection<SyncRoomData.Builder> invited) {
+            invited.forEach(this::addInvited);
             return this;
         }
 
-        public Builder setJoined(Collection<ISyncRoomData> joined) {
-            obj.joined = new ArrayList<>(joined);
+        public Builder addInvited(SyncRoomData.Builder invited) {
+            this.invited.put(invited.getRoomId(), invited);
             return this;
+        }
+
+        public SyncRoomData.Builder getInvited(String id) {
+            return get(invited, id);
+        }
+
+        public Builder setJoined(Collection<SyncRoomData.Builder> joined) {
+            joined.forEach(this::addJoined);
+            return this;
+        }
+
+        public Builder addJoined(SyncRoomData.Builder joined) {
+            this.joined.put(joined.getRoomId(), joined);
+            return this;
+        }
+
+        public SyncRoomData.Builder getJoined(String id) {
+            return get(joined, id);
+        }
+
+        public Builder setLeft(Collection<SyncRoomData.Builder> left) {
+            left.forEach(this::addLeft);
+            return this;
+        }
+
+        public Builder addLeft(SyncRoomData.Builder left) {
+            this.left.put(left.getRoomId(), left);
+            return this;
+        }
+
+        public SyncRoomData.Builder getLeft(String id) {
+            return get(left, id);
         }
 
     }
@@ -60,8 +106,9 @@ public class SyncData implements ISyncData {
     }
 
     private String token;
-    private List<ISyncRoomData> invited = Collections.emptyList();
-    private List<ISyncRoomData> joined = Collections.emptyList();
+    private List<ISyncRoomData> invited = new ArrayList<>();
+    private List<ISyncRoomData> joined = new ArrayList<>();
+    private List<ISyncRoomData> left = new ArrayList<>();
 
     @Override
     public String getNextBatchToken() {
@@ -76,6 +123,11 @@ public class SyncData implements ISyncData {
     @Override
     public List<ISyncRoomData> getJoinedRooms() {
         return Collections.unmodifiableList(joined);
+    }
+
+    @Override
+    public List<ISyncRoomData> getLeftRooms() {
+        return Collections.unmodifiableList(left);
     }
 
 }

@@ -30,4 +30,6 @@ public interface ISyncData {
 
     List<ISyncRoomData> getJoinedRooms();
 
+    List<ISyncRoomData> getLeftRooms();
+
 }

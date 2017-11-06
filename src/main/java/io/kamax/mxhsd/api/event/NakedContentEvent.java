@@ -22,23 +22,17 @@ package io.kamax.mxhsd.api.event;
 
 import com.google.gson.JsonObject;
 
-public class NakedRoomEvent extends NakedEvent {
+public class NakedContentEvent extends NakedEvent {
 
-    private String roomId;
-    protected JsonObject content = new JsonObject();
+    protected JsonObject content;
 
-    protected NakedRoomEvent(String type, String sender, String roomId) {
-        super(type, sender);
-        this.roomId = roomId;
+    public NakedContentEvent(String type, String sender) {
+        this(type, sender, new JsonObject());
     }
 
-    public NakedRoomEvent(String type, String sender, JsonObject content) {
+    public NakedContentEvent(String type, String sender, JsonObject content) {
         super(type, sender);
         this.content = content;
-    }
-
-    public String getRoomId() {
-        return roomId;
     }
 
     public JsonObject getContent() {

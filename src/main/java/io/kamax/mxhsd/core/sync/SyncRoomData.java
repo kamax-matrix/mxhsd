@@ -38,6 +38,10 @@ public class SyncRoomData implements ISyncRoomData {
             return new SyncRoomData();
         }
 
+        public String getRoomId() {
+            return obj.roomId;
+        }
+
         public Builder setRoomId(String roomId) {
             obj.roomId = roomId;
             return this;
@@ -60,6 +64,11 @@ public class SyncRoomData implements ISyncRoomData {
 
         public Builder setTimeline(Collection<? extends IEvent> timeline) {
             obj.timeline = new ArrayList<>(timeline);
+            return this;
+        }
+
+        public Builder addTimeline(IEvent entry) {
+            obj.timeline.add(entry);
             return this;
         }
 

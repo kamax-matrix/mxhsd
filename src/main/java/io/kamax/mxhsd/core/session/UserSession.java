@@ -22,15 +22,19 @@ package io.kamax.mxhsd.core.session;
 
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
+import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.device.IDevice;
+import io.kamax.mxhsd.api.event.EventKey;
+import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.ISignedEventStream;
 import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomCreateOptions;
 import io.kamax.mxhsd.api.room.IRoomState;
+import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.session.IUserSession;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncOptions;
-import io.kamax.mxhsd.api.sync.ISyncRoomData;
 import io.kamax.mxhsd.api.user.IHomeserverUser;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
@@ -38,10 +42,13 @@ import io.kamax.mxhsd.core.sync.SyncData;
 import io.kamax.mxhsd.core.sync.SyncRoomData;
 import net.engio.mbassy.listener.Handler;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,11 +58,13 @@ public class UserSession implements IUserSession {
 
     private class State {
 
-        private Map<String, ISyncRoomData> invited = new ConcurrentHashMap<>();
-        private Map<String, ISyncRoomData> joined = new ConcurrentHashMap<>();
-        private Map<String, ISyncRoomData> left = new ConcurrentHashMap<>();
+        private Map<String, SyncRoomData.Builder> invited = new ConcurrentHashMap<>();
+        private Map<String, SyncRoomData.Builder> joined = new ConcurrentHashMap<>();
+        private Map<String, SyncRoomData.Builder> left = new ConcurrentHashMap<>();
 
     }
+
+    private final Logger log = LoggerFactory.getLogger(UserSession.class);
 
     private HomeserverState global;
     private IDevice device;
@@ -104,17 +113,16 @@ public class UserSession implements IUserSession {
         // FIXME do something
     }
 
-    private SyncRoomData buildInviteState(IRoom room, IRoomState state) {
+    private SyncRoomData.Builder buildInviteState(IRoom room, IRoomState state) {
         return SyncRoomData.build()
                 .setRoomId(room.getId())
                 .addState(state.getMemberships().stream() // we process every membership
                         .filter(e -> StringUtils.equals(user.getId().getId(), e.getStateKey())) // only our own join
                         .map(e -> global.getEvMgr().get(e.getEventId()).get())
-                        .collect(Collectors.toList()))
-                .get();
+                        .collect(Collectors.toList()));
     }
 
-    private SyncRoomData buildJoinState(IRoom room, IRoomState state) {
+    private SyncRoomData.Builder buildJoinState(IRoom room, IRoomState state) {
         return SyncRoomData.build()
 
                 // we set the room ID
@@ -144,9 +152,7 @@ public class UserSession implements IUserSession {
                                 // We get the actual event
                                 .map(ISignedEventStreamEntry::get)
                                 // we collect them back into a list
-                                .collect(Collectors.toList()))
-
-                .get(); // get final immutable object
+                                .collect(Collectors.toList()));
     }
 
     private ISyncData fetchInitial(ISyncOptions options) {
@@ -179,7 +185,62 @@ public class UserSession implements IUserSession {
         return syncData;
     }
 
-    private ISyncData fetchNext(ISyncOptions options, String since) {
+    private ISyncData fetchNext(ISyncOptions options, int fromIndex, int toIndex) {
+        SyncData.Builder syncData = SyncData.build().setToken(Integer.toString(toIndex));
+        String mxid = user.getId().getId();
+        int amount = toIndex - fromIndex;
+        log.info("User {}: Fetching events from {} to {} ({})", mxid, fromIndex, toIndex, amount);
+
+
+        ISignedEventStream stream = global.getEvMgr().getBackwardStreamFrom(toIndex);
+        List<ISignedEventStreamEntry> entries = stream.getNext(amount);
+
+        entries.stream()
+                .sorted(Comparator.comparing(ISignedEventStreamEntry::streamIndex)).forEach(streamEv -> {
+            ISignedEvent ev = streamEv.get();
+            log.info("Processing event {} in room {} at stream index {}", ev.getId(), ev.getRoomId(), streamEv.streamIndex());
+            RoomEventType evType = RoomEventType.from(ev.getType());
+            boolean isAboutUs = evType.isState() && StringUtils.equals(mxid, EventKey.StateKey.getString(ev.getJson()));
+            global.getRoomMgr().findRoom(ev.getRoomId()).ifPresent(r -> {
+                IRoomState state = r.getStateFor(ev.getId());
+                log.info("Processing state of room {}", ev.getRoomId());
+                state.getMembershipValue(mxid).ifPresent(membership -> {
+                    log.info("We are in the room");
+                    if (RoomMembership.Invite.is(membership)) {
+                        if (RoomEventType.Membership.equals(evType) && isAboutUs) {
+                            syncData.getInvited(r.getId()).addState(ev);
+                        } else {
+                            // not about us, we ignore
+                        }
+                    }
+
+                    if (RoomMembership.Leave.is(membership)) {
+                        if (RoomEventType.Membership.equals(evType) && isAboutUs) {
+                            syncData.getInvited(r.getId()).addState(ev);
+                        } else {
+                            // not about us, we ignore
+                        }
+                    }
+
+                    if (RoomMembership.Join.is(membership)) {
+                        SyncRoomData.Builder roomBuilder = syncData.getJoined(r.getId());
+                        if (evType.isState()) {
+                            roomBuilder.addState(ev);
+                        } else {
+                            roomBuilder.addTimeline(ev);
+                        }
+                    }
+                });
+            });
+        });
+
+        log.info("Done fetching");
+        SyncData d = syncData.get();
+        log.info("Sync data: \n{}", GsonUtil.getPrettyForLog(d));
+        return d;
+    }
+
+    private ISyncData fetchNextOrWait(ISyncOptions options, String since) {
         // FIXME catch exception and throw appropriate error in case of parse error
         // TODO SPEC - Possible errors
         int sinceIndex = Integer.parseInt(since);
@@ -195,7 +256,7 @@ public class UserSession implements IUserSession {
             }
 
             if (amount > 0) { // we got new data
-                return fetchInitial(options);
+                return fetchNext(options, sinceIndex, currentIndex);
             } else { // no new data, let's wait
                 synchronized (this) {
                     try {
@@ -210,13 +271,14 @@ public class UserSession implements IUserSession {
         return syncBuild.setToken(since).get(); // no new data, we just send the same token
     }
 
+    // FIXME refactor into some kind of per-user stream handler using the provided filter
     @Override
     public ISyncData fetchData(ISyncOptions options) {
         String since = options.getSince().orElse("");
         if (StringUtils.isBlank(since) || options.isFullState()) {
             return fetchInitial(options);
         } else {
-            return fetchNext(options, since);
+            return fetchNextOrWait(options, since);
         }
     }
 

@@ -24,7 +24,6 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventKey;
 import io.kamax.mxhsd.api.room.RoomEventType;
@@ -88,7 +87,6 @@ public class RoomState implements IRoomState {
         public Builder from(IRoomState state) {
             Builder b = withCreation(state.getCreation())
                     .setMembers(state.getMemberships())
-                    .setExtremities(state.getExtremities())
                     .withStreamIndex(state.getStreamIndex());
 
             if (state.hasPowerLevels()) {
@@ -124,15 +122,6 @@ public class RoomState implements IRoomState {
             return this;
         }
 
-        public Builder setExtremities(ISignedEvent... evs) {
-            return setExtremities(Arrays.asList(evs));
-        }
-
-        public Builder setExtremities(Collection<ISignedEvent> evs) {
-            r.extremities = new ArrayList<>(evs);
-            return this;
-        }
-
         public Builder withStreamIndex(int streamIndex) {
             r.streamIndex = streamIndex;
             return this;
@@ -147,7 +136,6 @@ public class RoomState implements IRoomState {
     private Map<String, MembershipContext> membership = new HashMap<>();
     private RoomPowerLevels powerLevels;
     private String pId;
-    private List<ISignedEvent> extremities = new ArrayList<>();
     private int streamIndex = 0;
 
     @Override
@@ -183,11 +171,6 @@ public class RoomState implements IRoomState {
     @Override
     public String getPowerLevelsEventId() {
         return pId;
-    }
-
-    @Override
-    public Set<ISignedEvent> getExtremities() {
-        return new HashSet<>(extremities);
     }
 
     @Override
@@ -229,7 +212,7 @@ public class RoomState implements IRoomState {
                 return auth.deny(ev, "depth is not 0 for room creation event");
             }
 
-            if (!extremities.isEmpty()) {
+            if (!ev.getParents().isEmpty()) {
                 return auth.deny(ev, "there is a previous event");
             }
 
@@ -248,8 +231,8 @@ public class RoomState implements IRoomState {
             String membership = content.get(RoomEventKey.Membership.get()).getAsString();
             stateBuilder.setMember(ev, target, membership);
             if (Join.is(membership)) {
-                IEvent firstParentEv = extremities.get(0);
-                if (RoomEventType.Creation.is(firstParentEv.getType()) && extremities.size() == 1) {
+                IEvent firstParentEv = globalState.getEvMgr().get(ev.getParents().get(0)).get();
+                if (RoomEventType.Creation.is(firstParentEv.getType()) && ev.getParents().size() == 1) {
                     if (depth != 1) {
                         return auth.deny(ev, "depth is not 1 for creator join");
                     }

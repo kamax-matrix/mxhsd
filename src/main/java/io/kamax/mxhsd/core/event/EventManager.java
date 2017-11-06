@@ -33,6 +33,7 @@ import io.kamax.mxhsd.core.HomeserverState;
 import net.engio.mbassy.bus.MBassador;
 import org.apache.commons.lang3.RandomStringUtils;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -98,8 +99,14 @@ public class EventManager implements IEventManager {
     }
 
     @Override
-    public IEvent populate(INakedEvent ev, IRoomState roomState) {
-        return new EventBuilder(hsState.getDomain(), ev.getJson()).addParents(roomState.getExtremities()).build(getNextId());
+    public IEvent populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents) {
+        return new EventBuilder(ev.getJson())
+                .setId(getNextId())
+                .setRoomId(roomId)
+                .setTimestamp(Instant.now())
+                .setOrigin(hsState.getDomain())
+                .addParents(parents)
+                .get();
     }
 
     private JsonObject hash(JsonObject base) {
@@ -137,12 +144,22 @@ public class EventManager implements IEventManager {
         JsonObject base = hash(ev.getJson());
         JsonObject signs = sign(base);
         base.add(EventKey.Signatures.get(), signs);
-        return new SignedEvent(ev.getId(), ev.getType(), ev.getSender(), ev.getRoomId(), ev.getDepth(), MatrixJson.encodeCanonical(base));
+
+        return new SignedEvent(
+                ev.getId(),
+                ev.getType(),
+                ev.getSender(),
+                ev.getRoomId(),
+                ev.getDepth(),
+                ev.getParents(),
+                ev.getAuthorization(),
+                MatrixJson.encodeCanonical(base)
+        );
     }
 
     @Override
     public synchronized ISignedEventStreamEntry store(ISignedEvent ev) { // FIXME use RWLock
-        ISignedEventStreamEntry entry = new SignedEventStreamEntry(eventsStream.size(), ev);
+        ISignedEventStreamEntry entry = new SignedEventStreamEntry(Math.max(0, eventsStream.size() - 1), ev);
         eventsStream.add(entry);
         events.put(ev.getId(), entry);
 
@@ -167,6 +184,10 @@ public class EventManager implements IEventManager {
             throw new IllegalArgumentException("stream index must be greater or equal to 0");
         }
 
+        if (id > eventsStream.size() - 1) {
+            throw new IllegalArgumentException("index cannot be greater than current index");
+        }
+
         return new ISignedEventStream() {
 
             private int index = id;
@@ -185,7 +206,7 @@ public class EventManager implements IEventManager {
                 // TODO Streams could help if we provide a supplier with the values we want?
                 List<ISignedEventStreamEntry> events = new ArrayList<>();
                 int destination = Math.max(0, index - amount);
-                for (int i = index; i >= destination && i >= 0; i--) {
+                for (int i = index; i > destination; i--) {
                     events.add(EventManager.this.eventsStream.get(i)); // FIXME might change under concurrent access
                 }
                 index = destination;
@@ -196,7 +217,7 @@ public class EventManager implements IEventManager {
 
     @Override
     public int getStreamIndex() {
-        return eventsStream.size();
+        return Math.max(eventsStream.size() - 1, 0);
     }
 
     @Override

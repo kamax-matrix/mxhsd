@@ -21,7 +21,7 @@
 package io.kamax.mxhsd.api.room;
 
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
+import io.kamax.mxhsd.api.event.NakedContentEvent;
 
 public interface IRoom {
 
@@ -29,6 +29,8 @@ public interface IRoom {
 
     IRoomState getCurrentState();
 
-    ISignedEvent inject(NakedRoomEvent ev);
+    ISignedEvent inject(NakedContentEvent ev);
+
+    IRoomState getStateFor(String id);
 
 }

@@ -22,9 +22,11 @@ package io.kamax.mxhsd.api.event;
 
 import io.kamax.mxhsd.api.room.IRoomState;
 
+import java.util.List;
+
 public interface IEventManager {
 
-    IEvent populate(INakedEvent ev, IRoomState parents);
+    IEvent populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents);
 
     ISignedEvent sign(IEvent ev);
 

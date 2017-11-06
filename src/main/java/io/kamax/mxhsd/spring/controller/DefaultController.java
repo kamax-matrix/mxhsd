@@ -55,14 +55,14 @@ public class DefaultController {
             }
         }
 
-        log.warn("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
+        log.debug("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
         if (postData.length() > 0) {
-            log.warn("POST data: {}", postData);
+            log.debug("POST data: {}", postData);
         }
         try {
-            log.warn("Body: {}", IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8));
+            log.debug("Body: {}", IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8));
         } catch (IOException e) {
-            log.warn("Body: Unable to read", e);
+            log.debug("Body: Unable to read", e);
         }
 
         res.setStatus(HttpServletResponse.SC_NOT_FOUND);

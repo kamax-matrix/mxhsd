@@ -20,14 +20,14 @@
 
 package io.kamax.mxhsd.api.room.event;
 
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
+import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
-public class RoomHistoryVisibilityEvent extends NakedRoomEvent {
+public class RoomHistoryVisibilityEvent extends NakedContentEvent {
 
-    public RoomHistoryVisibilityEvent(String sender, String roomId, String visibility) {
-        super(RoomEventType.HistoryVisibility.get(), sender, roomId);
-        content.addProperty("history_visibility", visibility);
+    public RoomHistoryVisibilityEvent(String sender, String visibility) {
+        super(RoomEventType.HistoryVisibility.get(), sender);
+        content.addProperty("history_visibility", visibility); // FIXME use enum
     }
 
 }

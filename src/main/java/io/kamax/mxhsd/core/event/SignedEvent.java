@@ -20,61 +20,14 @@
 
 package io.kamax.mxhsd.core.event;
 
-import com.google.gson.JsonObject;
-import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 
-public class SignedEvent implements ISignedEvent {
+import java.util.Collection;
 
-    private String id;
-    private String type;
-    private String sender;
-    private long depth;
-    private String roomId;
-    private String raw;
+public class SignedEvent extends Event implements ISignedEvent {
 
-    public SignedEvent(String id, String type, String sender, String roomId, long depth, String raw) {
-        this.id = id;
-        this.type = type;
-        this.sender = sender;
-        this.depth = depth;
-        this.roomId = roomId;
-        this.raw = raw;
-    }
-
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public String getRoomId() {
-        return roomId;
-    }
-
-    @Override
-    public String getType() {
-        return type;
-    }
-
-    @Override
-    public String getSender() {
-        return sender;
-    }
-
-    @Override
-    public long getDepth() {
-        return depth;
-    }
-
-    @Override
-    public String getBody() {
-        return raw;
-    }
-
-    @Override
-    public JsonObject getJson() {
-        return GsonUtil.parseObj(raw);
+    public SignedEvent(String id, String type, String sender, String roomId, long depth, Collection<String> parents, Collection<String> auth, String json) {
+        super(id, type, sender, roomId, depth, parents, auth, json);
     }
 
 }

@@ -20,17 +20,20 @@
 
 package io.kamax.mxhsd.api.event;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
 import java.time.Instant;
 import java.util.Collection;
 
 public interface IEventBuilder {
 
+    IEventBuilder setId(String id);
+
     IEventBuilder setTimestamp(Instant instant);
 
-    IEventBuilder setType(String type);
+    IEventBuilder setOrigin(String origin);
+
+    IEventBuilder setRoomId(String roomId);
+
+    IEventBuilder addAuthorization(String evId);
 
     IEventBuilder addParent(ISignedEvent parent);
 
@@ -39,16 +42,6 @@ public interface IEventBuilder {
         return this;
     }
 
-    Collection<String> getParents();
-
-    JsonArray getAuthEvents();
-
-    JsonObject getContent();
-
-    JsonObject getPrevState();
-
-    JsonObject getJson();
-
-    IEvent build(String id);
+    IEvent get();
 
 }

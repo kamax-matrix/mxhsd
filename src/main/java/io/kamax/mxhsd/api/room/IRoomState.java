@@ -21,7 +21,6 @@
 package io.kamax.mxhsd.api.room;
 
 import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
 import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
@@ -47,8 +46,6 @@ public interface IRoomState {
     RoomPowerLevels getEffectivePowerLevels();
 
     String getPowerLevelsEventId();
-
-    Set<ISignedEvent> getExtremities();
 
     int getStreamIndex();
 

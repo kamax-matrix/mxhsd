@@ -21,15 +21,14 @@
 package io.kamax.mxhsd.api.room.event;
 
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.event.NakedRoomEvent;
+import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
-public class RoomPowerLevelEvent extends NakedRoomEvent {
+public class RoomPowerLevelEvent extends NakedContentEvent {
 
-    public RoomPowerLevelEvent(String sender, String roomId, RoomPowerLevels pls) {
-        super(RoomEventType.PowerLevels.get(), sender, roomId);
-        this.content = GsonUtil.getObj(pls);
+    public RoomPowerLevelEvent(String sender, RoomPowerLevels pls) {
+        super(RoomEventType.PowerLevels.get(), sender, GsonUtil.getObj(pls));
     }
 
 }

@@ -45,9 +45,9 @@ public class UserSyncTest extends GenericHomeserverTest {
         opts.setCreator(session.getUser().getId());
         opts.setPreset("private_chat");
         IRoom room = session.createRoom(opts);
-
+        int index = room.getCurrentState().getStreamIndex();
         // We should have at least two events in the stream (creation, join)
-        assertTrue(room.getCurrentState().getStreamIndex() > 0);
+        assertTrue(index > 0);
 
         ISyncData syncData = session.fetchData(new SyncOptions());
 
