@@ -26,6 +26,7 @@ import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEventBuilder;
+import io.kamax.mxhsd.api.event.INakedEvent;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 
 import java.time.Instant;
@@ -39,11 +40,11 @@ public class EventBuilder implements IEventBuilder {
     private Instant timestamp;
     private String origin;
     private String roomId;
-    private long depth;
+    private long depth = 1;
     private Set<String> authorization = new HashSet<>();
     private Set<String> parents = new HashSet<>();
 
-    public EventBuilder(JsonObject base) {
+    public EventBuilder(INakedEvent base) {
         this.base = GsonUtil.parseObj(GsonUtil.get().toJson(base));
     }
 

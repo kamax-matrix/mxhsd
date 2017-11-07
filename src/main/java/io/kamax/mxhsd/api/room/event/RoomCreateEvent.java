@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.api.room.event;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
@@ -40,13 +41,23 @@ public class RoomCreateEvent extends NakedContentEvent {
 
     }
 
+    private String stateKey = "";
+
+    public RoomCreateEvent(JsonObject o) {
+        super(o);
+    }
+
     public RoomCreateEvent(String creator) {
         this(creator, creator);
     }
 
     public RoomCreateEvent(String sender, String creator) {
-        super(RoomEventType.Creation.get(), creator);
-        content = GsonUtil.getObj(new Content(getSender()));
+        super(RoomEventType.Creation.get(), sender);
+        content = GsonUtil.getObj(new Content(creator));
+    }
+
+    public String getCreator() {
+        return GsonUtil.getString(getContent(), "creator"); // FIXME enum
     }
 
 }

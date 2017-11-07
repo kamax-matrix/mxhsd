@@ -20,7 +20,9 @@
 
 package io.kamax.mxhsd.api.room.event;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
@@ -39,16 +41,28 @@ public class RoomMembershipEvent extends NakedContentEvent {
         }
     }
 
+    private String membership;
     private String stateKey;
+
+    public RoomMembershipEvent(JsonObject o) {
+        super(o);
+        this.stateKey = EventKey.StateKey.getString(o);
+        this.membership = EventKey.Membership.getString(o);
+    }
 
     public RoomMembershipEvent(String sender, String membership, String target) {
         super(RoomEventType.Membership.get(), sender);
         this.stateKey = target;
+        this.membership = membership;
         content = GsonUtil.get().toJsonTree(new Content(membership)).getAsJsonObject();
     }
 
     public String getStateKey() {
         return stateKey;
+    }
+
+    public String getMembership() {
+        return GsonUtil.getString(getContent(), "membership");
     }
 
 }

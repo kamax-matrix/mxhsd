@@ -24,8 +24,11 @@ import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.room.event.IRoomReference;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ISyncRoomData extends IRoomReference {
+
+    Optional<String> getMembership();
 
     List<IEvent> getState();
 

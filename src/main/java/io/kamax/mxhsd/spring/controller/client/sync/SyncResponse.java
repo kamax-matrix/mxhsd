@@ -90,10 +90,24 @@ public class SyncResponse {
 
     }
 
+    private class LeftRoom {
+        private RoomState state = new RoomState();
+        private RoomTimeline timeline = new RoomTimeline();
+
+        public RoomState getState() {
+            return state;
+        }
+
+        public RoomTimeline getTimeline() {
+            return timeline;
+        }
+    }
+
     private class Rooms {
 
         private Map<String, InviteRoom> invite = new HashMap<>();
         private Map<String, JoinRoom> join = new HashMap<>();
+        private Map<String, LeftRoom> left = new HashMap<>();
 
         public Map<String, InviteRoom> getInvite() {
             return invite;

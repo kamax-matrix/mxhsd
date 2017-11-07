@@ -42,6 +42,8 @@ public enum EventKey {
     Signatures("signatures"),
     StateKey("state_key"),
     Type("type"),
+    // FIXME not documented at top level (only content), not consistent with other state ev - clarify why?
+    Membership("membership"),
     Unsigned("unsigned");
 
     private String key;

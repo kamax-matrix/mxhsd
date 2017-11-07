@@ -65,6 +65,11 @@ public class Room implements IRoom {
         return id;
     }
 
+    @Override
+    public IEvent getCreation() {
+        return state.getCreation();
+    }
+
     // FIXME use RWLock
     private synchronized void setCurrentState(RoomState state) {
         this.state = state;

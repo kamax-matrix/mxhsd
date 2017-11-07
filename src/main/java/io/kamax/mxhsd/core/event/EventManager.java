@@ -33,12 +33,16 @@ import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.HomeserverState;
 import net.engio.mbassy.bus.MBassador;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EventManager implements IEventManager {
+
+    private transient final Logger log = LoggerFactory.getLogger(EventManager.class);
 
     private final List<String> essentialTopKeys;
     private final Map<String, List<String>> essentialContentKeys = new HashMap<>();
@@ -62,7 +66,7 @@ public class EventManager implements IEventManager {
                 EventKey.Depth.get(),
                 EventKey.Id.get(),
                 EventKey.Hashes.get(),
-                "membership", // FIXME check this is actually required to hash/sign? and where is this ever set? spec is outdated?
+                EventKey.Membership.get(),
                 EventKey.Origin.get(),
                 EventKey.Timestamp.get(),
                 EventKey.PreviousEvents.get(),
@@ -101,7 +105,7 @@ public class EventManager implements IEventManager {
 
     @Override
     public IEvent populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents) {
-        return new EventBuilder(ev.getJson())
+        return new EventBuilder(ev)
                 .setId(getNextId())
                 .setRoomId(roomId)
                 .setTimestamp(Instant.now())
@@ -186,13 +190,13 @@ public class EventManager implements IEventManager {
             throw new IllegalArgumentException("stream index must be greater or equal to 0");
         }
 
-        if (id > eventsStream.size() - 1) {
+        if (id > eventsStream.size()) {
             throw new IllegalArgumentException("index cannot be greater than current index");
         }
 
         return new ISignedEventStream() {
 
-            private int index = id;
+            private int index = id - 1;
 
             @Override
             public int getIndex() {
@@ -207,7 +211,8 @@ public class EventManager implements IEventManager {
 
                 // TODO Streams could help if we provide a supplier with the values we want?
                 List<ISignedEventStreamEntry> events = new ArrayList<>();
-                int destination = Math.max(0, index - amount);
+                int destination = Math.max(-1, index - amount);
+                log.info("Seek - Index: {} | Amount: {} | Destination: {}", index, amount, destination);
                 for (int i = index; i > destination; i--) {
                     events.add(EventManager.this.eventsStream.get(i)); // FIXME might change under concurrent access
                 }
@@ -219,7 +224,7 @@ public class EventManager implements IEventManager {
 
     @Override
     public int getStreamIndex() {
-        return Math.max(eventsStream.size() - 1, 0);
+        return Math.max(eventsStream.size(), 0);
     }
 
     @Override

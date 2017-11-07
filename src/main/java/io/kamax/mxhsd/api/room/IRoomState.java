@@ -49,4 +49,6 @@ public interface IRoomState {
 
     int getStreamIndex();
 
+    boolean isAccessibleAs(String user);
+
 }

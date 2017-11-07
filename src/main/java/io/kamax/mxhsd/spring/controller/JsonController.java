@@ -29,16 +29,18 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+@CrossOrigin
 public class JsonController {
 
     private final Logger log = LoggerFactory.getLogger(JsonController.class);
 
-    protected Gson gson = GsonUtil.build();
+    protected Gson gson = GsonUtil.buildPretty();
 
     public void log(HttpServletRequest req) {
         log.info("Request {} {}", req.getMethod(), req.getRequestURL());

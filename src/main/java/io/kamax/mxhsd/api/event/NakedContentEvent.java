@@ -26,6 +26,11 @@ public class NakedContentEvent extends NakedEvent {
 
     protected JsonObject content;
 
+    public NakedContentEvent(JsonObject o) {
+        super(o);
+        this.content = EventKey.Content.getObj(o);
+    }
+
     public NakedContentEvent(String type, String sender) {
         this(type, sender, new JsonObject());
     }

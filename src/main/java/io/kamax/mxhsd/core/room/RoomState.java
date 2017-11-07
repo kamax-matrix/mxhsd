@@ -178,6 +178,11 @@ public class RoomState implements IRoomState {
         return streamIndex;
     }
 
+    @Override
+    public boolean isAccessibleAs(String user) {
+        return true;
+    }
+
     private String getMembershipOrDefault(String member) {
         return getMembership(member).map(IMembershipContext::getMembership).orElseGet(RoomMembership.Leave::get);
     }
@@ -208,8 +213,8 @@ public class RoomState implements IRoomState {
         RoomEventAuthorization.Builder auth = new RoomEventAuthorization.Builder(roomId, ev);
         Builder stateBuilder = new Builder(globalState, roomId).from(this); // we'll only make an update to our current state
         if (RoomEventType.Creation.is(type)) {
-            if (depth != 0) {
-                return auth.deny(ev, "depth is not 0 for room creation event");
+            if (depth != 1) {
+                return auth.deny(ev, "depth is not 1 for room creation event");
             }
 
             if (!ev.getParents().isEmpty()) {
@@ -233,8 +238,8 @@ public class RoomState implements IRoomState {
             if (Join.is(membership)) {
                 IEvent firstParentEv = globalState.getEvMgr().get(ev.getParents().get(0)).get();
                 if (RoomEventType.Creation.is(firstParentEv.getType()) && ev.getParents().size() == 1) {
-                    if (depth != 1) {
-                        return auth.deny(ev, "depth is not 1 for creator join");
+                    if (depth != 2) {
+                        return auth.deny(ev, "depth is not 2 for creator join");
                     }
 
                     String creator = EventKey.Content.getObj(firstParentEv.getJson()).get("creator").getAsString();

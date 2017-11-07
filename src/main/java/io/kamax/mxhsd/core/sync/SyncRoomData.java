@@ -24,14 +24,13 @@ import io.kamax.mxhsd.ABuilder;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class SyncRoomData implements ISyncRoomData {
 
     public static class Builder extends ABuilder<SyncRoomData> {
+
+        private List<String> timelineIds = new ArrayList<>();
 
         @Override
         protected SyncRoomData buildObj() {
@@ -48,27 +47,34 @@ public class SyncRoomData implements ISyncRoomData {
         }
 
         public Builder setState(Collection<IEvent> state) {
-            obj.state = new ArrayList<>(state);
-            return this;
+            obj.state = new ArrayList<>();
+            return addState(state);
         }
 
         public Builder addState(Collection<IEvent> state) {
-            obj.state.addAll(state);
+            state.forEach(this::addState);
             return this;
         }
 
         public Builder addState(IEvent state) {
-            obj.state.add(state);
+            if (!timelineIds.contains(state.getId())) obj.state.add(state);
             return this;
         }
 
         public Builder setTimeline(Collection<? extends IEvent> timeline) {
-            obj.timeline = new ArrayList<>(timeline);
+            obj.timeline = new ArrayList<>();
+            timeline.forEach(this::addTimeline);
             return this;
         }
 
         public Builder addTimeline(IEvent entry) {
             obj.timeline.add(entry);
+            timelineIds.add(entry.getId());
+            return this;
+        }
+
+        public Builder setMembership(String membership) {
+            obj.membership = membership;
             return this;
         }
 
@@ -79,12 +85,18 @@ public class SyncRoomData implements ISyncRoomData {
     }
 
     private String roomId;
+    private String membership;
     private List<IEvent> state = new ArrayList<>();
     private List<IEvent> timeline = new ArrayList<>();
 
     @Override
     public String getRoomId() {
         return roomId;
+    }
+
+    @Override
+    public Optional<String> getMembership() {
+        return Optional.ofNullable(membership);
     }
 
     @Override

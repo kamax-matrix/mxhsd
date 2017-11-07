@@ -29,6 +29,12 @@ public class NakedEvent implements INakedEvent {
     private String sender;
     private JsonObject unsigned;
 
+    public NakedEvent(JsonObject o) {
+        this.type = EventKey.Type.getString(o);
+        this.sender = EventKey.Sender.getString(o);
+        this.unsigned = EventKey.Unsigned.getObj(o);
+    }
+
     public NakedEvent(String type, String sender) {
         this.type = type;
         this.sender = sender;

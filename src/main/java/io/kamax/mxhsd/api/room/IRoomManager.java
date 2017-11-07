@@ -27,6 +27,10 @@ public interface IRoomManager {
 
     IRoom createRoom(IRoomCreateOptions options);
 
+    default IRoom getRoom(String id) {
+        return findRoom(id).orElseThrow(IllegalArgumentException::new);
+    }
+
     Optional<IRoom> findRoom(String id);
 
     List<IRoom> listRooms();

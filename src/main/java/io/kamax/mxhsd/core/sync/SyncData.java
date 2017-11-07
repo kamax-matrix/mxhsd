@@ -24,32 +24,18 @@ import io.kamax.mxhsd.ABuilder;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class SyncData implements ISyncData {
 
     public static class Builder extends ABuilder<SyncData> {
 
-        private Map<String, SyncRoomData.Builder> invited = new HashMap<>();
-        private Map<String, SyncRoomData.Builder> joined = new HashMap<>();
-        private Map<String, SyncRoomData.Builder> left = new HashMap<>();
-
-        private SyncRoomData.Builder get(Map<String, SyncRoomData.Builder> map, String id) {
-            return map.computeIfAbsent(id, id1 -> new SyncRoomData.Builder().setRoomId(id1));
-        }
-
         @Override
         protected SyncData buildObj() {
             return new SyncData();
-        }
-
-        @Override
-        public SyncData get() {
-            invited.values().forEach(v -> obj.invited.add(v.get()));
-            joined.values().forEach(v -> obj.joined.add(v.get()));
-            left.values().forEach(v -> obj.left.add(v.get()));
-
-            return super.get();
         }
 
         public Builder setToken(String token) {
@@ -57,46 +43,31 @@ public class SyncData implements ISyncData {
             return this;
         }
 
-        public Builder setInvited(Collection<SyncRoomData.Builder> invited) {
+        public Builder setInvited(Collection<SyncRoomData> invited) {
+            obj.invited.clear();
             invited.forEach(this::addInvited);
             return this;
         }
 
-        public Builder addInvited(SyncRoomData.Builder invited) {
-            this.invited.put(invited.getRoomId(), invited);
+        public Builder addInvited(SyncRoomData invited) {
+            obj.invited.add(invited);
             return this;
         }
 
-        public SyncRoomData.Builder getInvited(String id) {
-            return get(invited, id);
-        }
-
-        public Builder setJoined(Collection<SyncRoomData.Builder> joined) {
+        public Builder setJoined(Collection<SyncRoomData> joined) {
+            obj.joined.clear();
             joined.forEach(this::addJoined);
             return this;
         }
 
-        public Builder addJoined(SyncRoomData.Builder joined) {
-            this.joined.put(joined.getRoomId(), joined);
+        public Builder addJoined(SyncRoomData joined) {
+            obj.joined.add(joined);
             return this;
         }
 
-        public SyncRoomData.Builder getJoined(String id) {
-            return get(joined, id);
-        }
-
-        public Builder setLeft(Collection<SyncRoomData.Builder> left) {
-            left.forEach(this::addLeft);
+        public Builder addLeft(SyncRoomData left) {
+            obj.left.add(left);
             return this;
-        }
-
-        public Builder addLeft(SyncRoomData.Builder left) {
-            this.left.put(left.getRoomId(), left);
-            return this;
-        }
-
-        public SyncRoomData.Builder getLeft(String id) {
-            return get(left, id);
         }
 
     }
