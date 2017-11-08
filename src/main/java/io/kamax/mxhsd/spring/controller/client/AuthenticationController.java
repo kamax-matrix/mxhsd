@@ -91,7 +91,7 @@ public class AuthenticationController extends JsonController {
     public String logout(HttpServletRequest req, @RequestParam("access_token") String accessToken) {
         log(req);
 
-        hs.getUserSession(accessToken).logout();
+        hs.findUserSession(accessToken).ifPresent(IUserSession::logout);
 
         return EmptyJsonResponse.stringify();
     }
