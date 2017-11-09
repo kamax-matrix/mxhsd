@@ -20,7 +20,10 @@
 
 package io.kamax.mxhsd.core.sync;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.ABuilder;
+import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
 
@@ -31,6 +34,28 @@ public class SyncRoomData implements ISyncRoomData {
     public static class Builder extends ABuilder<SyncRoomData> {
 
         private List<String> timelineIds = new ArrayList<>();
+
+        private void copyKey(EventKey key, JsonObject origin, JsonObject destination) {
+            GsonUtil.findElement(origin, key.get()).ifPresent(el -> destination.add(key.get(), el));
+        }
+
+        private JsonObject getFormatedEvent(IEvent ev) {
+            JsonObject origin = ev.getJson();
+            JsonObject formated = new JsonObject();
+
+            copyKey(EventKey.Id, origin, formated);
+            copyKey(EventKey.Content, origin, formated);
+            copyKey(EventKey.Timestamp, origin, formated);
+            copyKey(EventKey.Sender, origin, formated);
+            copyKey(EventKey.StateKey, origin, formated);
+            copyKey(EventKey.Type, origin, formated);
+
+            JsonObject unsigned = new JsonObject();
+            unsigned.addProperty("age", 0);
+            formated.add(EventKey.Unsigned.get(), unsigned);
+
+            return formated;
+        }
 
         @Override
         protected SyncRoomData buildObj() {
@@ -57,7 +82,7 @@ public class SyncRoomData implements ISyncRoomData {
         }
 
         public Builder addState(IEvent state) {
-            if (!timelineIds.contains(state.getId())) obj.state.add(state);
+            if (!timelineIds.contains(state.getId())) obj.state.add(getFormatedEvent(state));
             return this;
         }
 
@@ -68,7 +93,7 @@ public class SyncRoomData implements ISyncRoomData {
         }
 
         public Builder addTimeline(IEvent entry) {
-            obj.timeline.add(entry);
+            obj.timeline.add(getFormatedEvent(entry));
             timelineIds.add(entry.getId());
             return this;
         }
@@ -86,8 +111,8 @@ public class SyncRoomData implements ISyncRoomData {
 
     private String roomId;
     private String membership;
-    private List<IEvent> state = new ArrayList<>();
-    private List<IEvent> timeline = new ArrayList<>();
+    private List<JsonObject> state = new ArrayList<>();
+    private List<JsonObject> timeline = new ArrayList<>();
 
     @Override
     public String getRoomId() {
@@ -100,12 +125,12 @@ public class SyncRoomData implements ISyncRoomData {
     }
 
     @Override
-    public List<IEvent> getState() {
+    public List<JsonObject> getState() {
         return Collections.unmodifiableList(state);
     }
 
     @Override
-    public List<IEvent> getTimeline() {
+    public List<JsonObject> getTimeline() {
         return Collections.unmodifiableList(timeline);
     }
 

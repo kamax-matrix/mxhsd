@@ -23,7 +23,6 @@ package io.kamax.mxhsd.core.session;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.ABuilder;
-import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.device.IDevice;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.event.ISignedEventStream;
@@ -180,7 +179,6 @@ public class UserSession implements IUserSession {
                             ISignedEventStreamEntry rCreate = global.getEvMgr().get(roomState.getCreation().getId());
                             if (evFull.getParents().contains(rCreate.get().getId())) {
                                 builder.addTimeline(rCreate.get());
-                                builder.addTimeline(rCreate.get());
                             } else {
                                 if (rCreate.streamIndex() < timelineIndex) {
                                     builder.addState(rCreate.get());
@@ -262,10 +260,7 @@ public class UserSession implements IUserSession {
         List<ISignedEventStreamEntry> entries = stream.getNext(amount);
         buildTimelines(syncData, fromIndex, entries);
 
-        log.info("Done fetching");
-        SyncData d = syncData.get();
-        log.info("Sync data: \n{}", GsonUtil.getPrettyForLog(d));
-        return d;
+        return syncData.get();
     }
 
     private ISyncData fetchNextOrWait(ISyncOptions options, String since) {
@@ -289,6 +284,7 @@ public class UserSession implements IUserSession {
                 synchronized (this) {
                     try {
                         // we wait at least 1ms and at most 500ms
+                        // FIXME this should not be here. Use async request handling in Spring instead (or similar)
                         wait(Math.max(Math.min(endTs.toEpochMilli() - Instant.now().toEpochMilli(), 500), 1));
                     } catch (InterruptedException e) {
                         // we got interrupted, let's try to fetch again

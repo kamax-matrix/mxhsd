@@ -41,10 +41,24 @@ public class SyncResponse {
 
     }
 
+    private class UnreadNotifications {
+
+        private long highlight_count = 0L;
+        private long notification_count = 0L;
+
+    }
+
+    private class Ephemeral {
+
+        private List<Object> events = new ArrayList<>();
+
+    }
+
     private class RoomTimeline {
 
-        private boolean limited = false;
         private List<JsonObject> events = new ArrayList<>();
+        private boolean limited = false;
+        private String prevBatch = "no_previous_token"; // FIXME give something!
 
         public List<JsonObject> getEvents() {
             return events;
@@ -54,6 +68,10 @@ public class SyncResponse {
             return limited;
         }
 
+        public String getPrevBatch() {
+            return prevBatch;
+        }
+
     }
 
     private class InviteRoom {
@@ -61,7 +79,7 @@ public class SyncResponse {
         private RoomState inviteState = new RoomState();
 
         public InviteRoom(ISyncRoomData r) {
-            r.getState().forEach(ev -> inviteState.events.add(ev.getJson()));
+            inviteState.events.addAll(r.getState());
         }
 
         public RoomState getInviteState() {
@@ -72,12 +90,15 @@ public class SyncResponse {
 
     private class JoinRoom {
 
+        private AccountData accountData = new AccountData();
+        private Ephemeral ephemeral = new Ephemeral();
         private RoomState state = new RoomState();
         private RoomTimeline timeline = new RoomTimeline();
+        private UnreadNotifications unreadNotifications = new UnreadNotifications();
 
         public JoinRoom(ISyncRoomData r) {
-            r.getState().forEach(ev -> state.events.add(ev.getJson()));
-            r.getTimeline().forEach(ev -> timeline.events.add(ev.getJson()));
+            state.events.addAll(r.getState());
+            timeline.events.addAll(r.getTimeline());
         }
 
         public RoomState getState() {
@@ -119,8 +140,37 @@ public class SyncResponse {
 
     }
 
+    private class AccountData {
+
+        private List<Object> events = new ArrayList<>();
+
+    }
+
+    private class DeviceLists {
+
+        private List<Object> changed = new ArrayList<>();
+        private List<Object> left = new ArrayList<>();
+
+    }
+
+    private class Presence {
+
+        private List<Object> events = new ArrayList<>();
+
+    }
+
+    private class ToDevice {
+
+        private List<Object> events = new ArrayList<>();
+
+    }
+
+    private AccountData accountData = new AccountData();
+    private DeviceLists deviceLists = new DeviceLists();
     private String nextBatch;
+    private Presence presence = new Presence();
     private Rooms rooms = new Rooms();
+    private ToDevice toDevice = new ToDevice();
 
     public SyncResponse(ISyncData data) {
         nextBatch = data.getNextBatchToken();

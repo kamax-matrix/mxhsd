@@ -20,7 +20,7 @@
 
 package io.kamax.mxhsd.api.sync;
 
-import io.kamax.mxhsd.api.event.IEvent;
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.room.event.IRoomReference;
 
 import java.util.List;
@@ -30,8 +30,8 @@ public interface ISyncRoomData extends IRoomReference {
 
     Optional<String> getMembership();
 
-    List<IEvent> getState();
+    List<JsonObject> getState();
 
-    List<IEvent> getTimeline();
+    List<JsonObject> getTimeline();
 
 }

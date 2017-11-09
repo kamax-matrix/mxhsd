@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.api.event;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.exception.MalformedEventException;
@@ -58,6 +59,14 @@ public enum EventKey {
 
     public JsonObject getObj(JsonObject o) {
         return findObj(o).orElseThrow(() -> new MalformedEventException(key));
+    }
+
+    public Optional<JsonElement> findElement(JsonObject o) {
+        return GsonUtil.findElement(o, key);
+    }
+
+    public JsonElement getElement(JsonObject o) {
+        return GsonUtil.findElement(o, key).orElseThrow(() -> new MalformedEventException(key));
     }
 
     public Optional<JsonObject> findObj(JsonObject o) {

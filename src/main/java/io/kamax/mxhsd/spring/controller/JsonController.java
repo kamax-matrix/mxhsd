@@ -69,7 +69,7 @@ public class JsonController {
 
     protected String toJson(Object o) {
         String json = gson.toJson(o);
-        log.debug("To json:\n{}", json);
+        log.info("To json:\n{}", json);
         return json;
     }
 
