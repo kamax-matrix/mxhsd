@@ -20,7 +20,6 @@
 
 package io.kamax.mxhsd.spring.controller.client.r0;
 
-import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.controller.JsonController;
@@ -43,10 +42,14 @@ public class PresenceController extends JsonController {
     }
 
     @RequestMapping(method = RequestMethod.PUT, path = "/presence/{userId:.+}/status")
-    public String setPresence(HttpServletRequest req, @PathVariable String userId, @RequestParam("access_token") String token) {
+    public String setPresence(
+            HttpServletRequest req,
+            @PathVariable String userId,
+            @RequestParam("access_token") String token
+    ) {
         log(req);
 
-        hs.getUserSession(token).getForUser(new MatrixID(userId)).setPresence("");
+        hs.getUserSession(token).setPresence("");
 
         return EmptyJsonResponse.stringify();
     }
