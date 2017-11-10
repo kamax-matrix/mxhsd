@@ -44,7 +44,11 @@ public interface IUserSession {
 
     IRoom getRoom(String id);
 
-    void setReadMarker(String roomId, String type, String eventId);
+    IRoom joinRoom(String id); // TODO move into obj representing the user view of a room
+
+    void leaveRoom(String id); // TODO move into obj representing the user view of a room
+
+    void setReadMarker(String roomId, String type, String eventId); // TODO move into obj representing the user view of a room
 
     void logout();
 

@@ -31,6 +31,7 @@ import io.kamax.mxhsd.spring.controller.client.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.service.HomeserverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,5 +71,22 @@ public class RoomController extends JsonController {
         reply.addProperty("room_id", room.getId());
         return toJson(reply);
     }
+
+    @RequestMapping(method = POST, path = "/join/{roomIdOrAlias:.+}")
+    public String joinByRoomIdOrAlias(
+            HttpServletRequest req,
+            @PathVariable String roomIdOrAlias,
+            @RequestParam("access_token") String token
+    ) {
+        log(req);
+
+        IRoom r = hs.getUserSession(token).joinRoom(roomIdOrAlias);
+
+        JsonObject json = new JsonObject();
+        json.addProperty("room_id", r.getId());
+
+        return toJson(json);
+    }
+
 
 }

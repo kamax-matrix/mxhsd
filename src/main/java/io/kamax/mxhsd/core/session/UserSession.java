@@ -192,6 +192,9 @@ public class UserSession implements IUserSession {
                                     builder.addState(rCreate.get());
                                 }
                             }
+
+                            roomState.getMemberships().stream().map(ref -> global.getEvMgr().get(ref.getEventId()).get())
+                                    .forEach(builder::addState);
                         }
 
                         // TODO if invite, we should include data about membership of the sender
@@ -332,6 +335,19 @@ public class UserSession implements IUserSession {
     @Override
     public IRoom getRoom(String id) {
         return global.getRoomMgr().findRoom(id).orElseThrow(() -> new IllegalArgumentException("Unknown room " + id));
+    }
+
+    @Override
+    public IRoom joinRoom(String id) {
+        IRoom room = global.getRoomMgr().getRoom(id);
+        room.inject(new RoomMembershipEvent(user.getId().getId(), RoomMembership.Join.get(), user.getId().getId()));
+        return room;
+    }
+
+    @Override
+    public void leaveRoom(String id) {
+        IRoom room = global.getRoomMgr().getRoom(id);
+        room.inject(new RoomMembershipEvent(user.getId().getId(), RoomMembership.Leave.get(), user.getId().getId()));
     }
 
     @Override
