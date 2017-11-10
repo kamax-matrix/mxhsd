@@ -44,6 +44,8 @@ public interface IUserSession {
 
     IRoom getRoom(String id);
 
+    void setReadMarker(String roomId, String type, String eventId);
+
     void logout();
 
 }

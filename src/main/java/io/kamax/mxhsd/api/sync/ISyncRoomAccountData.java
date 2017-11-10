@@ -21,19 +21,11 @@
 package io.kamax.mxhsd.api.sync;
 
 import com.google.gson.JsonObject;
-import io.kamax.mxhsd.api.room.event.IRoomReference;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface ISyncRoomData extends IRoomReference {
+public interface ISyncRoomAccountData {
 
-    Optional<String> getMembership();
-
-    List<JsonObject> getState();
-
-    ISyncRoomTimeline getTimeline();
-
-    ISyncRoomAccountData getAccountData();
+    List<JsonObject> getEvents();
 
 }

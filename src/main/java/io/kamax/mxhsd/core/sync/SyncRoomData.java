@@ -25,12 +25,24 @@ import io.kamax.mxhsd.ABuilder;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.sync.ISyncRoomAccountData;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
 import io.kamax.mxhsd.api.sync.ISyncRoomTimeline;
 
 import java.util.*;
 
 public class SyncRoomData implements ISyncRoomData {
+
+    public static class AccountData implements ISyncRoomAccountData {
+
+        private List<JsonObject> events = new ArrayList<>();
+
+        @Override
+        public List<JsonObject> getEvents() {
+            return events;
+        }
+
+    }
 
     public static class Timeline implements ISyncRoomTimeline {
 
@@ -137,6 +149,11 @@ public class SyncRoomData implements ISyncRoomData {
             return this;
         }
 
+        public Builder addAccountData(JsonObject event) {
+            obj.accountData.events.add(event);
+            return this;
+        }
+
     }
 
     public static Builder build() {
@@ -147,6 +164,7 @@ public class SyncRoomData implements ISyncRoomData {
     private String membership;
     private List<JsonObject> state = new ArrayList<>();
     private Timeline timeline = new Timeline();
+    private AccountData accountData = new AccountData();
 
     @Override
     public String getRoomId() {
@@ -166,6 +184,11 @@ public class SyncRoomData implements ISyncRoomData {
     @Override
     public Timeline getTimeline() {
         return timeline;
+    }
+
+    @Override
+    public ISyncRoomAccountData getAccountData() {
+        return accountData;
     }
 
 }

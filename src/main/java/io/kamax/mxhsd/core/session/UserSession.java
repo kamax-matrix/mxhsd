@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.core.session;
 
+import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.ABuilder;
@@ -69,6 +70,8 @@ public class UserSession implements IUserSession {
 
     // FIXME This is such a big hack! but it's ok until we implement cache management
     private Map<String, State> statesCache = new WeakHashMap<>();
+
+    private Map<String, JsonObject> readMarkers = new HashMap<>();
 
     public UserSession(HomeserverState global, IHomeserverUser user, IDevice dev) {
         this.global = global;
@@ -203,6 +206,7 @@ public class UserSession implements IUserSession {
 
         builder.setLimited(false);
         builder.setPreviousBatchToken(Integer.toString(timelineIndex)); // TODO have a separate generator?
+        Optional.ofNullable(readMarkers.get(room.getId())).ifPresent(builder::addAccountData); // ugly, but effective
 
         return builder.get();
     }
@@ -328,6 +332,16 @@ public class UserSession implements IUserSession {
     @Override
     public IRoom getRoom(String id) {
         return global.getRoomMgr().findRoom(id).orElseThrow(() -> new IllegalArgumentException("Unknown room " + id));
+    }
+
+    @Override
+    public void setReadMarker(String roomId, String type, String eventId) {
+        JsonObject content = new JsonObject();
+        content.addProperty("event_id", eventId);
+        JsonObject obj = new JsonObject();
+        obj.addProperty("type", type);
+        obj.add("content", content);
+        readMarkers.put(roomId, obj);
     }
 
     @Override

@@ -43,8 +43,8 @@ public class SyncResponse {
 
     private class UnreadNotifications {
 
-        private long highlight_count = 0L;
-        private long notification_count = 0L;
+        //private long highlight_count = 0L;
+        //private long notification_count = 0L;
 
     }
 
@@ -101,6 +101,7 @@ public class SyncResponse {
             timeline.events.addAll(r.getTimeline().getEvents());
             timeline.limited = r.getTimeline().isFiltered();
             timeline.prevBatch = r.getTimeline().getPreviousBatchToken();
+            accountData.events.addAll(r.getAccountData().getEvents());
         }
 
         public RoomState getState() {
@@ -109,6 +110,10 @@ public class SyncResponse {
 
         public RoomTimeline getTimeline() {
             return timeline;
+        }
+
+        public AccountData getAccountData() {
+            return accountData;
         }
 
     }
@@ -144,7 +149,7 @@ public class SyncResponse {
 
     private class AccountData {
 
-        private List<Object> events = new ArrayList<>();
+        private List<JsonObject> events = new ArrayList<>();
 
     }
 
