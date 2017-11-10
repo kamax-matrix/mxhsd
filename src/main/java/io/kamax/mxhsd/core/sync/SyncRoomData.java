@@ -26,10 +26,34 @@ import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
+import io.kamax.mxhsd.api.sync.ISyncRoomTimeline;
 
 import java.util.*;
 
 public class SyncRoomData implements ISyncRoomData {
+
+    public static class Timeline implements ISyncRoomTimeline {
+
+        private boolean limited;
+        private List<JsonObject> events = new ArrayList<>();
+        private String prevBatchToken;
+
+        @Override
+        public List<JsonObject> getEvents() {
+            return Collections.unmodifiableList(events);
+        }
+
+        @Override
+        public boolean isFiltered() {
+            return limited;
+        }
+
+        @Override
+        public String getPreviousBatchToken() {
+            return prevBatchToken;
+        }
+
+    }
 
     public static class Builder extends ABuilder<SyncRoomData> {
 
@@ -87,19 +111,29 @@ public class SyncRoomData implements ISyncRoomData {
         }
 
         public Builder setTimeline(Collection<? extends IEvent> timeline) {
-            obj.timeline = new ArrayList<>();
+            obj.timeline.events = new ArrayList<>();
             timeline.forEach(this::addTimeline);
             return this;
         }
 
         public Builder addTimeline(IEvent entry) {
-            obj.timeline.add(getFormatedEvent(entry));
+            obj.timeline.events.add(getFormatedEvent(entry));
             timelineIds.add(entry.getId());
             return this;
         }
 
         public Builder setMembership(String membership) {
             obj.membership = membership;
+            return this;
+        }
+
+        public Builder setLimited(boolean isLimited) {
+            obj.timeline.limited = isLimited;
+            return this;
+        }
+
+        public Builder setPreviousBatchToken(String token) {
+            obj.timeline.prevBatchToken = token;
             return this;
         }
 
@@ -112,7 +146,7 @@ public class SyncRoomData implements ISyncRoomData {
     private String roomId;
     private String membership;
     private List<JsonObject> state = new ArrayList<>();
-    private List<JsonObject> timeline = new ArrayList<>();
+    private Timeline timeline = new Timeline();
 
     @Override
     public String getRoomId() {
@@ -130,8 +164,8 @@ public class SyncRoomData implements ISyncRoomData {
     }
 
     @Override
-    public List<JsonObject> getTimeline() {
-        return Collections.unmodifiableList(timeline);
+    public Timeline getTimeline() {
+        return timeline;
     }
 
 }

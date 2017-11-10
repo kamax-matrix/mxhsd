@@ -18,24 +18,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd.api.exception;
 
-import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.NakedContentEvent;
+public class InvalidRequestException extends MatrixException {
 
-public interface IRoom {
+    public InvalidRequestException(String message) {
+        this("M_INVALID_INPUT", message);
+    }
 
-    String getId();
-
-    IEvent getCreation();
-
-    IRoomState getCurrentState();
-
-    ISignedEvent inject(NakedContentEvent ev);
-
-    IRoomState getStateFor(String id);
-
-    IRoomEventChunk getEventsChunk(String from, int amount);
+    public InvalidRequestException(String code, String message) {
+        super(code, message);
+    }
 
 }

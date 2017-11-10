@@ -32,6 +32,6 @@ public interface ISyncRoomData extends IRoomReference {
 
     List<JsonObject> getState();
 
-    List<JsonObject> getTimeline();
+    ISyncRoomTimeline getTimeline();
 
 }

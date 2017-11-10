@@ -58,7 +58,7 @@ public class SyncResponse {
 
         private List<JsonObject> events = new ArrayList<>();
         private boolean limited = false;
-        private String prevBatch = "no_previous_token"; // FIXME give something!
+        private String prevBatch;
 
         public List<JsonObject> getEvents() {
             return events;
@@ -98,7 +98,9 @@ public class SyncResponse {
 
         public JoinRoom(ISyncRoomData r) {
             state.events.addAll(r.getState());
-            timeline.events.addAll(r.getTimeline());
+            timeline.events.addAll(r.getTimeline().getEvents());
+            timeline.limited = r.getTimeline().isFiltered();
+            timeline.prevBatch = r.getTimeline().getPreviousBatchToken();
         }
 
         public RoomState getState() {

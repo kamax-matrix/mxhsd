@@ -20,11 +20,12 @@
 
 package io.kamax.mxhsd.spring.controller.client.room;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.event.NakedContentEvent;
+import io.kamax.mxhsd.api.room.IRoomEventChunk;
 import io.kamax.mxhsd.spring.controller.ClientAPIr0;
 import io.kamax.mxhsd.spring.controller.JsonController;
 import io.kamax.mxhsd.spring.service.HomeserverService;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
 @RestController
@@ -69,8 +71,33 @@ public class RoomEventController extends JsonController {
         JsonObject response = new JsonObject();
         response.addProperty("event_id", fullEv.getId()); // FIXME no hardcoding, use enum
         long after = System.currentTimeMillis();
-        System.out.println("Injecting client message took " + (after - before) + "ms");
-        return GsonUtil.get().toJson(response);
+
+        return toJson(response);
+    }
+
+    @RequestMapping(method = GET, path = "/messages")
+    public String paginateRoomEvents(
+            HttpServletRequest req,
+            @PathVariable String roomId,
+            @RequestParam("access_token") String token,
+            @RequestParam("dir") String direction,
+            @RequestParam String from,
+            @RequestParam(value = "to", required = false) String to,
+            @RequestParam(value = "limit", required = false) int limit,
+            @RequestParam(value = "filter", required = false) String filter
+    ) {
+        log(req);
+
+        IRoomEventChunk page = hs.getUserSession(token).getRoom(roomId).getEventsChunk(from, limit);
+
+        JsonArray evs = new JsonArray();
+        page.getEvents().forEach(evs::add);
+        JsonObject json = new JsonObject();
+        json.addProperty("start", page.getStartToken());
+        json.addProperty("end", page.getEndToken());
+        json.add("chunk", evs);
+
+        return toJson(json);
     }
 
 }

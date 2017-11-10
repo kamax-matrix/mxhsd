@@ -21,6 +21,7 @@
 package io.kamax.mxhsd_test.core;
 
 import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.room.IRoomEventChunk;
 import io.kamax.mxhsd.api.session.IUserSession;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
@@ -37,17 +38,24 @@ import static junit.framework.TestCase.assertTrue;
 
 public class UserSyncTest extends GenericHomeserverTest {
 
-    @Test
-    public void syncAfterRoomCreate() {
-        IUserSession session = hs.login("john", "john".toCharArray());
+    private IUserSession login() {
+        return hs.login("john", "john".toCharArray());
+    }
 
+    private IRoom createRoom(IUserSession session) {
         RoomCreateOptions opts = new RoomCreateOptions();
         opts.setCreator(session.getUser().getId());
         opts.setPreset("private_chat");
-        IRoom room = session.createRoom(opts);
-        int index = room.getCurrentState().getStreamIndex();
+        return session.createRoom(opts);
+    }
+
+    @Test
+    public void syncAfterRoomCreate() {
+        IUserSession session = login();
+        IRoom room = createRoom(session);
+
         // We should have at least two events in the stream (creation, join)
-        assertTrue(index > 0);
+        assertTrue(room.getCurrentState().getStreamIndex() > 0);
 
         ISyncData syncData = session.fetchData(new SyncOptions());
 
@@ -73,11 +81,35 @@ public class UserSyncTest extends GenericHomeserverTest {
 
         ISyncRoomData roomData = roomDataList.get(0);
 
-        // We got at least one state event
-        assertTrue(!roomData.getState().isEmpty());
-
         // We got at least one timeline event
-        assertTrue(!roomData.getTimeline().isEmpty());
+        assertTrue(!roomData.getTimeline().getEvents().isEmpty());
+
+        // We have a previous batch token
+        assertTrue(StringUtils.isNotBlank(roomData.getTimeline().getPreviousBatchToken()));
+    }
+
+    @Test
+    public void getMessagesAfterRoomCreate() {
+        IUserSession session = login();
+        IRoom room = createRoom(session);
+        ISyncData syncData = session.fetchData(new SyncOptions());
+
+        ISyncRoomData roomData = syncData.getJoinedRooms().stream()
+                .filter(d -> StringUtils.equals(room.getId(), d.getRoomId()))
+                .collect(Collectors.toList()).get(0);
+
+        String prevToken = roomData.getTimeline().getPreviousBatchToken();
+
+        IRoomEventChunk chunk = session.getRoom(room.getId()).getEventsChunk(prevToken, 10);
+        assertNotNull(chunk);
+
+        assertTrue(StringUtils.equals(prevToken, chunk.getStartToken()));
+
+        if (chunk.getEvents().isEmpty()) {
+            assertTrue(StringUtils.equals(chunk.getStartToken(), chunk.getEndToken()));
+        } else {
+            assertTrue(!StringUtils.equals(chunk.getStartToken(), chunk.getEndToken()));
+        }
     }
 
 }

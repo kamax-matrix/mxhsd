@@ -21,15 +21,15 @@
 package io.kamax.mxhsd.core.room;
 
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
-import io.kamax.mxhsd.api.event.NakedContentEvent;
+import io.kamax.mxhsd.api.event.*;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
+import io.kamax.mxhsd.api.exception.InvalidRequestException;
 import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.room.IRoomEventChunk;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.HomeserverState;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +39,13 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 public class Room implements IRoom {
 
     private Logger log = LoggerFactory.getLogger(Room.class);
 
-    private HomeserverState globalState;
+    private HomeserverState global;
 
     private String id;
     private RoomState state;
@@ -52,11 +53,11 @@ public class Room implements IRoom {
 
     private BlockingQueue<ISignedEvent> extremities = new LinkedBlockingQueue<>();
 
-    Room(HomeserverState globalState, String id) {
-        this.globalState = globalState;
+    Room(HomeserverState global, String id) {
+        this.global = global;
         this.id = id;
         this.prevStates = new ConcurrentHashMap<>();
-        setCurrentState(new RoomState.Builder(globalState, id).build());
+        setCurrentState(new RoomState.Builder(global, id).build());
 
     }
 
@@ -88,7 +89,7 @@ public class Room implements IRoom {
         extremities.drainTo(parents);
         try {
             log.info("Room {}: Injecting new event of type {}", id, evNaked.getType());
-            IEvent ev = globalState.getEvMgr().populate(evNaked, getId(), state, parents);
+            IEvent ev = global.getEvMgr().populate(evNaked, getId(), state, parents);
             log.debug("Formalized event: {}", GsonUtil.getPrettyForLog(ev.getJson()));
             RoomEventAuthorization val = state.isAuthorized(ev);
             if (!val.isAuthorized()) {
@@ -96,9 +97,9 @@ public class Room implements IRoom {
                 log.error(val.getReason());
                 throw new ForbiddenException("Unauthorized event");
             } else {
-                RoomState.Builder stateBuilder = new RoomState.Builder(globalState, id).from(val.getNewState());
+                RoomState.Builder stateBuilder = new RoomState.Builder(global, id).from(val.getNewState());
                 log.info("Room {}: storing new event {}", id, ev.getId());
-                ISignedEventStreamEntry entry = globalState.getEvMgr().store(ev);
+                ISignedEventStreamEntry entry = global.getEvMgr().store(ev);
                 stateBuilder.withStreamIndex(entry.streamIndex());
 
                 // We update extremities info
@@ -133,6 +134,47 @@ public class Room implements IRoom {
         }
 
         return state;
+    }
+
+    @Override
+    public IRoomEventChunk getEventsChunk(String from, int amount) {
+        int index;
+        try {
+            index = Integer.parseInt(from);
+        } catch (NumberFormatException e) {
+            throw new InvalidRequestException("From token is not in a valid format");
+        }
+
+        ISignedEventStream stream = global.getEvMgr().getBackwardStreamFrom(index);
+        List<ISignedEventStreamEntry> list = new ArrayList<>();
+        int toFetch = amount;
+
+        while (list.size() < amount) {
+            List<ISignedEventStreamEntry> rawList = stream.getNext(toFetch).stream()
+                    .filter(ev -> StringUtils.equals(id, ev.get().getRoomId())) // only events about this room.
+                    .collect(Collectors.toList());
+
+            if (rawList.isEmpty()) {
+                // No more events at all, we stop
+                break;
+            }
+
+            list.addAll(rawList);
+
+            if (RoomEventType.Creation.is(rawList.get(rawList.size() - 1).get().getType())) {
+                // This is the first event of the room, no need to go further
+                break;
+            }
+
+            toFetch = amount - list.size();
+        }
+
+        RoomEventChunk.Builder builder = new RoomEventChunk.Builder();
+        builder.setStartToken(from);
+        builder.setEndToken(Integer.toString(list.stream().mapToInt(ISignedEventStreamEntry::streamIndex).min().orElse(index)));
+        list.forEach(ev -> builder.addEvent(ev.get().getJson()));
+
+        return builder.get();
     }
 
 }

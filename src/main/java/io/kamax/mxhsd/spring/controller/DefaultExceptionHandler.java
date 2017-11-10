@@ -54,6 +54,12 @@ public class DefaultExceptionHandler {
         return handleException(e);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InvalidRequestException.class)
+    public String handle(InvalidRequestException e) {
+        return handleException(e);
+    }
+
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(ForbiddenException.class)
     public String handle(ForbiddenException e) {

@@ -120,11 +120,29 @@ public class UserSession implements IUserSession {
                         .collect(Collectors.toList()));
     }
 
+    // FIXME this doesn't filter on what the user can see. Need to do better
     private SyncRoomData.Builder buildJoinState(IRoom room, IRoomState state) {
+        List<ISignedEventStreamEntry> entries = global.getEvMgr()
+                // latest 10 events - FIXME make it configurable / use client filters
+                .getBackwardStreamFrom(state.getStreamIndex()).getNext(10).stream()
+                // We sort by oldest to newest
+                .sorted(Comparator.comparing(ISignedEventStreamEntry::streamIndex))
+                // we collect them back into a list
+                .collect(Collectors.toList());
+
+        int timelineStart = entries.stream().mapToInt(ISignedEventStreamEntry::streamIndex).min().orElse(state.getStreamIndex());
+
         return SyncRoomData.build()
 
                 // we set the room ID
                 .setRoomId(room.getId())
+
+                // we create the timeline for the most recent events
+                // we do this first so state events can be excluded
+                .setTimeline(entries.stream().map(ISignedEventStreamEntry::get).collect(Collectors.toList()))
+
+                // we set the previous token
+                .setPreviousBatchToken(Integer.toString(timelineStart))
 
                 // we process the room creation
                 .addState(state.getCreation())
@@ -137,20 +155,7 @@ public class UserSession implements IUserSession {
                         .collect(Collectors.toList()))
 
                 // we process power levels
-                .addState(global.getEvMgr().get(state.getPowerLevelsEventId()).get())
-
-
-                // we create the timeline for the most recent events - FIXME missing previous events token
-                .setTimeline(
-                        global.getEvMgr()
-                                // latest 10 events - FIXME make it configurable / use client filters
-                                .getBackwardStreamFrom(state.getStreamIndex()).getNext(10).stream()
-                                // We sort by oldest to newest
-                                .sorted(Comparator.comparing(ISignedEventStreamEntry::streamIndex))
-                                // We get the actual event
-                                .map(ISignedEventStreamEntry::get)
-                                // we collect them back into a list
-                                .collect(Collectors.toList()));
+                .addState(global.getEvMgr().get(state.getPowerLevelsEventId()).get());
     }
 
     private SyncRoomData buildSingleTimeline(IRoom room, int timelineIndex, List<ISignedEventStreamEntry> entries) {
@@ -195,6 +200,9 @@ public class UserSession implements IUserSession {
                 builder.addTimeline(evFull);
             }
         });
+
+        builder.setLimited(false);
+        builder.setPreviousBatchToken(Integer.toString(timelineIndex)); // TODO have a separate generator?
 
         return builder.get();
     }

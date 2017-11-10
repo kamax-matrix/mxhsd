@@ -18,24 +18,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd.api.sync;
 
-import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.NakedContentEvent;
+import com.google.gson.JsonObject;
 
-public interface IRoom {
+import java.util.List;
 
-    String getId();
+public interface ISyncRoomTimeline {
 
-    IEvent getCreation();
+    List<JsonObject> getEvents();
 
-    IRoomState getCurrentState();
+    boolean isFiltered();
 
-    ISignedEvent inject(NakedContentEvent ev);
-
-    IRoomState getStateFor(String id);
-
-    IRoomEventChunk getEventsChunk(String from, int amount);
+    String getPreviousBatchToken();
 
 }

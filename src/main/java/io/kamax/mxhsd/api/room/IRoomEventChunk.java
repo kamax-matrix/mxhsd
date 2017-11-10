@@ -20,22 +20,16 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.NakedContentEvent;
+import com.google.gson.JsonObject;
 
-public interface IRoom {
+import java.util.List;
 
-    String getId();
+public interface IRoomEventChunk {
 
-    IEvent getCreation();
+    String getStartToken();
 
-    IRoomState getCurrentState();
+    String getEndToken();
 
-    ISignedEvent inject(NakedContentEvent ev);
-
-    IRoomState getStateFor(String id);
-
-    IRoomEventChunk getEventsChunk(String from, int amount);
+    List<JsonObject> getEvents();
 
 }
