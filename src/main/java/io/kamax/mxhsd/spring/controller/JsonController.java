@@ -40,7 +40,7 @@ public class JsonController {
 
     private final Logger log = LoggerFactory.getLogger(JsonController.class);
 
-    protected Gson gson = GsonUtil.buildPretty();
+    private Gson gson = GsonUtil.buildPretty();
 
     public void log(HttpServletRequest req) {
         log.info("Request {} {}", req.getMethod(), req.getRequestURL());

@@ -18,36 +18,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client;
+package io.kamax.mxhsd.spring.controller.client.r0.room;
 
-import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.spring.controller.ClientAPIr0;
 import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.controller.JsonController;
+import io.kamax.mxhsd.spring.controller.client.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.service.HomeserverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
+
 @RestController
-@RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class PresenceController extends JsonController {
+@RequestMapping(path = ClientAPIr0.Room, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+public class ReadMarkerController extends JsonController {
 
     private IHomeServer hs;
 
     @Autowired
-    public PresenceController(HomeserverService svc) {
+    public ReadMarkerController(HomeserverService svc) {
         this.hs = svc.get();
     }
 
-    @RequestMapping(method = RequestMethod.PUT, path = "/presence/{userId:.+}/status")
-    public String setPresence(HttpServletRequest req, @PathVariable String userId, @RequestParam("access_token") String token) {
+    @RequestMapping(method = POST, path = "/read_markers")
+    public String setReadMarkerForRoom(
+            HttpServletRequest req,
+            @RequestParam("access_token") String token,
+            @PathVariable String roomId
+    ) {
         log(req);
-
-        hs.getUserSession(token).getForUser(new MatrixID(userId)).setPresence("");
 
         return EmptyJsonResponse.stringify();
     }

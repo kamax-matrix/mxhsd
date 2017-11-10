@@ -18,13 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client;
+package io.kamax.mxhsd.spring.controller.client.r0;
 
 import com.google.gson.JsonObject;
 import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.user.IUserFilter;
-import io.kamax.mxhsd.spring.controller.ClientAPIr0;
 import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.controller.InvalidRequestException;
 import io.kamax.mxhsd.spring.controller.JsonController;

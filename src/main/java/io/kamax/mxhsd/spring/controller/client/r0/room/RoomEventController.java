@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client.room;
+package io.kamax.mxhsd.spring.controller.client.r0.room;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -26,8 +26,8 @@ import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.IRoomEventChunk;
-import io.kamax.mxhsd.spring.controller.ClientAPIr0;
 import io.kamax.mxhsd.spring.controller.JsonController;
+import io.kamax.mxhsd.spring.controller.client.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.service.HomeserverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -42,7 +42,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
 @RestController
-@RequestMapping(path = ClientAPIr0.Base + "/rooms/{roomId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(path = ClientAPIr0.Room, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RoomEventController extends JsonController {
 
     private IHomeServer hs;

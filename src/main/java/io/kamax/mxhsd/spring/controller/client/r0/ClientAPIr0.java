@@ -18,12 +18,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller;
+package io.kamax.mxhsd.spring.controller.client.r0;
 
 import io.kamax.mxhsd.spring.controller.client.ClientAPI;
 
 public class ClientAPIr0 {
 
     public static final String Base = ClientAPI.Base + "/r0";
+    public static final String Rooms = Base + "/rooms";
+    public static final String Room = Rooms + "/{roomId}";
 
 }

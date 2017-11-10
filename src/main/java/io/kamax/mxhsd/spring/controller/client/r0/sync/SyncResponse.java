@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client.sync;
+package io.kamax.mxhsd.spring.controller.client.r0.sync;
 
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.sync.ISyncData;

@@ -18,16 +18,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client;
+package io.kamax.mxhsd.spring.controller.client.r0.sync;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.spring.controller.ClientAPIr0;
+import io.kamax.mxhsd.api.IHomeServer;
+import io.kamax.mxhsd.api.sync.ISyncData;
+import io.kamax.mxhsd.core.sync.SyncOptions;
 import io.kamax.mxhsd.spring.controller.JsonController;
+import io.kamax.mxhsd.spring.controller.client.r0.ClientAPIr0;
+import io.kamax.mxhsd.spring.service.HomeserverService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,24 +39,31 @@ import javax.servlet.http.HttpServletRequest;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @RestController
-@RequestMapping(path = ClientAPIr0.Base + "/pushrules", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class PushRuleController extends JsonController {
+@RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+public class SyncController extends JsonController {
+
+    private IHomeServer hs;
 
     private Gson gson = GsonUtil.build();
 
-    @RequestMapping(method = GET, path = "/")
-    public String list(HttpServletRequest req) {
+    @Autowired
+    public SyncController(HomeserverService svc) {
+        this.hs = svc.get();
+    }
+
+    @RequestMapping(method = GET, path = "/sync")
+    public String sync(
+            HttpServletRequest req,
+            @RequestParam("access_token") String token,
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String since,
+            @RequestParam(required = false) Long timeout
+    ) {
         log(req);
 
-        JsonObject global = new JsonObject();
-        global.addProperty("rule_id", "1");
-        global.add("default", new JsonArray());
-        global.add("actions", new JsonArray());
-        global.add("enabled", new JsonArray());
-        JsonObject reply = new JsonObject();
-        reply.add("global", global);
-
-        return toJson(reply);
+        SyncOptions options = new SyncOptions().setFilterId(filter).setSince(since).setTimeout(timeout);
+        ISyncData data = hs.getUserSession(token).fetchData(options);
+        return toJson(new SyncResponse(data));
     }
 
 }

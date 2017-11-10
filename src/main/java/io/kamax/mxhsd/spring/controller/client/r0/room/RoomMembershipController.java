@@ -18,20 +18,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client.room;
+package io.kamax.mxhsd.spring.controller.client.r0.room;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import io.kamax.matrix.MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
-import io.kamax.mxhsd.core.room.RoomCreateOptions;
-import io.kamax.mxhsd.spring.controller.ClientAPIr0;
 import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.controller.JsonController;
+import io.kamax.mxhsd.spring.controller.client.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.service.HomeserverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -45,40 +41,17 @@ import javax.servlet.http.HttpServletRequest;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
-@RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class RoomController extends JsonController {
+@RequestMapping(path = ClientAPIr0.Room, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+public class RoomMembershipController extends JsonController {
 
     private IHomeServer hs;
 
-    private Gson gson = GsonUtil.build();
-
     @Autowired
-    public RoomController(HomeserverService svc) {
+    public RoomMembershipController(HomeserverService svc) {
         this.hs = svc.get();
     }
 
-    @RequestMapping(method = POST, path = "/createRoom")
-    public String createRoom(HttpServletRequest req, @RequestParam("access_token") String token) {
-        log(req);
-
-        JsonObject o = getJsonObject(req);
-        RoomCreateOptions options = new RoomCreateOptions(); // FIXME handle all options correctly
-
-        // FIXME no hardcoding!
-        GsonUtil.findArray(o, "invite").ifPresent(v ->
-                v.forEach(i -> options.addInvitee(new MatrixID(i.getAsString()))));
-
-        // FIXME no hardcoding!
-        GsonUtil.findString(o, "preset").ifPresent(options::setPreset);
-
-        IRoom room = hs.getUserSession(token).createRoom(options);
-
-        JsonObject reply = new JsonObject();
-        reply.addProperty("room_id", room.getId());
-        return gson.toJson(reply);
-    }
-
-    @RequestMapping(method = POST, path = "/rooms/{roomId}/invite")
+    @RequestMapping(method = POST, path = "/invite")
     public String inviteToRoom(HttpServletRequest req, @PathVariable String roomId, @RequestParam("access_token") String token) {
         log(req);
 

@@ -18,52 +18,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client.sync;
+package io.kamax.mxhsd.spring.controller.client.r0.room;
 
-import com.google.gson.Gson;
-import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.sync.ISyncData;
-import io.kamax.mxhsd.core.sync.SyncOptions;
-import io.kamax.mxhsd.spring.controller.ClientAPIr0;
+import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.controller.JsonController;
+import io.kamax.mxhsd.spring.controller.client.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.service.HomeserverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
 @RestController
-@RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class SyncController extends JsonController {
+@RequestMapping(path = ClientAPIr0.Room + "/typing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+public class RoomTypingController extends JsonController {
 
     private IHomeServer hs;
 
-    private Gson gson = GsonUtil.build();
-
     @Autowired
-    public SyncController(HomeserverService svc) {
+    public RoomTypingController(HomeserverService svc) {
         this.hs = svc.get();
     }
 
-    @RequestMapping(method = GET, path = "/sync")
-    public String sync(
+    // So Riot stops throwing errors
+    // TODO implement
+    @RequestMapping(method = PUT, path = "/{mxId:.+}")
+    public String inject(
             HttpServletRequest req,
-            @RequestParam("access_token") String token,
-            @RequestParam(required = false) String filter,
-            @RequestParam(required = false) String since,
-            @RequestParam(required = false) Long timeout
+            @PathVariable String roomId,
+            @PathVariable String mxId,
+            @RequestParam("access_token") String token
     ) {
         log(req);
 
-        SyncOptions options = new SyncOptions().setFilterId(filter).setSince(since).setTimeout(timeout);
-        ISyncData data = hs.getUserSession(token).fetchData(options);
-        return toJson(new SyncResponse(data));
+        return EmptyJsonResponse.stringify();
     }
 
 }
