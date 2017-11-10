@@ -21,6 +21,8 @@
 package io.kamax.mxhsd.spring.controller.client.r0;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.spring.controller.JsonController;
 import org.springframework.http.MediaType;
@@ -42,45 +44,16 @@ public class PushRuleController extends JsonController {
     public String list(HttpServletRequest req) {
         log(req);
 
-        // Straight up from synapse until we support this - Seems like default rules
-        // Without this, Riot just fails to handle new room creation.
-        String json = "{\"device\":{},\"global\":{\"content\":[{\"default\":true,\"pattern\":\"z\",\"enabled\":true," +
-                "\"rule_id\":\".m.rule.contains_user_name\",\"actions\":[\"notify\",{\"set_tweak\":\"sound\"," +
-                "\"value\":\"default\"},{\"set_tweak\":\"highlight\"}]}],\"override\":[{\"default\":true," +
-                "\"enabled\":false,\"conditions\":[],\"rule_id\":\".m.rule.master\",\"actions\":[\"dont_notify\"]}," +
-                "{\"default\":true,\"enabled\":true,\"conditions\":[{\"pattern\":\"m.notice\",\"kind\":" +
-                "\"event_match\",\"key\":\"content.msgtype\"}],\"rule_id\":\".m.rule.suppress_notices\",\"actions\":" +
-                "[\"dont_notify\"]},{\"default\":true,\"enabled\":true,\"conditions\":[{\"pattern\":\"m.room.member\"," +
-                "\"kind\":\"event_match\",\"key\":\"type\"},{\"pattern\":\"invite\",\"kind\":\"event_match\"," +
-                "\"key\":\"content.membership\"},{\"pattern\":\"@z:localhost.kamax.io\",\"kind\":\"event_match\"," +
-                "\"key\":\"state_key\"}],\"rule_id\":\".m.rule.invite_for_me\",\"actions\":[\"notify\"," +
-                "{\"set_tweak\":\"sound\",\"value\":\"default\"},{\"set_tweak\":\"highlight\",\"value\":false}]}," +
-                "{\"default\":true,\"enabled\":true,\"conditions\":[{\"pattern\":\"m.room.member\"," +
-                "\"kind\":\"event_match\",\"key\":\"type\"}],\"rule_id\":\".m.rule.member_event\",\"actions\":" +
-                "[\"dont_notify\"]},{\"default\":true,\"enabled\":true,\"conditions\":[{\"kind\":" +
-                "\"contains_display_name\"}],\"rule_id\":\".m.rule.contains_display_name\",\"actions\":" +
-                "[\"notify\",{\"set_tweak\":\"sound\",\"value\":\"default\"},{\"set_tweak\":\"highlight\"}]}," +
-                "{\"default\":true,\"enabled\":true,\"conditions\":[{\"pattern\":\"@room\",\"kind\":\"event_match\"," +
-                "\"key\":\"content.body\"},{\"kind\":\"sender_notification_permission\",\"key\":\"room\"}]," +
-                "\"rule_id\":\".m.rule.roomnotif\",\"actions\":[\"notify\",{\"set_tweak\":\"highlight\"," +
-                "\"value\":true}]}],\"sender\":[],\"room\":[],\"underride\":[{\"default\":true,\"enabled\":true," +
-                "\"conditions\":[{\"pattern\":\"m.call.invite\",\"kind\":\"event_match\",\"key\":\"type\"}]," +
-                "\"rule_id\":\".m.rule.call\",\"actions\":[\"notify\",{\"set_tweak\":\"sound\",\"value\":\"ring\"}," +
-                "{\"set_tweak\":\"highlight\",\"value\":false}]},{\"default\":true,\"enabled\":true,\"conditions\":" +
-                "[{\"kind\":\"room_member_count\",\"is\":\"2\"},{\"pattern\":\"m.room.message\",\"kind\":" +
-                "\"event_match\",\"key\":\"type\"}],\"rule_id\":\".m.rule.room_one_to_one\",\"actions\":[\"notify\"," +
-                "{\"set_tweak\":\"sound\",\"value\":\"default\"},{\"set_tweak\":\"highlight\",\"value\":false}]}," +
-                "{\"default\":true,\"enabled\":true,\"conditions\":[{\"kind\":\"room_member_count\",\"is\":\"2\"}," +
-                "{\"pattern\":\"m.room.encrypted\",\"kind\":\"event_match\",\"key\":\"type\"}],\"rule_id\":" +
-                "\".m.rule.encrypted_room_one_to_one\",\"actions\":[\"notify\",{\"set_tweak\":\"sound\"," +
-                "\"value\":\"default\"},{\"set_tweak\":\"highlight\",\"value\":false}]},{\"default\":true," +
-                "\"enabled\":true,\"conditions\":[{\"pattern\":\"m.room.message\",\"kind\":\"event_match\"," +
-                "\"key\":\"type\"}],\"rule_id\":\".m.rule.message\",\"actions\":[\"notify\",{\"set_tweak\":" +
-                "\"highlight\",\"value\":false}]},{\"default\":true,\"enabled\":true,\"conditions\":[{\"pattern\":" +
-                "\"m.room.encrypted\",\"kind\":\"event_match\",\"key\":\"type\"}],\"rule_id\":\".m.rule.encrypted\"," +
-                "\"actions\":[\"notify\",{\"set_tweak\":\"highlight\",\"value\":false}]}]}}";
+        JsonObject global = new JsonObject();
+        global.add("content", new JsonArray());
+        global.add("override", new JsonArray());
+        global.add("room", new JsonArray());
+        global.add("sender", new JsonArray());
+        global.add("underride", new JsonArray());
+        JsonObject reply = new JsonObject();
+        reply.add("global", global);
 
-        return json;
+        return toJson(reply);
     }
 
 }
