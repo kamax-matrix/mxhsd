@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.controller.client.unstable.e2ee;
+package io.kamax.mxhsd.spring.controller.client.unstable;
 
 import io.kamax.mxhsd.spring.controller.client.ClientAPI;
 

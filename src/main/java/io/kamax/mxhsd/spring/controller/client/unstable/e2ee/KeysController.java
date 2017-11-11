@@ -21,6 +21,7 @@
 package io.kamax.mxhsd.spring.controller.client.unstable.e2ee;
 
 import io.kamax.mxhsd.spring.controller.JsonController;
+import io.kamax.mxhsd.spring.controller.client.unstable.ClientAPIunstable;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
