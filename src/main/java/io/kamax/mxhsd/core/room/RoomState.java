@@ -102,7 +102,11 @@ public class RoomState implements IRoomState {
         }
 
         private Builder setMember(IMembershipContext ev) {
-            r.membership.put(ev.getStateKey(), new MembershipContext(ev));
+            if (RoomMembership.Leave.is(ev.getMembership())) {
+                r.membership.remove(ev.getStateKey());
+            } else {
+                r.membership.put(ev.getStateKey(), new MembershipContext(ev));
+            }
             return this;
         }
 
@@ -283,12 +287,12 @@ public class RoomState implements IRoomState {
                 return auth.allow(stateBuilder);
             } else if (Leave.is(membership)) {
                 boolean isSame = StringUtils.equals(sender, target);
-                if (isSame && hasMembership(sender, Invite)) {
+                if (isSame && hasMembership(sender, Invite, Join)) {
                     return auth.allow(stateBuilder);
                 }
 
-                if (isSame && !hasMembership(sender, Join)) {
-                    return auth.deny(ev, "sender cannot leave a room they are not in");
+                if (!hasMembership(sender, Join)) {
+                    return auth.deny(ev, "sender cannot send leave in a room they are not in");
                 }
 
                 if (isMembership(getMembershipOrDefault(target), Ban) && !effectivePls.canBan(senderPl)) {
