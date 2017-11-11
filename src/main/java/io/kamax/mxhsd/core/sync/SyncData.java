@@ -65,6 +65,13 @@ public class SyncData implements ISyncData {
             return this;
         }
 
+
+        public Builder setLeft(Collection<SyncRoomData> left) {
+            obj.left.clear();
+            left.forEach(this::addLeft);
+            return this;
+        }
+
         public Builder addLeft(SyncRoomData left) {
             obj.left.add(left);
             return this;

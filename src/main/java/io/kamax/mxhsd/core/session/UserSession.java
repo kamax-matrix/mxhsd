@@ -199,6 +199,9 @@ public class UserSession implements IUserSession {
 
                         // TODO if invite, we should include data about membership of the sender
 
+                        if (RoomMembership.Leave.is(eventDetails.getMembership())) {
+                            builder.setMembership(RoomMembership.Leave.get());
+                        }
                         // TODO if leave, find out if we need to include something?
                     }
                 }
@@ -258,6 +261,7 @@ public class UserSession implements IUserSession {
 
         b.setInvited(syncState.invited.values().stream().map(ABuilder::get).collect(Collectors.toList()))
                 .setJoined(syncState.joined.values().stream().map(ABuilder::get).collect(Collectors.toList()))
+                .setLeft(syncState.left.values().stream().map(ABuilder::get).collect(Collectors.toList()))
                 .setToken(Integer.toString(streamIndex));
 
         SyncData syncData = b.get();

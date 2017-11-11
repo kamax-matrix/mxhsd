@@ -74,12 +74,13 @@ public class SyncResponse {
 
     }
 
-    private class InviteRoom {
+    private class InvitedRoom {
 
         private RoomState inviteState = new RoomState();
 
-        public InviteRoom(ISyncRoomData r) {
+        public InvitedRoom(ISyncRoomData r) {
             inviteState.events.addAll(r.getState());
+            inviteState.events.addAll(r.getTimeline().getEvents());
         }
 
         public RoomState getInviteState() {
@@ -88,7 +89,7 @@ public class SyncResponse {
 
     }
 
-    private class JoinRoom {
+    private class JoinedRoom {
 
         private AccountData accountData = new AccountData();
         private Ephemeral ephemeral = new Ephemeral();
@@ -96,7 +97,7 @@ public class SyncResponse {
         private RoomTimeline timeline = new RoomTimeline();
         private UnreadNotifications unreadNotifications = new UnreadNotifications();
 
-        public JoinRoom(ISyncRoomData r) {
+        public JoinedRoom(ISyncRoomData r) {
             state.events.addAll(r.getState());
             timeline.events.addAll(r.getTimeline().getEvents());
             timeline.limited = r.getTimeline().isFiltered();
@@ -118,31 +119,22 @@ public class SyncResponse {
 
     }
 
-    private class LeftRoom {
-        private RoomState state = new RoomState();
-        private RoomTimeline timeline = new RoomTimeline();
-
-        public RoomState getState() {
-            return state;
-        }
-
-        public RoomTimeline getTimeline() {
-            return timeline;
-        }
-    }
-
     private class Rooms {
 
-        private Map<String, InviteRoom> invite = new HashMap<>();
-        private Map<String, JoinRoom> join = new HashMap<>();
-        private Map<String, LeftRoom> left = new HashMap<>();
+        private Map<String, InvitedRoom> invite = new HashMap<>();
+        private Map<String, JoinedRoom> join = new HashMap<>();
+        private Map<String, JoinedRoom> leave = new HashMap<>();
 
-        public Map<String, InviteRoom> getInvite() {
+        public Map<String, InvitedRoom> getInvite() {
             return invite;
         }
 
-        public Map<String, JoinRoom> getJoin() {
+        public Map<String, JoinedRoom> getJoin() {
             return join;
+        }
+
+        public Map<String, JoinedRoom> getLeave() {
+            return leave;
         }
 
     }
@@ -181,8 +173,9 @@ public class SyncResponse {
 
     public SyncResponse(ISyncData data) {
         nextBatch = data.getNextBatchToken();
-        data.getInvitedRooms().forEach(r -> rooms.invite.put(r.getRoomId(), new InviteRoom(r)));
-        data.getJoinedRooms().forEach(r -> rooms.join.put(r.getRoomId(), new JoinRoom(r)));
+        data.getInvitedRooms().forEach(r -> rooms.invite.put(r.getRoomId(), new InvitedRoom(r)));
+        data.getJoinedRooms().forEach(r -> rooms.join.put(r.getRoomId(), new JoinedRoom(r)));
+        data.getLeftRooms().forEach(r -> rooms.leave.put(r.getRoomId(), new JoinedRoom(r)));
     }
 
     public String getNextBatch() {

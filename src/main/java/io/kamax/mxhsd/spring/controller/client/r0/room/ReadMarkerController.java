@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.spring.controller.client.r0.room;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.spring.controller.EmptyJsonResponse;
@@ -58,7 +59,10 @@ public class ReadMarkerController extends JsonController {
 
         JsonObject json = getJsonObject(req);
         json.keySet().forEach(key -> {
-            hs.getUserSession(token).setReadMarker(roomId, key, json.get(key).getAsString());
+            JsonElement el = json.get(key);
+            if (el.isJsonPrimitive()) {
+                hs.getUserSession(token).setReadMarker(roomId, key, el.getAsString());
+            }
         });
 
         return EmptyJsonResponse.stringify();

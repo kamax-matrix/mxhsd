@@ -64,4 +64,13 @@ public class RoomMembershipController extends JsonController {
         return EmptyJsonResponse.stringify();
     }
 
+    @RequestMapping(method = POST, path = "/leave")
+    public String leaveRoom(HttpServletRequest req, @PathVariable String roomId, @RequestParam("access_token") String token) {
+        log(req);
+
+        hs.getUserSession(token).leaveRoom(roomId);
+
+        return EmptyJsonResponse.stringify();
+    }
+
 }

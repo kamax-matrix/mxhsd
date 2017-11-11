@@ -23,10 +23,13 @@ package io.kamax.mxhsd_test.core;
 import io.kamax.matrix.MatrixID;
 import io.kamax.matrix.sign.KeyManager;
 import io.kamax.matrix.sign.SignatureManager;
+import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.session.IUserSession;
 import io.kamax.mxhsd.core.Homeserver;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
+import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import io.kamax.mxhsd.core.room.RoomManager;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
@@ -36,6 +39,16 @@ import static junit.framework.TestCase.assertTrue;
 public class GenericHomeserverTest {
 
     protected Homeserver hs;
+    protected final String username = "test";
+    protected final String password = username;
+
+    public IUserSession login(String username, String password) {
+        return hs.login(username, password.toCharArray());
+    }
+
+    public IUserSession login() {
+        return login(username, password);
+    }
 
     @Before
     public void beforeClass() {
@@ -50,6 +63,13 @@ public class GenericHomeserverTest {
         hs = new Homeserver(state);
 
         assertTrue(StringUtils.isNotBlank(hs.getDomain()));
+    }
+
+    public IRoom createRoomHelper(IUserSession session) {
+        RoomCreateOptions opts = new RoomCreateOptions();
+        opts.setCreator(session.getUser().getId());
+        opts.setPreset("private_chat");
+        return session.createRoom(opts);
     }
 
 }

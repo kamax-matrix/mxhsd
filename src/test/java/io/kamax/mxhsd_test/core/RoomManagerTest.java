@@ -21,19 +21,35 @@
 package io.kamax.mxhsd_test.core;
 
 import io.kamax.matrix.MatrixID;
+import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.room.IRoomState;
+import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
+import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.api.session.IUserSession;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
+import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
 
 public class RoomManagerTest extends GenericHomeserverTest {
 
     @Test
-    public void createRoom() {
-        IUserSession session = hs.login("test01", "test".toCharArray());
+    public void createPrivateRoom() {
+        IUserSession session = login();
+        IRoom room = createRoomHelper(session);
+        assertTrue(StringUtils.isNotBlank(room.getId()));
+        assertNotNull(room.getCurrentState());
+        assertNotNull(room.getCreation());
+        RoomCreateEvent ev = new RoomCreateEvent(room.getCreation().getJson());
+        assertTrue(StringUtils.equals(session.getUser().getId().getId(), ev.getCreator()));
+    }
+
+    @Test
+    public void createDirectMessageRoom() {
+        IUserSession session = login();
         RoomCreateOptions opts = new RoomCreateOptions();
         opts.setCreator(session.getUser().getId());
         opts.setPreset("trusted_private_chat");
@@ -41,6 +57,17 @@ public class RoomManagerTest extends GenericHomeserverTest {
         IRoom room = session.createRoom(opts);
         assertTrue(StringUtils.isNotBlank(room.getId()));
         // TODO check preset events and invite events
+    }
+
+    @Test
+    public void leaveRoom() {
+        IUserSession session = login();
+        String mxid = session.getUser().getId().getId();
+        IRoom room = createRoomHelper(session);
+        room.inject(new RoomMembershipEvent(mxid, RoomMembership.Leave.get(), mxid));
+        // TODO check the returned event content
+        IRoomState state = room.getCurrentState();
+        assertTrue(!state.getMembership(mxid).isPresent());
     }
 
 }
