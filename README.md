@@ -17,7 +17,7 @@ mxhsd wants to provide a Matrix Homeserver implementation with the expected leve
 mxhsd wants to be as extensible as possible, relying on a module framework, so anyone can manage every detail of its server(s).
 
 ## Features
-Version 0.1 aims to include the following features/abilities:
+Version 0.1 aims to include the following features/abilities implemented to their strict minimum:
 
 - Software side
   - [ ] Event-based module framework
@@ -25,14 +25,14 @@ Version 0.1 aims to include the following features/abilities:
 - User side
   - Session
     - [X] Login
-    - [ ] Logout
-    - [ ] Sync from client
+    - [X] Logout
+    - [X] Sync from client
   - User profiles
     - [ ] Set display name
   - Rooms
     - [X] Create
-    - [ ] Join
-    - [ ] Leave
+    - [X] Join
+    - [X] Leave
     - [ ] Forget
     - [X] Send events - Only `m.room.message` will be supported
 
