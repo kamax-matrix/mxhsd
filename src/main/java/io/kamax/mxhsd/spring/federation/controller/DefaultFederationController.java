@@ -18,9 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.common.controller;
+package io.kamax.mxhsd.spring.federation.controller;
 
+import io.kamax.mxhsd.spring.common.controller.DefaultExceptionHandler;
+import io.kamax.mxhsd.spring.common.controller.JsonController;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -35,13 +38,19 @@ import java.util.Enumeration;
 
 @RestController
 @RequestMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class DefaultController extends JsonController {
+public class DefaultFederationController extends JsonController {
 
-    private Logger log = LoggerFactory.getLogger(DefaultController.class);
+    private Logger log = LoggerFactory.getLogger(DefaultFederationController.class);
 
     @RequestMapping("/**")
     public String catchAll(HttpServletRequest req, HttpServletResponse res) {
         log(req);
+
+        Enumeration<String> headerNames = req.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String name = headerNames.nextElement();
+            log.info("{}: {}", name, req.getHeader(name));
+        }
 
         StringBuffer postData = new StringBuffer();
         Enumeration<String> postParms = req.getParameterNames();
@@ -59,10 +68,15 @@ public class DefaultController extends JsonController {
 
         log.debug("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
         if (postData.length() > 0) {
-            log.debug("POST data: {}", postData);
+            log.info("POST data: {}", postData);
         }
         try {
-            log.debug("Body: {}", IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8));
+            String body = IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8);
+            if (StringUtils.isNotBlank(body)) {
+                log.info("Body: {}", body);
+            } else {
+                log.info("No body");
+            }
         } catch (IOException e) {
             log.debug("Body: Unable to read", e);
         }

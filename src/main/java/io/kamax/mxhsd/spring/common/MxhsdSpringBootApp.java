@@ -21,6 +21,7 @@
 package io.kamax.mxhsd.spring.common;
 
 import io.kamax.mxhsd.spring.client.MxhsdClientApp;
+import io.kamax.mxhsd.spring.common.controller.DefaultExceptionHandler;
 import io.kamax.mxhsd.spring.federation.MxhsdFederationApp;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -30,8 +31,8 @@ public class MxhsdSpringBootApp {
 
     public static void main(String[] args) {
         SpringApplicationBuilder builder = new SpringApplicationBuilder(MxhsdSpringBootApp.class);
-        builder.child(MxhsdClientApp.class).run(args);
-        builder.child(MxhsdFederationApp.class).run(args);
+        builder.child(MxhsdClientApp.class).sources(DefaultExceptionHandler.class).run(args);
+        builder.child(MxhsdFederationApp.class).sources(DefaultExceptionHandler.class).run(args);
     }
 
 }

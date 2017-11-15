@@ -34,7 +34,7 @@ public class DefaultExceptionHandler {
 
     private Logger log = LoggerFactory.getLogger(DefaultExceptionHandler.class);
 
-    static String handle(String erroCode, String error) {
+    public static String handle(String erroCode, String error) {
         return "{\"errcode\":\"" + erroCode + "\",\"error\":\"" + error + "\"}";
     }
 
