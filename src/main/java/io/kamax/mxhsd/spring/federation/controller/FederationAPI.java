@@ -18,20 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.common;
+package io.kamax.mxhsd.spring.federation.controller;
 
-import io.kamax.mxhsd.spring.client.MxhsdClientApp;
-import io.kamax.mxhsd.spring.federation.MxhsdFederationApp;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
+public class FederationAPI {
 
-@SpringBootApplication
-public class MxhsdSpringBootApp {
-
-    public static void main(String[] args) {
-        SpringApplicationBuilder builder = new SpringApplicationBuilder(MxhsdSpringBootApp.class);
-        builder.child(MxhsdClientApp.class).run(args);
-        builder.child(MxhsdFederationApp.class).run(args);
-    }
+    public static final String Base = "/_matrix/federation";
 
 }

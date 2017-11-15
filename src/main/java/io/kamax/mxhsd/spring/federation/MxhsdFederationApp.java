@@ -20,8 +20,40 @@
 
 package io.kamax.mxhsd.spring.federation;
 
+import io.kamax.mxhsd.spring.federation.config.FederationConnectorConfig;
+import org.apache.coyote.http11.Http11NioProtocol;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
+import org.springframework.boot.context.embedded.tomcat.TomcatConnectorCustomizer;
+import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
+import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 public class MxhsdFederationApp {
+
+    private FederationConnectorConfig cfg;
+
+    @Autowired
+    public MxhsdFederationApp(FederationConnectorConfig cfg) {
+        this.cfg = cfg;
+    }
+
+    @Bean
+    public EmbeddedServletContainerFactory servletContainer() {
+        TomcatEmbeddedServletContainerFactory tomcat = new TomcatEmbeddedServletContainerFactory();
+
+        tomcat.addConnectorCustomizers((TomcatConnectorCustomizer) connector -> {
+            connector.setScheme("https");
+            connector.setPort(cfg.getPort());
+            Http11NioProtocol protocol = (Http11NioProtocol) connector.getProtocolHandler();
+            protocol.setSSLEnabled(true);
+            protocol.setSSLCertificateKeyFile(cfg.getKey());
+            protocol.setSSLCertificateFile(cfg.getCert());
+            cfg.getChain().ifPresent(protocol::setSSLCertificateChainFile);
+        });
+
+        return tomcat;
+    }
+
 }
