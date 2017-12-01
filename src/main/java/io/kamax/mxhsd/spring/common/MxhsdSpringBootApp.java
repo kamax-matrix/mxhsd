@@ -30,9 +30,15 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 public class MxhsdSpringBootApp {
 
     public static void main(String[] args) {
-        SpringApplicationBuilder builder = new SpringApplicationBuilder(MxhsdSpringBootApp.class);
-        builder.child(MxhsdClientApp.class).sources(DefaultExceptionHandler.class).run(args);
-        builder.child(MxhsdFederationApp.class).sources(DefaultExceptionHandler.class).run(args);
+        try {
+            SpringApplicationBuilder builder = new SpringApplicationBuilder(MxhsdSpringBootApp.class);
+            builder.web(false);
+
+            builder.child(MxhsdClientApp.class).sources(DefaultExceptionHandler.class).run(args);
+            builder.child(MxhsdFederationApp.class).sources(DefaultExceptionHandler.class).run(args);
+        } catch (Throwable t) {
+            System.exit(1);
+        }
     }
 
 }
