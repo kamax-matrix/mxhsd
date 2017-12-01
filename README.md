@@ -16,30 +16,56 @@ mxhsd wants to be as extensible as possible, relying on a module framework, so a
 ## Features
 Version 0.1.0 aims to include the following features/abilities implemented to their strict minimum:
 
-- Software side
-  - [ ] Event-based module framework
+- Architecture
   - [ ] Permanent storage
 
-- User side
+- Client
   - Session
     - [X] Login
     - [X] Logout
-    - [X] Sync from client
-  - User profiles
-    - [ ] Set display name
   - Rooms
-    - [X] Create
-    - [X] Join
-    - [X] Leave
-    - [ ] Forget
-    - [X] Send events - Only `m.room.message` will be supported
+    - Management
+      - [X] Create
+    - Membership
+      - [X] Join
+      - [X] Leave
+      - [ ] Forget
+    - Usage
+      - [X] Send events
+    - Alias
+      - [ ] List
+      - [ ] Add
+      - [ ] Remove
+      - [ ] Lookup
+  - Events
+    - [X] Sync
     
-- Server side
-  - [ ] Federation version of the user points
-
-- Admin side
-  - [ ] Administration page(s)
-  - [ ] Manage authentication backends - LDAP only
+- Server
+  - Federation
+    - Keys
+      - Lookup
+        - [ ] Inbound
+        - [ ] Outbound
+    - Protocol
+      - Sign
+        - [ ] Requests
+        - [ ] Events
+    - Rooms
+      - Membership
+        - Join
+          - [ ] Inbound
+          - [ ] Outbound
+        - [ ] Leave
+      - Usage
+        - [ ] Send events
+      - Alias
+        - [ ] Lookup
+    - Events
+      - [ ] Inbound
+      - [ ] Outbound
+   - Admin
+    - [ ] Administration page(s)
+    - [ ] Manage authentication backends - LDAP only
 
 ## Support
 Via Matrix: [#mxhsd:kamax.io](https://matrix.to/#/#mxhsd:kamax.io) - [Static view](https://view.matrix.org/room/!MDGUnxWASkbvkdZMpE:kamax.io/)
