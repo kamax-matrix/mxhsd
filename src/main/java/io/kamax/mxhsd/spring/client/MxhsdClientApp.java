@@ -20,9 +20,34 @@
 
 package io.kamax.mxhsd.spring.client;
 
+import io.kamax.mxhsd.spring.client.config.ClientConnectorConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
+import org.springframework.boot.context.embedded.tomcat.TomcatConnectorCustomizer;
+import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
+import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 public class MxhsdClientApp {
+
+    private ClientConnectorConfig cfg;
+
+    @Autowired
+    public MxhsdClientApp(ClientConnectorConfig cfg) {
+        this.cfg = cfg;
+    }
+
+    @Bean
+    public EmbeddedServletContainerFactory servletContainer() {
+        TomcatEmbeddedServletContainerFactory tomcat = new TomcatEmbeddedServletContainerFactory();
+
+        tomcat.addConnectorCustomizers((TomcatConnectorCustomizer) connector -> {
+            connector.setScheme("http");
+            connector.setPort(cfg.getPort());
+        });
+
+        return tomcat;
+    }
 
 }
