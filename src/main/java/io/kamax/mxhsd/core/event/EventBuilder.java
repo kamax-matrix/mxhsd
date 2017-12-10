@@ -40,7 +40,7 @@ public class EventBuilder implements IEventBuilder {
     private Instant timestamp;
     private String origin;
     private String roomId;
-    private long depth = 1;
+    private long depth = 0;
     private Set<String> authorization = new HashSet<>();
     private Set<String> parents = new HashSet<>();
 
@@ -99,7 +99,6 @@ public class EventBuilder implements IEventBuilder {
         base.addProperty(EventKey.RoomId.get(), roomId);
         base.addProperty(EventKey.Timestamp.get(), timestamp.toEpochMilli());
         base.add(EventKey.PreviousEvents.get(), pEv);
-        ;
 
         String json = MatrixJson.encodeCanonical(base);
         return new Event(
