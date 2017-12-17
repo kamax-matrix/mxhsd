@@ -24,6 +24,7 @@ import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
 import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -50,5 +51,7 @@ public interface IRoomState {
     int getStreamIndex();
 
     boolean isAccessibleAs(String user);
+
+    Map<String, String> getEvents();
 
 }

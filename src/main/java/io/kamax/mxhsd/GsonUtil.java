@@ -84,6 +84,10 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
         return obj.get(member).getAsString();
     }
 
+    public static JsonArray getArrayOrThrow(JsonObject obj, String member) {
+        return findArray(obj, member).orElseThrow(() -> new InvalidJsonException("Not an array"));
+    }
+
     public static String getString(JsonObject o, String key) {
         JsonElement el = o.get(key);
         if (el != null && el.isJsonPrimitive()) {

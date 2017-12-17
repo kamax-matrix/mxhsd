@@ -25,5 +25,6 @@ import io.kamax.mxhsd.spring.federation.controller.FederationAPI;
 public class FederationAPIv1 {
 
     public static final String Base = FederationAPI.Base + "/v1";
+    public static final String Query = Base + "/query";
 
 }

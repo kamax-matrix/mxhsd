@@ -45,6 +45,10 @@ public interface IEventManager {
 
     // MBassador bus
     // TODO consider refactoring this into accepting a consumer (functional interface) to abstract MBassador
+    void addFilter(Object o);
+
+    // MBassador bus
+    // TODO consider refactoring this into accepting a consumer (functional interface) to abstract MBassador
     void addListener(Object o);
 
 }

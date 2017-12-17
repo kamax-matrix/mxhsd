@@ -22,12 +22,14 @@ package io.kamax.mxhsd.core.room;
 
 import com.google.gson.JsonObject;
 import io.kamax.matrix.hs.RoomMembership;
+import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventKey;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
+import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang.StringUtils;
 
@@ -76,7 +78,7 @@ public class RoomState implements IRoomState {
 
         public Builder(HomeserverState globalState, String roomId) {
             r = new RoomState();
-            r.globalState = globalState;
+            r.global = globalState;
             r.roomId = roomId;
         }
 
@@ -85,45 +87,61 @@ public class RoomState implements IRoomState {
         }
 
         public Builder from(IRoomState state) {
-            Builder b = withCreation(state.getCreation())
-                    .setMembers(state.getMemberships())
-                    .withStreamIndex(state.getStreamIndex());
-
-            if (state.hasPowerLevels()) {
-                b.withPower(state.getPowerLevelsEventId(), state.getEffectivePowerLevels());
-            }
-
-            return b;
-        }
-
-        public Builder withCreation(IEvent c) {
-            r.creation = c;
-            return this;
-        }
-
-        private Builder setMember(IMembershipContext ev) {
-            if (RoomMembership.Leave.is(ev.getMembership())) {
-                r.membership.remove(ev.getStateKey());
+            if (state instanceof RoomState) { // we simply copy the cache
+                RoomState other = (RoomState) state;
+                setEvents(other.events);
+                r.streamIndex = other.streamIndex;
+                r.members = new HashMap<>(other.members);
+                r.pls = other.pls;
+                r.plsId = other.plsId;
             } else {
-                r.membership.put(ev.getStateKey(), new MembershipContext(ev));
+                state.getEvents().values().stream() // we need to rebuild the cache ourselves
+                        .map(id -> r.global.getEvMgr().get(id).get()) // we fetch each event
+                        .forEach(this::addEvent); // we process them one by one
             }
+
             return this;
         }
 
-        public Builder setMembers(Collection<IMembershipContext> ms) {
-            ms.forEach(this::setMember);
+        public Builder from(Map<String, String> events) {
+            setEvents(events);
+
             return this;
         }
 
-        public Builder setMember(IEvent ev, String target, String membership) {
-            setMember(new MembershipContext(ev.getId(), target, membership));
-            return this;
+        private void setEvents(Map<String, String> events) {
+            r.events = new HashMap<>(events);
         }
 
-        public Builder withPower(String evenId, RoomPowerLevels p) {
-            r.pId = evenId;
-            r.powerLevels = p;
-            return this;
+        public void addEvent(IEvent ev) {
+            JsonObject json = ev.getJson();
+            if (!json.has(EventKey.StateKey.get())) {
+                // Ignoring non-state event
+                return;
+            }
+
+            String sKey = GsonUtil.getString(json, EventKey.StateKey.get());
+            r.events.put(ev.getType() + sKey, ev.getId());
+
+            if (RoomEventType.Membership.is(ev.getType())) {
+                RoomMembershipEvent mEv = new RoomMembershipEvent(json);
+                setMember(new MembershipContext(ev.getId(), sKey, mEv.getMembership()));
+            }
+
+            if (RoomEventType.PowerLevels.is(ev.getType())) {
+                RoomPowerLevels pl = new RoomPowerLevels(ev);
+                r.plsId = ev.getId();
+                r.pls = pl;
+            }
+        }
+
+        private void setMember(MembershipContext ev) {
+            if (RoomMembership.Leave.is(ev.getMembership())) {
+                r.events.remove(RoomEventType.Membership.get() + ev.getStateKey());
+                r.members.remove(ev.getStateKey());
+            } else {
+                r.members.put(ev.getStateKey(), ev);
+            }
         }
 
         public Builder withStreamIndex(int streamIndex) {
@@ -133,38 +151,42 @@ public class RoomState implements IRoomState {
 
     }
 
-    private transient HomeserverState globalState;
+    private transient HomeserverState global;
 
     private String roomId;
-    private IEvent creation;
-    private Map<String, MembershipContext> membership = new HashMap<>();
-    private RoomPowerLevels powerLevels;
-    private String pId;
     private int streamIndex = 0;
+    private Map<String, String> events = new HashMap<>();
+    private Map<String, IMembershipContext> members = new HashMap<>();
+    private RoomPowerLevels pls;
+    private String plsId;
+
+    private IEvent getEv(String id) {
+        return global.getEvMgr().get(id).get();
+    }
 
     @Override
     public IEvent getCreation() {
-        return creation;
+        return getEv(events.get(RoomEventType.Creation.get()));
     }
 
     @Override
     public Set<IMembershipContext> getMemberships() {
-        return new HashSet<>(membership.values());
+        return new HashSet<>(members.values());
     }
 
     @Override
     public Optional<IMembershipContext> getMembership(String target) {
-        return Optional.ofNullable(membership.get(target));
+        return Optional.ofNullable(members.get(target));
     }
 
     @Override
     public boolean hasPowerLevels() {
-        return powerLevels != null;
+        return pls != null;
     }
 
     @Override
     public Optional<RoomPowerLevels> getPowerLevels() {
-        return Optional.ofNullable(powerLevels);
+        return Optional.ofNullable(pls);
     }
 
     @Override
@@ -174,7 +196,7 @@ public class RoomState implements IRoomState {
 
     @Override
     public String getPowerLevelsEventId() {
-        return pId;
+        return plsId;
     }
 
     @Override
@@ -185,6 +207,11 @@ public class RoomState implements IRoomState {
     @Override
     public boolean isAccessibleAs(String user) {
         return true;
+    }
+
+    @Override
+    public Map<String, String> getEvents() {
+        return Collections.unmodifiableMap(events);
     }
 
     private String getMembershipOrDefault(String member) {
@@ -212,16 +239,16 @@ public class RoomState implements IRoomState {
         JsonObject evJson = ev.getJson();
         JsonObject content = EventKey.Content.getObj(evJson);
         String type = evJson.get(EventKey.Type.get()).getAsString();
-        long depth = evJson.get(EventKey.Depth.get()).getAsLong();
 
         RoomEventAuthorization.Builder auth = new RoomEventAuthorization.Builder(roomId, ev);
-        Builder stateBuilder = new Builder(globalState, roomId).from(this); // we'll only make an update to our current state
+        Builder stateBuilder = new Builder(global, roomId).from(this); // we'll only make an update to our current state
+        stateBuilder.addEvent(ev);
         if (RoomEventType.Creation.is(type)) {
             if (!ev.getParents().isEmpty()) {
                 return auth.deny(ev, "there is a previous event");
             }
 
-            return auth.allow(stateBuilder.withCreation(ev));
+            return auth.allow(stateBuilder);
         }
 
         RoomPowerLevels effectivePls = getEffectivePowerLevels();
@@ -234,9 +261,8 @@ public class RoomState implements IRoomState {
 
         if (RoomEventType.Membership.is(type)) {
             String membership = content.get(RoomEventKey.Membership.get()).getAsString();
-            stateBuilder.setMember(ev, target, membership);
             if (Join.is(membership)) {
-                IEvent firstParentEv = globalState.getEvMgr().get(ev.getParents().get(0)).get();
+                IEvent firstParentEv = global.getEvMgr().get(ev.getParents().get(0)).get();
                 if (RoomEventType.Creation.is(firstParentEv.getType()) && ev.getParents().size() == 1) {
 
                     String creator = EventKey.Content.getObj(firstParentEv.getJson()).get("creator").getAsString();
@@ -334,18 +360,18 @@ public class RoomState implements IRoomState {
         if (RoomEventType.PowerLevels.is(ev.getType())) {
             RoomPowerLevels newPls = new RoomPowerLevels(ev);
             if (effectivePls.isInitialState()) { // Because https://github.com/matrix-org/synapse/issues/2644
-                return auth.allow(stateBuilder.withPower(ev.getId(), newPls));
+                return auth.allow(stateBuilder);
             }
 
             if (!effectivePls.canReplace(sender, senderPl, newPls)) {
                 return auth.deny(ev, "sender is missing minimum PL to change room PLs");
             }
 
-            return auth.allow(stateBuilder.withPower(ev.getId(), newPls));
+            return auth.allow(stateBuilder);
         }
 
         if (RoomEventType.Redaction.is(ev.getType())) {
-            if (powerLevels.canRedact(senderPl)) {
+            if (pls.canRedact(senderPl)) {
                 return auth.allow(stateBuilder);
             }
 

@@ -20,17 +20,38 @@
 
 package io.kamax.mxhsd.api.room.event;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.INakedEvent;
 import io.kamax.mxhsd.api.event.NakedContentEvent;
+import io.kamax.mxhsd.api.room.RoomAlias;
 import io.kamax.mxhsd.api.room.RoomEventType;
-import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
-public class RoomPowerLevelEvent extends NakedContentEvent {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-    private String stateKey = "";
+public class RoomAliasEvent extends NakedContentEvent {
 
-    public RoomPowerLevelEvent(String sender, RoomPowerLevels pls) {
-        super(RoomEventType.PowerLevels.get(), sender, GsonUtil.getObj(pls));
+    private List<String> aliases = new ArrayList<>();
+
+    public RoomAliasEvent(INakedEvent ev) {
+        this(ev.getJson());
+    }
+
+    public RoomAliasEvent(JsonObject o) {
+        super(o);
+
+        if (!RoomEventType.Aliases.is(getType())) {
+            throw new IllegalArgumentException("Type is not " + RoomEventType.Aliases.get());
+        }
+
+        GsonUtil.getArrayOrThrow(content, "aliases")
+                .forEach(v -> aliases.add(RoomAlias.from(v.getAsString()).getId()));
+    }
+
+    public List<String> getAliases() {
+        return Collections.unmodifiableList(aliases);
     }
 
 }

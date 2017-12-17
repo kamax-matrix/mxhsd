@@ -54,7 +54,8 @@ public class EventManager implements IEventManager {
     private List<ISignedEventStreamEntry> eventsStream = Collections.synchronizedList(new ArrayList<>());
     private Map<String, ISignedEventStreamEntry> events = new ConcurrentHashMap<>();
 
-    private MBassador<ISignedEventStreamEntry> eventBus = new MBassador<>();
+    private MBassador<ISignedEvent> eventBusFilter = new MBassador<>();
+    private MBassador<ISignedEventStreamEntry> eventBusNotification = new MBassador<>();
 
     // FIXME enums
     public EventManager(HomeserverState hsState) {
@@ -165,11 +166,13 @@ public class EventManager implements IEventManager {
 
     @Override
     public synchronized ISignedEventStreamEntry store(ISignedEvent ev) { // FIXME use RWLock
+        eventBusFilter.publish(ev);
+
         ISignedEventStreamEntry entry = new SignedEventStreamEntry(Math.max(0, eventsStream.size() - 1), ev);
         eventsStream.add(entry);
         events.put(ev.getId(), entry);
 
-        eventBus.post(entry).now(); // TODO we might want to do this async?
+        eventBusNotification.publish(entry); // TODO we might want to do this async?
 
         return entry;
     }
@@ -228,8 +231,13 @@ public class EventManager implements IEventManager {
     }
 
     @Override
+    public void addFilter(Object o) {
+        eventBusFilter.subscribe(o);
+    }
+
+    @Override
     public void addListener(Object o) {
-        eventBus.subscribe(o);
+        eventBusNotification.subscribe(o);
     }
 
 }

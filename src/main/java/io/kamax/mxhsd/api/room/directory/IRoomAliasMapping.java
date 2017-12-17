@@ -18,34 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.api.room.directory;
 
-import com.google.gson.JsonObject;
+public interface IRoomAliasMapping {
 
-public class NakedContentEvent extends NakedEvent {
+    String getId();
 
-    protected JsonObject content;
-
-    protected NakedContentEvent() {
-        // for subclasses only
-    }
-
-    public NakedContentEvent(JsonObject o) {
-        super(o);
-        this.content = EventKey.Content.getObj(o);
-    }
-
-    public NakedContentEvent(String type, String sender) {
-        this(type, sender, new JsonObject());
-    }
-
-    public NakedContentEvent(String type, String sender, JsonObject content) {
-        super(type, sender);
-        this.content = content;
-    }
-
-    public JsonObject getContent() {
-        return content;
-    }
+    String getAlias();
 
 }
