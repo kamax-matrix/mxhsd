@@ -22,6 +22,7 @@ package io.kamax.mxhsd.core.event;
 
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 
 import java.time.Instant;
@@ -61,7 +62,7 @@ public class Event implements IEvent {
 
     @Override
     public String getOrigin() {
-        return null;
+        return GsonUtil.getString(getJson(), EventKey.Origin.get());
     }
 
     @Override

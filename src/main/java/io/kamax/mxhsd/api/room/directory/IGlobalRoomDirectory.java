@@ -20,10 +20,10 @@
 
 package io.kamax.mxhsd.api.room.directory;
 
-import java.util.Optional;
+import java.util.List;
 
-public interface IRoomDirectory {
+public interface IGlobalRoomDirectory extends IRoomDirectory {
 
-    Optional<IRoomAliasLookup> lookup(String alias);
+    List<String> getAliases(String roomId);
 
 }

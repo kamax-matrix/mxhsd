@@ -109,14 +109,15 @@ public class Room implements IRoom {
                 ISignedEvent evSigned = entry.get();
                 log.debug("Signed event: {}", GsonUtil.getPrettyForLog(evSigned.getJson()));
                 log.info("Room {}: event {} stored at index {}", id, evSigned.getId(), entry.streamIndex());
-
-                if (RoomEventType.from(evSigned.getType()).isState()) {
-                    log.debug("Room {} new state: {}", id, GsonUtil.getPrettyForLog(state));
-                }
+                boolean changed = stateBuilder.addEvent(evSigned);
 
                 RoomState newState = stateBuilder.build();
                 prevStates.put(evSigned.getId(), newState);
                 setCurrentState(newState);
+
+                if (changed) {
+                    log.debug("Room {} new state: {}", id, GsonUtil.getPrettyForLog(state));
+                }
 
                 return evSigned;
             }

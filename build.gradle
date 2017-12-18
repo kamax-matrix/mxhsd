@@ -43,7 +43,7 @@ dependencies {
     compile 'org.apache.commons:commons-lang3:3.5'
 
     // Matrix Java SDK
-    compile 'io.kamax:matrix-java-sdk:0.0.2-21-gf012a90'
+    compile 'io.kamax:matrix-java-sdk:0.0.3'
 
     // Spring boot for HTTP container
     compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'

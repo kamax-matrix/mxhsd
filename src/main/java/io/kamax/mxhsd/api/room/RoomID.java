@@ -20,6 +20,8 @@
 
 package io.kamax.mxhsd.api.room;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
 public class RoomID {
 
     private static final String sigill = "!";
-    private static final Pattern idPattern = Pattern.compile(sigill + "(.*):(.+)");
+    private static final Pattern idPattern = Pattern.compile(sigill + "(.+?):(.+)");
 
     private String id;
     private String localpart;
@@ -65,6 +67,10 @@ public class RoomID {
 
     public String getDomain() {
         return domain;
+    }
+
+    public boolean isLocal(String domain) {
+        return StringUtils.equals(this.domain, domain);
     }
 
 }

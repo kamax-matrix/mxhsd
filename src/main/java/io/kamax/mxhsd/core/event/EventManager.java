@@ -131,7 +131,7 @@ public class EventManager implements IEventManager {
     private JsonObject sign(JsonObject base) {
         JsonObject signBase = gson.fromJson(gson.toJson(base), JsonObject.class); // TODO how to do better?
 
-        signBase.keySet().forEach(key -> {
+        new HashSet<>(signBase.keySet()).forEach(key -> {
             if (!essentialTopKeys.contains(key)) signBase.remove(key);
         });
 

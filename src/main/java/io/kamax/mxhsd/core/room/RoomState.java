@@ -113,11 +113,11 @@ public class RoomState implements IRoomState {
             r.events = new HashMap<>(events);
         }
 
-        public void addEvent(IEvent ev) {
+        public boolean addEvent(IEvent ev) {
             JsonObject json = ev.getJson();
             if (!json.has(EventKey.StateKey.get())) {
                 // Ignoring non-state event
-                return;
+                return false;
             }
 
             String sKey = GsonUtil.getString(json, EventKey.StateKey.get());
@@ -133,6 +133,8 @@ public class RoomState implements IRoomState {
                 r.plsId = ev.getId();
                 r.pls = pl;
             }
+
+            return true;
         }
 
         private void setMember(MembershipContext ev) {
@@ -207,6 +209,11 @@ public class RoomState implements IRoomState {
     @Override
     public boolean isAccessibleAs(String user) {
         return true;
+    }
+
+    @Override
+    public Optional<String> findEventFor(String type, String key) {
+        return Optional.ofNullable(events.get(type + key));
     }
 
     @Override

@@ -21,10 +21,11 @@
 package io.kamax.mxhsd.api.room.event;
 
 import com.google.gson.JsonObject;
+import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.INakedEvent;
 import io.kamax.mxhsd.api.event.NakedContentEvent;
-import io.kamax.mxhsd.api.room.RoomAlias;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
 import java.util.ArrayList;
@@ -33,7 +34,31 @@ import java.util.List;
 
 public class RoomAliasEvent extends NakedContentEvent {
 
-    private List<String> aliases = new ArrayList<>();
+    public class Content {
+
+        private List<String> aliases;
+
+        Content(List<String> aliases) {
+            this.aliases = Collections.unmodifiableList(new ArrayList<>(aliases));
+        }
+
+        public List<String> getAliases() {
+            return aliases;
+        }
+
+    }
+
+    private String stateKey;
+
+    public RoomAliasEvent(String sender, String alias) {
+        this(sender, Collections.singletonList(alias));
+    }
+
+    public RoomAliasEvent(String sender, List<String> alias) {
+        super(RoomEventType.Aliases.get(), sender);
+        stateKey = new MatrixID(sender).getDomain();
+        setContent(new Content(alias));
+    }
 
     public RoomAliasEvent(INakedEvent ev) {
         this(ev.getJson());
@@ -42,16 +67,15 @@ public class RoomAliasEvent extends NakedContentEvent {
     public RoomAliasEvent(JsonObject o) {
         super(o);
 
+        GsonUtil.findString(o, EventKey.StateKey.get()).ifPresent(s -> stateKey = s);
+
         if (!RoomEventType.Aliases.is(getType())) {
             throw new IllegalArgumentException("Type is not " + RoomEventType.Aliases.get());
         }
-
-        GsonUtil.getArrayOrThrow(content, "aliases")
-                .forEach(v -> aliases.add(RoomAlias.from(v.getAsString()).getId()));
     }
 
     public List<String> getAliases() {
-        return Collections.unmodifiableList(aliases);
+        return GsonUtil.get().fromJson(content, Content.class).getAliases();
     }
 
 }

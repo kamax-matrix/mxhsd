@@ -21,6 +21,7 @@
 package io.kamax.mxhsd.api.event;
 
 import com.google.gson.JsonObject;
+import io.kamax.mxhsd.GsonUtil;
 
 public class NakedContentEvent extends NakedEvent {
 
@@ -42,6 +43,10 @@ public class NakedContentEvent extends NakedEvent {
     public NakedContentEvent(String type, String sender, JsonObject content) {
         super(type, sender);
         this.content = content;
+    }
+
+    protected void setContent(Object o) {
+        content = GsonUtil.get().toJsonTree(o).getAsJsonObject();
     }
 
     public JsonObject getContent() {

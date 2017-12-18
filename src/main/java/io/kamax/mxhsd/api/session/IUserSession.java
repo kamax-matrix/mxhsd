@@ -24,7 +24,7 @@ import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.device.IDevice;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomCreateOptions;
-import io.kamax.mxhsd.api.room.directory.IRoomDirectory;
+import io.kamax.mxhsd.api.room.directory.IUserRoomDirectory;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncOptions;
 import io.kamax.mxhsd.api.user.IHomeserverUser;
@@ -51,7 +51,7 @@ public interface IUserSession {
 
     void setReadMarker(String roomId, String type, String eventId); // TODO move into obj representing the user view of a room
 
-    IRoomDirectory getRoomDirectory();
+    IUserRoomDirectory getRoomDirectory();
 
     void logout();
 

@@ -38,6 +38,7 @@ import static junit.framework.TestCase.assertTrue;
 
 public class GenericHomeserverTest {
 
+    protected HomeserverState state;
     protected Homeserver hs;
     protected final String username = "test";
     protected final String password = username;
@@ -52,8 +53,8 @@ public class GenericHomeserverTest {
 
     @Before
     public void beforeClass() {
-        HomeserverState state = new HomeserverState();
-        state.setDomain("localhost");
+        state = new HomeserverState();
+        state.setDomain("localhost:8779");
         state.setDevMgr(new DeviceManager());
         state.setAuthMgr((domain, user, password) -> new MatrixID(user, domain));
         state.setKeyMgr(new KeyManager("data/sign.key"));

@@ -48,6 +48,12 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
         return instance.toJsonTree(o).getAsJsonObject();
     }
 
+    public static JsonObject getObj(String key, Object value) {
+        JsonObject obj = new JsonObject();
+        obj.add(key, instance.toJsonTree(value));
+        return obj;
+    }
+
     public static Gson get() {
         return instance;
     }

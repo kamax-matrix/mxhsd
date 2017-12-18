@@ -21,62 +21,59 @@
 package io.kamax.mxhsd_test.core.room.directory;
 
 import io.kamax.mxhsd.api.room.RoomAlias;
-import io.kamax.mxhsd.api.room.RoomID;
 import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
-import io.kamax.mxhsd.core.HomeserverState;
-import io.kamax.mxhsd.core.event.EventManager;
-import io.kamax.mxhsd.core.room.directory.RoomDirectory;
+import io.kamax.mxhsd.api.room.directory.IUserRoomDirectory;
+import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.core.room.directory.GlobalRoomDirectory;
+import io.kamax.mxhsd_test.core.GenericHomeserverTest;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Optional;
 
 import static junit.framework.TestCase.assertTrue;
 
-public class RoomDirectoryTest {
+public class RoomDirectoryTest extends GenericHomeserverTest {
 
-    private static HomeserverState state;
-    private RoomDirectory dir;
-
-    @BeforeClass
-    public static void beforeClass() {
-        state = new HomeserverState();
-        state.setDomain("localhost");
-        state.setEvMgr(new EventManager(state));
-    }
+    private GlobalRoomDirectory dir;
+    private IUserSession s;
+    private IUserRoomDirectory uDir;
 
     @Before
     public void before() {
-        dir = new RoomDirectory(state);
+        state.setRoomDir(dir = new GlobalRoomDirectory(state));
+        uDir = (s = login()).getRoomDirectory();
     }
 
     @Test
     public void basicAddRemove() {
-        String id = RoomID.from("a", state.getDomain()).getId();
+        String id = createRoomHelper(s).getId();
         String alias = RoomAlias.from("test", state.getDomain()).getId();
 
         assertTrue(!dir.lookup(alias).isPresent());
-        dir.add(alias, id);
+        uDir.add(alias, id);
 
         IRoomAliasLookup lookup = dir.lookup(alias).orElseThrow(IllegalStateException::new);
         assertTrue(lookup.getId(), id.equals(lookup.getId()));
         assertTrue(alias.equals(lookup.getAlias()));
 
-        dir.remove(alias);
-        assertTrue(!dir.lookup(alias).isPresent());
+        uDir.remove(alias);
+        Optional<IRoomAliasLookup> o = dir.lookup(alias);
+        assertTrue(!o.isPresent());
     }
 
     @Test(expected = IllegalStateException.class)
     public void failToAddExistingAlias() {
-        String id = RoomID.from("a", state.getDomain()).getId();
+        String id = createRoomHelper(s).getId();
         String alias = RoomAlias.from("test", state.getDomain()).getId();
-        dir.add(alias, id);
-        dir.add(alias, id);
+        uDir.add(alias, id);
+        uDir.add(alias, id);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void failToRemoveNonExistingAlias() {
         String alias = RoomAlias.from("test", state.getDomain()).getId();
-        dir.remove(alias);
+        uDir.remove(alias);
     }
 
 }

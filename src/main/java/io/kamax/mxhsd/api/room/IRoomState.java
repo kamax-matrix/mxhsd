@@ -52,6 +52,12 @@ public interface IRoomState {
 
     boolean isAccessibleAs(String user);
 
+    Optional<String> findEventFor(String type, String key);
+
+    default Optional<String> findEventFor(RoomEventType type, String key) {
+        return findEventFor(type.get(), key);
+    }
+
     Map<String, String> getEvents();
 
 }

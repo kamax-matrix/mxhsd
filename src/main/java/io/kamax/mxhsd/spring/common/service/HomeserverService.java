@@ -29,6 +29,7 @@ import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
 import io.kamax.mxhsd.core.room.RoomManager;
+import io.kamax.mxhsd.core.room.directory.GlobalRoomDirectory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,7 @@ public class HomeserverService {
         state.setRoomMgr(new RoomManager(state));
         state.setAuthMgr(new DumbAuthProvider());
         state.setDevMgr(new DeviceManager());
+        state.setRoomDir(new GlobalRoomDirectory(state));
         srv = new Homeserver(state);
     }
 

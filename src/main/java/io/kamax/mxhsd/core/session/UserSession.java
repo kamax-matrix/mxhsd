@@ -32,7 +32,7 @@ import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomCreateOptions;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventType;
-import io.kamax.mxhsd.api.room.directory.IRoomDirectory;
+import io.kamax.mxhsd.api.room.directory.IUserRoomDirectory;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.api.session.IUserSession;
 import io.kamax.mxhsd.api.sync.ISyncData;
@@ -366,8 +366,8 @@ public class UserSession implements IUserSession {
     }
 
     @Override
-    public IRoomDirectory getRoomDirectory() {
-        return null;
+    public IUserRoomDirectory getRoomDirectory() {
+        return new UserRoomDirectory(global, user.getId());
     }
 
     @Override

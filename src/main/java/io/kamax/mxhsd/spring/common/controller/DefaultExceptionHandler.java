@@ -38,6 +38,10 @@ public class DefaultExceptionHandler {
         return "{\"errcode\":\"" + erroCode + "\",\"error\":\"" + error + "\"}";
     }
 
+    public static String handle(String error) {
+        return handle("M_UNKNOWN", error);
+    }
+
     public String handleException(MatrixException e) {
         return handle(e.getErrorCode(), e.getError());
     }
@@ -58,6 +62,18 @@ public class DefaultExceptionHandler {
     @ExceptionHandler(InvalidRequestException.class)
     public String handle(InvalidRequestException e) {
         return handleException(e);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public String handle(IllegalArgumentException e) {
+        return handle(e.getMessage());
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalStateException.class)
+    public String handle(IllegalStateException e) {
+        return handle(e.getMessage());
     }
 
     @ResponseStatus(HttpStatus.FORBIDDEN)
