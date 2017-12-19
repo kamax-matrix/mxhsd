@@ -22,8 +22,8 @@ package io.kamax.mxhsd_test.core.room.directory;
 
 import io.kamax.mxhsd.api.room.RoomAlias;
 import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
-import io.kamax.mxhsd.api.room.directory.IUserRoomDirectory;
-import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
+import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.core.room.directory.GlobalRoomDirectory;
 import io.kamax.mxhsd_test.core.GenericHomeserverTest;
 import org.junit.Before;
@@ -33,15 +33,14 @@ import java.util.Optional;
 
 import static junit.framework.TestCase.assertTrue;
 
-public class RoomDirectoryTest extends GenericHomeserverTest {
+public class UserRoomDirectoryTest extends GenericHomeserverTest {
 
-    private GlobalRoomDirectory dir;
     private IUserSession s;
     private IUserRoomDirectory uDir;
 
     @Before
     public void before() {
-        state.setRoomDir(dir = new GlobalRoomDirectory(state));
+        state.setRoomDir(new GlobalRoomDirectory(state));
         uDir = (s = login()).getRoomDirectory();
     }
 
@@ -50,15 +49,15 @@ public class RoomDirectoryTest extends GenericHomeserverTest {
         String id = createRoomHelper(s).getId();
         String alias = RoomAlias.from("test", state.getDomain()).getId();
 
-        assertTrue(!dir.lookup(alias).isPresent());
+        assertTrue(!uDir.lookup(alias).isPresent());
         uDir.add(alias, id);
 
-        IRoomAliasLookup lookup = dir.lookup(alias).orElseThrow(IllegalStateException::new);
+        IRoomAliasLookup lookup = uDir.lookup(alias).orElseThrow(IllegalStateException::new);
         assertTrue(lookup.getId(), id.equals(lookup.getId()));
         assertTrue(alias.equals(lookup.getAlias()));
 
         uDir.remove(alias);
-        Optional<IRoomAliasLookup> o = dir.lookup(alias);
+        Optional<IRoomAliasLookup> o = uDir.lookup(alias);
         assertTrue(!o.isPresent());
     }
 

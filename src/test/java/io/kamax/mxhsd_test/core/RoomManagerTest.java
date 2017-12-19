@@ -26,7 +26,7 @@ import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
-import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;

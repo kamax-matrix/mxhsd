@@ -23,7 +23,7 @@ package io.kamax.mxhsd.core.room.directory;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
 import io.kamax.mxhsd.api.room.RoomEventType;
-import io.kamax.mxhsd.api.room.directory.IGlobalRoomDirectory;
+import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
 import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.RoomAliasEvent;
 import io.kamax.mxhsd.core.HomeserverState;
@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class GlobalRoomDirectory implements IGlobalRoomDirectory {
+public class GlobalRoomDirectory implements ICoreRoomDirectory {
 
     private final Logger log = LoggerFactory.getLogger(GlobalRoomDirectory.class);
 

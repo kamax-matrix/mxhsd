@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.session;
+package io.kamax.mxhsd.core.session.user;
 
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
@@ -32,9 +32,9 @@ import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomCreateOptions;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventType;
-import io.kamax.mxhsd.api.room.directory.IUserRoomDirectory;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
-import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
+import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncOptions;
 import io.kamax.mxhsd.api.user.IHomeserverUser;

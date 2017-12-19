@@ -26,7 +26,7 @@ import io.kamax.mxhsd.api.auth.IAuthProvider;
 import io.kamax.mxhsd.api.device.IDeviceManager;
 import io.kamax.mxhsd.api.event.IEventManager;
 import io.kamax.mxhsd.api.room.IRoomManager;
-import io.kamax.mxhsd.api.room.directory.IGlobalRoomDirectory;
+import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
 
 public class HomeserverState {
 
@@ -37,7 +37,7 @@ public class HomeserverState {
     private SignatureManager signMgr;
     private IEventManager evMgr;
     private IRoomManager roomMgr;
-    private IGlobalRoomDirectory roomDir;
+    private ICoreRoomDirectory roomDir;
 
     public String getDomain() {
         return domain;
@@ -95,11 +95,11 @@ public class HomeserverState {
         this.roomMgr = roomMgr;
     }
 
-    public IGlobalRoomDirectory getRoomDir() {
+    public ICoreRoomDirectory getRoomDir() {
         return roomDir;
     }
 
-    public void setRoomDir(IGlobalRoomDirectory roomDir) {
+    public void setRoomDir(ICoreRoomDirectory roomDir) {
         this.roomDir = roomDir;
     }
 

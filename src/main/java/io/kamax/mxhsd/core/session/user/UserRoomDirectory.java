@@ -18,14 +18,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.session;
+package io.kamax.mxhsd.core.session.user;
 
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.RoomID;
 import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
-import io.kamax.mxhsd.api.room.directory.IUserRoomDirectory;
 import io.kamax.mxhsd.api.room.event.RoomAliasEvent;
+import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
 import io.kamax.mxhsd.core.HomeserverState;
 
 import java.util.ArrayList;

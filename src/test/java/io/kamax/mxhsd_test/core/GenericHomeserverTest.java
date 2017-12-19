@@ -24,7 +24,7 @@ import io.kamax.matrix.MatrixID;
 import io.kamax.matrix.sign.KeyManager;
 import io.kamax.matrix.sign.SignatureManager;
 import io.kamax.mxhsd.api.room.IRoom;
-import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.core.Homeserver;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.device.DeviceManager;

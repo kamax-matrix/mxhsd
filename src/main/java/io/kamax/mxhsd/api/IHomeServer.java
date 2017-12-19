@@ -20,7 +20,8 @@
 
 package io.kamax.mxhsd.api;
 
-import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.session.server.IServerSession;
+import io.kamax.mxhsd.api.session.user.IUserSession;
 
 import java.util.Optional;
 
@@ -55,5 +56,13 @@ public interface IHomeServer {
      * @return The user session, if one exists
      */
     Optional<IUserSession> findUserSession(String token);
+
+    /**
+     * Retrieve an authenticated server session with the provided signature.
+     *
+     * @param signature Signature that identify and authenticate this request
+     * @return The server session
+     */
+    IServerSession getServerSession(String signature);
 
 }

@@ -18,12 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room.directory;
+package io.kamax.mxhsd.api.session.server;
 
-public interface IUserRoomDirectory extends IRoomDirectory {
+public interface IServerSession {
 
-    void add(String alias, String roomId);
-
-    void remove(String alias);
+    IServerRoomDirectory getDirectory();
 
 }

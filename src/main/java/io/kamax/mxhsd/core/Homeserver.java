@@ -26,9 +26,11 @@ import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.device.IDevice;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.exception.InvalidTokenException;
-import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.session.server.IServerSession;
+import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.api.user.IHomeserverUser;
-import io.kamax.mxhsd.core.session.UserSession;
+import io.kamax.mxhsd.core.session.server.ServerSession;
+import io.kamax.mxhsd.core.session.user.UserSession;
 import io.kamax.mxhsd.core.user.HomeserverUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +80,11 @@ public class Homeserver implements IHomeServer {
     @Override
     public Optional<IUserSession> findUserSession(String token) {
         return Optional.ofNullable(sessions.get(token));
+    }
+
+    @Override
+    public IServerSession getServerSession(String signature) {
+        return new ServerSession(state);
     }
 
 }

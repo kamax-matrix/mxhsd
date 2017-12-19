@@ -22,7 +22,7 @@ package io.kamax.mxhsd_test.core;
 
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomEventChunk;
-import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
 import io.kamax.mxhsd.core.sync.SyncOptions;

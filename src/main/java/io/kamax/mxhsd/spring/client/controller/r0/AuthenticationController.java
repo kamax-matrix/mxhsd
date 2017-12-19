@@ -24,7 +24,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.session.IUserSession;
+import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;

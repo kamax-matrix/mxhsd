@@ -3,6 +3,8 @@ package io.kamax.mxhsd.spring.federation.controller.v1.query;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.IHomeServer;
+import io.kamax.mxhsd.api.exception.NotFoundException;
+import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import io.kamax.mxhsd.spring.federation.controller.v1.FederationAPIv1;
@@ -29,10 +31,15 @@ public class RoomDirectoryController extends JsonController {
 
     @RequestMapping(method = GET, path = "/directory")
     public String queryRoomAlias(HttpServletRequest req, @RequestParam("room_alias") String roomAlias) {
+        log(req);
+
+        IRoomAliasLookup lookup = hs.getServerSession("").getDirectory().lookup(roomAlias)
+                .orElseThrow(() -> new NotFoundException("No room with alias " + roomAlias + " exists"));
+
         JsonArray servers = new JsonArray();
-        servers.add(hs.getDomain());
+        lookup.getServers().forEach(servers::add);
         JsonObject body = new JsonObject();
-        body.addProperty("room_id", "!roomid:" + hs.getDomain());
+        body.addProperty("room_id", lookup.getId());
         body.add("servers", servers);
 
         return toJson(body);

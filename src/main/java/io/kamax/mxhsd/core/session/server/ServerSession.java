@@ -18,12 +18,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room.directory;
+package io.kamax.mxhsd.core.session.server;
 
-import java.util.List;
+import io.kamax.mxhsd.api.session.server.IServerRoomDirectory;
+import io.kamax.mxhsd.api.session.server.IServerSession;
+import io.kamax.mxhsd.core.HomeserverState;
 
-public interface IGlobalRoomDirectory extends IRoomDirectory {
+public class ServerSession implements IServerSession {
 
-    List<String> getAliases(String roomId);
+    private HomeserverState global;
+
+    public ServerSession(HomeserverState global) {
+        this.global = global;
+    }
+
+    @Override
+    public IServerRoomDirectory getDirectory() {
+        return new ServerRoomDirectory(global);
+    }
 
 }

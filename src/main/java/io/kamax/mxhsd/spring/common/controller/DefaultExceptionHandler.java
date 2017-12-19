@@ -32,9 +32,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class DefaultExceptionHandler {
 
-    private Logger log = LoggerFactory.getLogger(DefaultExceptionHandler.class);
+    private static Logger log = LoggerFactory.getLogger(DefaultExceptionHandler.class);
 
     public static String handle(String erroCode, String error) {
+        log.info("Reply: {} - {}", erroCode, error);
+
         return "{\"errcode\":\"" + erroCode + "\",\"error\":\"" + error + "\"}";
     }
 
@@ -85,6 +87,12 @@ public class DefaultExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(InvalidTokenException.class)
     public String handle(InvalidTokenException e) {
+        return handleException(e);
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(NotFoundException.class)
+    public String handle(NotFoundException e) {
         return handleException(e);
     }
 
