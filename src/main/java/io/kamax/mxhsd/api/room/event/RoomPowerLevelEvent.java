@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.api.room.event;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
@@ -27,7 +28,19 @@ import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
 public class RoomPowerLevelEvent extends NakedContentEvent {
 
+    public RoomPowerLevelEvent get(JsonObject o) {
+        RoomPowerLevelEvent e = new RoomPowerLevelEvent(o);
+        if (!RoomEventType.PowerLevels.is(e.getType())) {
+            throw new IllegalArgumentException("Expected event JSON with type " + RoomEventType.PowerLevels.get() + " but got " + e.getType());
+        }
+        return e;
+    }
+
     private String stateKey = "";
+
+    private RoomPowerLevelEvent(JsonObject o) {
+        super(o);
+    }
 
     public RoomPowerLevelEvent(String sender, RoomPowerLevels pls) {
         super(RoomEventType.PowerLevels.get(), sender, GsonUtil.getObj(pls));

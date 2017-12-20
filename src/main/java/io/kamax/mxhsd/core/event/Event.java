@@ -35,8 +35,8 @@ public class Event implements IEvent {
     private String roomId;
     private String sender;
     private long depth;
-    private Set<String> parents = new HashSet<>();
-    private Set<String> authorization = new HashSet<>();
+    private Set<String> parents;
+    private Set<String> authorization;
     private String json;
 
     public Event(String id, String type, String sender, String roomId, long depth, Collection<String> parents, Collection<String> auth, String json) {

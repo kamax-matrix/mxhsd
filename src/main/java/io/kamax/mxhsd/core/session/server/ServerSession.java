@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.core.session.server;
 
+import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.session.server.IServerRoomDirectory;
 import io.kamax.mxhsd.api.session.server.IServerSession;
 import io.kamax.mxhsd.core.HomeserverState;
@@ -35,6 +36,11 @@ public class ServerSession implements IServerSession {
     @Override
     public IServerRoomDirectory getDirectory() {
         return new ServerRoomDirectory(global);
+    }
+
+    @Override
+    public IRoom getRoom(String id) {
+        return global.getRoomMgr().getRoom(id);
     }
 
 }

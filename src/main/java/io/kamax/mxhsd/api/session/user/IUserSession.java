@@ -22,8 +22,8 @@ package io.kamax.mxhsd.api.session.user;
 
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.device.IDevice;
-import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomCreateOptions;
+import io.kamax.mxhsd.api.room.IUserRoom;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncOptions;
 import io.kamax.mxhsd.api.user.IHomeserverUser;
@@ -40,11 +40,11 @@ public interface IUserSession {
 
     ISyncData fetchData(ISyncOptions options);
 
-    IRoom createRoom(IRoomCreateOptions options);
+    IUserRoom createRoom(IRoomCreateOptions options);
 
-    IRoom getRoom(String id);
+    IUserRoom getRoom(String id);
 
-    IRoom joinRoom(String id); // TODO move into obj representing the user view of a room
+    IUserRoom joinRoom(String id); // TODO move into obj representing the user view of a room
 
     void leaveRoom(String id); // TODO move into obj representing the user view of a room
 

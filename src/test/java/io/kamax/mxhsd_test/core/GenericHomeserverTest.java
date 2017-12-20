@@ -23,7 +23,7 @@ package io.kamax.mxhsd_test.core;
 import io.kamax.matrix.MatrixID;
 import io.kamax.matrix.sign.KeyManager;
 import io.kamax.matrix.sign.SignatureManager;
-import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.room.IUserRoom;
 import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.core.Homeserver;
 import io.kamax.mxhsd.core.HomeserverState;
@@ -66,7 +66,7 @@ public class GenericHomeserverTest {
         assertTrue(StringUtils.isNotBlank(hs.getDomain()));
     }
 
-    public IRoom createRoomHelper(IUserSession session) {
+    public IUserRoom createRoomHelper(IUserSession session) {
         RoomCreateOptions opts = new RoomCreateOptions();
         opts.setCreator(session.getUser().getId());
         opts.setPreset("private_chat");

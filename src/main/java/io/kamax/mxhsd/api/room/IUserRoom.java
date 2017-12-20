@@ -18,41 +18,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+package io.kamax.mxhsd.api.room;
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
+import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.NakedContentEvent;
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.7.RELEASE'
-    }
-}
+public interface IUserRoom extends ICoreRoom {
 
-repositories {
-    maven { url "https://kamax.io/maven/releases" }
-    maven { url "https://kamax.io/maven/snapshots" }
-    mavenCentral()
-}
+    ISignedEvent inject(NakedContentEvent ev);
 
-dependencies {
-    // Various utilities
-    compile 'org.apache.commons:commons-lang3:3.5'
+    IRoomEventChunk getEventsChunk(String from, int amount);
 
-    // Matrix Java SDK
-    compile 'io.kamax:matrix-java-sdk:0.0.4'
-
-    // Spring boot for HTTP container
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
-
-    // Event bus
-    compile 'net.engio:mbassador:1.3.1'
-
-    testCompile 'junit:junit:4.12'
-}
-
-springBoot {
-    executable = true
 }

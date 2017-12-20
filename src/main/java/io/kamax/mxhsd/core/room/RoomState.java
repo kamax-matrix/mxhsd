@@ -29,6 +29,7 @@ import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventKey;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
+import io.kamax.mxhsd.api.room.event.RoomJoinRulesEvent;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang.StringUtils;
@@ -221,6 +222,10 @@ public class RoomState implements IRoomState {
         return Collections.unmodifiableMap(events);
     }
 
+    private JsonObject getEventJson(String id) {
+        return global.getEvMgr().get(id).get().getJson();
+    }
+
     private String getMembershipOrDefault(String member) {
         return getMembership(member).map(IMembershipContext::getMembership).orElseGet(RoomMembership.Leave::get);
     }
@@ -271,7 +276,6 @@ public class RoomState implements IRoomState {
             if (Join.is(membership)) {
                 IEvent firstParentEv = global.getEvMgr().get(ev.getParents().get(0)).get();
                 if (RoomEventType.Creation.is(firstParentEv.getType()) && ev.getParents().size() == 1) {
-
                     String creator = EventKey.Content.getObj(firstParentEv.getJson()).get("creator").getAsString();
                     if (!StringUtils.equals(EventKey.StateKey.getString(evJson), creator)) {
                         return auth.deny(ev, "sender is not creator");
@@ -292,8 +296,11 @@ public class RoomState implements IRoomState {
                     return auth.allow(stateBuilder);
                 }
 
-                if (!StringUtils.equals(EventKey.Content.getObj(evJson).get("join_rule").getAsString(), "public")) {
-                    return auth.deny(ev, "room is private and sender was never invited");
+                String rule = findEventFor("join_rule", "")
+                        .map(id -> RoomJoinRulesEvent.get(getEventJson(id)).getRule())
+                        .orElse("private");
+                if (!StringUtils.equals(rule, "public") && false) {
+                    return auth.deny(ev, "room is not public and sender was never invited");
                 }
 
                 return auth.allow(stateBuilder);

@@ -20,8 +20,12 @@
 
 package io.kamax.mxhsd.api.session.server;
 
+import io.kamax.mxhsd.api.room.IServerRoom;
+
 public interface IServerSession {
 
     IServerRoomDirectory getDirectory();
+
+    IServerRoom getRoom(String id);
 
 }

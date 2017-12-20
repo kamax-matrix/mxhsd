@@ -22,8 +22,8 @@ package io.kamax.mxhsd_test.core;
 
 import io.kamax.matrix.MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
-import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomState;
+import io.kamax.mxhsd.api.room.IUserRoom;
 import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.api.session.user.IUserSession;
@@ -39,7 +39,7 @@ public class RoomManagerTest extends GenericHomeserverTest {
     @Test
     public void createPrivateRoom() {
         IUserSession session = login();
-        IRoom room = createRoomHelper(session);
+        IUserRoom room = createRoomHelper(session);
         assertTrue(StringUtils.isNotBlank(room.getId()));
         assertNotNull(room.getCurrentState());
         assertNotNull(room.getCreation());
@@ -54,7 +54,7 @@ public class RoomManagerTest extends GenericHomeserverTest {
         opts.setCreator(session.getUser().getId());
         opts.setPreset("trusted_private_chat");
         opts.addInvitee(new MatrixID("@test02:localhost"));
-        IRoom room = session.createRoom(opts);
+        IUserRoom room = session.createRoom(opts);
         assertTrue(StringUtils.isNotBlank(room.getId()));
         // TODO check preset events and invite events
     }
@@ -63,7 +63,7 @@ public class RoomManagerTest extends GenericHomeserverTest {
     public void leaveRoom() {
         IUserSession session = login();
         String mxid = session.getUser().getId().getId();
-        IRoom room = createRoomHelper(session);
+        IUserRoom room = createRoomHelper(session);
         room.inject(new RoomMembershipEvent(mxid, RoomMembership.Leave.get(), mxid));
         // TODO check the returned event content
         IRoomState state = room.getCurrentState();

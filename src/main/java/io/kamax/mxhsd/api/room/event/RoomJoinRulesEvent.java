@@ -20,14 +20,34 @@
 
 package io.kamax.mxhsd.api.room.event;
 
+import com.google.gson.JsonObject;
+import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
 
 public class RoomJoinRulesEvent extends NakedContentEvent {
 
+    public static RoomJoinRulesEvent get(JsonObject o) {
+        RoomJoinRulesEvent e = new RoomJoinRulesEvent(o);
+        if (!RoomEventType.JoinRules.is(e.getType())) {
+            throw new IllegalArgumentException("Expected event JSON with type " + RoomEventType.JoinRules.get() + " but got " + e.getType());
+        }
+        return e;
+    }
+
+    private String stateKey = "";
+
+    private RoomJoinRulesEvent(JsonObject o) {
+        super(o);
+    }
+
     public RoomJoinRulesEvent(String sender, String rule) {
         super(RoomEventType.JoinRules.get(), sender);
         content.addProperty("join_rule", rule); // FIXME use enum
+    }
+
+    public String getRule() {
+        return GsonUtil.getOrThrow(content, "join_rule");
     }
 
 }

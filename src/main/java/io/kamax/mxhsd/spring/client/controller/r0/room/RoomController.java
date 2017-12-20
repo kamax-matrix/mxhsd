@@ -24,7 +24,7 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.room.IUserRoom;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
@@ -60,12 +60,12 @@ public class RoomController extends JsonController {
 
         // FIXME no hardcoding!
         GsonUtil.findArray(o, "invite").ifPresent(v ->
-                v.forEach(i -> options.addInvitee(new MatrixID(i.getAsString()))));
+                v.forEach(i -> options.addInvitee(MatrixID.asAcceptable(i.getAsString()))));
 
         // FIXME no hardcoding!
         GsonUtil.findString(o, "preset").ifPresent(options::setPreset);
 
-        IRoom room = hs.getUserSession(token).createRoom(options);
+        IUserRoom room = hs.getUserSession(token).createRoom(options);
 
         JsonObject reply = new JsonObject();
         reply.addProperty("room_id", room.getId());
@@ -80,7 +80,7 @@ public class RoomController extends JsonController {
     ) {
         log(req);
 
-        IRoom r = hs.getUserSession(token).joinRoom(roomIdOrAlias);
+        IUserRoom r = hs.getUserSession(token).joinRoom(roomIdOrAlias);
 
         JsonObject json = new JsonObject();
         json.addProperty("room_id", r.getId());

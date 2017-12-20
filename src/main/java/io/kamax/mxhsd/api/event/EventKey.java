@@ -81,6 +81,10 @@ public enum EventKey {
         return Optional.empty();
     }
 
+    public String getStringOrThrow(JsonObject o) {
+        return findString(o).orElseThrow(() -> new MalformedEventException(key));
+    }
+
     public String getString(JsonObject o) {
         return GsonUtil.getString(o, key);
     }

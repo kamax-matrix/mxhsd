@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class EventManager implements IEventManager {
 
@@ -185,6 +186,14 @@ public class EventManager implements IEventManager {
         }
 
         return ev;
+    }
+
+    @Override
+    public List<ISignedEvent> get(Collection<String> ids) {
+        return ids.stream()
+                .map(this::get)
+                .map(ISignedEventStreamEntry::get)
+                .collect(Collectors.toList());
     }
 
     @Override

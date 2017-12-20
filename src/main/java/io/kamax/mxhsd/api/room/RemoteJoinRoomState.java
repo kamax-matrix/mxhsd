@@ -18,41 +18,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+package io.kamax.mxhsd.api.room;
 
-buildscript {
-    repositories {
-        mavenCentral()
+import io.kamax.mxhsd.api.event.ISignedEvent;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class RemoteJoinRoomState {
+
+    private List<ISignedEvent> state;
+
+    public RemoteJoinRoomState(List<ISignedEvent> state) {
+        this.state = new ArrayList<>(state);
     }
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.7.RELEASE'
+    public List<ISignedEvent> getState() {
+        return state;
     }
-}
 
-repositories {
-    maven { url "https://kamax.io/maven/releases" }
-    maven { url "https://kamax.io/maven/snapshots" }
-    mavenCentral()
-}
+    public void setState(List<ISignedEvent> state) {
+        this.state = state;
+    }
 
-dependencies {
-    // Various utilities
-    compile 'org.apache.commons:commons-lang3:3.5'
-
-    // Matrix Java SDK
-    compile 'io.kamax:matrix-java-sdk:0.0.4'
-
-    // Spring boot for HTTP container
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
-
-    // Event bus
-    compile 'net.engio:mbassador:1.3.1'
-
-    testCompile 'junit:junit:4.12'
-}
-
-springBoot {
-    executable = true
 }

@@ -20,8 +20,8 @@
 
 package io.kamax.mxhsd_test.core;
 
-import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomEventChunk;
+import io.kamax.mxhsd.api.room.IUserRoom;
 import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
@@ -40,7 +40,7 @@ public class UserSyncTest extends GenericHomeserverTest {
     @Test
     public void syncAfterRoomCreate() {
         IUserSession session = login();
-        IRoom room = createRoomHelper(session);
+        IUserRoom room = createRoomHelper(session);
 
         // We should have at least two events in the stream (creation, join)
         assertTrue(room.getCurrentState().getStreamIndex() > 0);
@@ -79,7 +79,7 @@ public class UserSyncTest extends GenericHomeserverTest {
     @Test
     public void getMessagesAfterRoomCreate() {
         IUserSession session = login();
-        IRoom room = createRoomHelper(session);
+        IUserRoom room = createRoomHelper(session);
         ISyncData syncData = session.fetchData(new SyncOptions());
 
         ISyncRoomData roomData = syncData.getJoinedRooms().stream()

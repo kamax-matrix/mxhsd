@@ -20,20 +20,23 @@
 
 package io.kamax.mxhsd.core.room;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.*;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.exception.InvalidRequestException;
-import io.kamax.mxhsd.api.room.IRoom;
-import io.kamax.mxhsd.api.room.IRoomEventChunk;
-import io.kamax.mxhsd.api.room.IRoomState;
-import io.kamax.mxhsd.api.room.RoomEventType;
+import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -58,7 +61,6 @@ public class Room implements IRoom {
         this.id = id;
         this.prevStates = new ConcurrentHashMap<>();
         setCurrentState(new RoomState.Builder(global, id).build());
-
     }
 
     @Override
@@ -78,7 +80,7 @@ public class Room implements IRoom {
 
     // FIXME use RWLock
     @Override
-    public synchronized IRoomState getCurrentState() {
+    public synchronized RoomState getCurrentState() {
         return state;
     }
 
@@ -139,14 +141,15 @@ public class Room implements IRoom {
 
     @Override
     public IRoomEventChunk getEventsChunk(String from, int amount) {
-        int index;
         try {
-            index = Integer.parseInt(from);
+            return getEventsChunk(Integer.parseInt(from), amount);
         } catch (NumberFormatException e) {
             throw new InvalidRequestException("From token is not in a valid format");
         }
+    }
 
-        ISignedEventStream stream = global.getEvMgr().getBackwardStreamFrom(index);
+    private IRoomEventChunk getEventsChunk(int streamIndex, int amount) {
+        ISignedEventStream stream = global.getEvMgr().getBackwardStreamFrom(streamIndex);
         List<ISignedEventStreamEntry> list = new ArrayList<>();
         int toFetch = amount;
 
@@ -171,11 +174,69 @@ public class Room implements IRoom {
         }
 
         RoomEventChunk.Builder builder = new RoomEventChunk.Builder();
-        builder.setStartToken(from);
-        builder.setEndToken(Integer.toString(list.stream().mapToInt(ISignedEventStreamEntry::streamIndex).min().orElse(index)));
+        builder.setStartToken(Integer.toString(streamIndex));
+        builder.setEndToken(Integer.toString(list.stream()
+                .mapToInt(ISignedEventStreamEntry::streamIndex)
+                .min()
+                .orElse(streamIndex)));
         list.forEach(ev -> builder.addEvent(ev.get().getJson()));
 
         return builder.get();
+    }
+
+    @Override
+    public JsonObject makeJoin(_MatrixID mxid) {
+        JsonArray prevEvents = new JsonArray();
+        global.getEvMgr().getBackwardStreamFrom(state.getStreamIndex())
+                .getNext(1)
+                .forEach(e -> prevEvents.add(e.get().getId()));
+
+        JsonObject event = new JsonObject();
+        event.addProperty(EventKey.Type.get(), RoomEventType.Membership.get());
+        event.add(EventKey.AuthEvents.get(), GsonUtil.asArray(getCreation().getId()));
+        event.add("content", GsonUtil.getObj("membership", RoomMembership.Join.get()));
+        event.addProperty(EventKey.Depth.get(), Integer.MAX_VALUE);
+        event.addProperty(EventKey.Origin.get(), global.getDomain());
+        event.addProperty(EventKey.Timestamp.get(), Instant.now().toEpochMilli());
+        event.add(EventKey.PreviousEvents.get(), prevEvents);
+        event.addProperty(EventKey.RoomId.get(), getId());
+        event.addProperty(EventKey.Sender.get(), mxid.getId());
+        event.addProperty(EventKey.StateKey.get(), mxid.getId());
+
+        return event;
+    }
+
+    @Override
+    public synchronized RemoteJoinRoomState injectJoin(ISignedEvent ev) {
+        RoomState state = getCurrentState();
+        RoomEventAuthorization eval = state.isAuthorized(ev);
+        if (!eval.isAuthorized()) {
+            log.debug("Room current state: {}", GsonUtil.getPrettyForLog(state));
+            log.error(eval.getReason());
+            throw new ForbiddenException("Unauthorized federated event");
+        }
+
+        RoomState.Builder stateBuilder = new RoomState.Builder(global, id).from(eval.getNewState());
+        log.info("Room {}: storing federated event {}", id, ev.getId());
+        ISignedEventStreamEntry entry = global.getEvMgr().store(ev);
+        stateBuilder.withStreamIndex(entry.streamIndex());
+
+        // We update extremities info
+        // FIXME we should clean up those which we are aware of
+        extremities.add(entry.get());
+        boolean changed = stateBuilder.addEvent(ev);
+
+        RoomState newState = stateBuilder.build();
+        prevStates.put(ev.getId(), newState);
+        setCurrentState(newState);
+
+        if (changed) {
+            log.debug("Room {} new state: {}", id, GsonUtil.getPrettyForLog(state));
+        }
+
+        Collection<String> eventIds = state.getEvents().values();
+        List<ISignedEvent> events = global.getEvMgr().get(eventIds);
+        return new RemoteJoinRoomState(events);
     }
 
 }
