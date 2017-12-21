@@ -18,6 +18,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.util.regex.Pattern
+
+String gitVersion() {
+    def versionPattern = Pattern.compile("v(\\d+\\.)?(\\d+\\.)?(\\d+)(-.*)?")
+    ByteArrayOutputStream out = new ByteArrayOutputStream()
+    def o = exec {
+        commandLine = ['git', 'describe', '--tags', '--always', '--dirty']
+        standardOutput = out
+        errorOutput = out
+        ignoreExitValue = true
+    }
+    if (o.exitValue != 0) {
+        if (o.exitValue != 128) {
+            printf("Unable to determine git version: %s", out.toString())
+        }
+
+        return "UNKNOWN"
+    }
+
+    def v = out.toString().replace(System.lineSeparator(), '')
+    return versionPattern.matcher(v).matches() ? v.substring(1) : v
+}
+
+String propValue(String propName, String defValue) {
+    (project.hasProperty(propName) && project.getProperty(propName)) ? project.getProperty(propName) : defValue
+}
+
+def dockerImageName = propValue('docker.image.name', project.name)
+def dockerImageTag = propValue('docker.image.tag', gitVersion())
+def dockerImage = dockerImageName + ':' + dockerImageTag
+
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 
@@ -42,7 +73,7 @@ dependencies {
     compile 'org.apache.commons:commons-lang3:3.5'
 
     // Matrix Java SDK
-    compile 'io.kamax:matrix-java-sdk:0.0.4'
+    compile 'io.kamax:matrix-java-sdk:0.0.5'
 
     // Spring boot for HTTP container
     compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
@@ -53,6 +84,26 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
+jar {
+    manifest {
+        attributes([
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : gitVersion(),
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd’T’HH:mm:ssZ")
+        ])
+    }
+}
+
 springBoot {
     executable = true
+}
+
+task dockerBuild(type: Exec, dependsOn: build) {
+    commandLine 'docker', 'build', '-t', dockerImage, project.rootDir
+
+    doLast {
+        exec {
+            commandLine 'docker', 'tag', dockerImage, "${dockerImageName}:latest-dev"
+        }
+    }
 }

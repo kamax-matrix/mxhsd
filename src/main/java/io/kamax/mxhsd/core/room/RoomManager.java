@@ -24,8 +24,8 @@ import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.event.*;
 import io.kamax.mxhsd.core.HomeserverState;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

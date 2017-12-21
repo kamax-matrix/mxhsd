@@ -22,7 +22,7 @@ package io.kamax.mxhsd.spring.common.config;
 
 import io.kamax.mxhsd.api.IHomeserverConfig;
 import io.kamax.mxhsd.spring.common.ConfigurationException;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 

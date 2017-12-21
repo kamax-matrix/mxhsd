@@ -27,7 +27,7 @@ import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.exception.MalformedEventException;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.event.PowerLevelKey;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;

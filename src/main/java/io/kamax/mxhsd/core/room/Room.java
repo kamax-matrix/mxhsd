@@ -30,7 +30,7 @@ import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.exception.InvalidRequestException;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.core.HomeserverState;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

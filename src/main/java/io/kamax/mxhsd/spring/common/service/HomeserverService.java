@@ -42,7 +42,7 @@ public class HomeserverService {
     public HomeserverService(IHomeserverConfig cfg) {
         HomeserverState state = new HomeserverState();
         state.setDomain(cfg.getDomain());
-        state.setKeyMgr(new KeyManager("data/sign.key"));
+        state.setKeyMgr(KeyManager.fromFile("data/sign.key"));
         state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));
         state.setEvMgr(new EventManager(state));
         state.setRoomMgr(new RoomManager(state));

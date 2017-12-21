@@ -32,7 +32,7 @@ import io.kamax.mxhsd.api.room.event.IMembershipContext;
 import io.kamax.mxhsd.api.room.event.RoomJoinRulesEvent;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.core.HomeserverState;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 

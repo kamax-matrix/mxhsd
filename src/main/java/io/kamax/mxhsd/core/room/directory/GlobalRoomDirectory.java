@@ -28,7 +28,7 @@ import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.RoomAliasEvent;
 import io.kamax.mxhsd.core.HomeserverState;
 import net.engio.mbassy.listener.Handler;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
