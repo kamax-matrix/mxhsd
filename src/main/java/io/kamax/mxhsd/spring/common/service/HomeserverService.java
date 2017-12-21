@@ -30,6 +30,7 @@ import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
 import io.kamax.mxhsd.core.room.RoomManager;
 import io.kamax.mxhsd.core.room.directory.GlobalRoomDirectory;
+import io.kamax.mxhsd.spring.common.config.InfoBuildConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,8 +40,10 @@ public class HomeserverService {
     private IHomeServer srv;
 
     @Autowired
-    public HomeserverService(IHomeserverConfig cfg) {
+    public HomeserverService(InfoBuildConfig info, IHomeserverConfig cfg) {
         HomeserverState state = new HomeserverState();
+        state.setAppName(info.getName());
+        state.setAppVersion(info.getVersion());
         state.setDomain(cfg.getDomain());
         state.setKeyMgr(KeyManager.fromFile("data/sign.key"));
         state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));

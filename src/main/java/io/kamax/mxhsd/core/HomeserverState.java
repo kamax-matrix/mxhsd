@@ -30,6 +30,8 @@ import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
 
 public class HomeserverState {
 
+    private String appName;
+    private String appVersion;
     private String domain;
     private IAuthProvider authMgr;
     private IDeviceManager devMgr;
@@ -38,6 +40,22 @@ public class HomeserverState {
     private IEventManager evMgr;
     private IRoomManager roomMgr;
     private ICoreRoomDirectory roomDir;
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
+    public String getAppVersion() {
+        return appVersion;
+    }
+
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
+    }
 
     public String getDomain() {
         return domain;

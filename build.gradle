@@ -20,6 +20,10 @@
 
 import java.util.regex.Pattern
 
+String propValue(String propName, String defValue) {
+    (project.hasProperty(propName) && project.getProperty(propName)) ? project.getProperty(propName) : defValue
+}
+
 String gitVersion() {
     def versionPattern = Pattern.compile("v(\\d+\\.)?(\\d+\\.)?(\\d+)(-.*)?")
     ByteArrayOutputStream out = new ByteArrayOutputStream()
@@ -39,10 +43,6 @@ String gitVersion() {
 
     def v = out.toString().replace(System.lineSeparator(), '')
     return versionPattern.matcher(v).matches() ? v.substring(1) : v
-}
-
-String propValue(String propName, String defValue) {
-    (project.hasProperty(propName) && project.getProperty(propName)) ? project.getProperty(propName) : defValue
 }
 
 def dockerImageName = propValue('docker.image.name', project.name)
@@ -84,13 +84,12 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
-jar {
-    manifest {
-        attributes([
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : gitVersion(),
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd’T’HH:mm:ssZ")
-        ])
+processResources {
+    doLast {
+        def configFile = new File(project.rootDir, 'build/resources/main/application.yaml')
+        String configContent = configFile.getText('UTF-8')
+        configContent = configContent.replaceAll(/info\.build\.version:.*/, "info.build.version: '${gitVersion()}'")
+        configFile.write(configContent, 'UTF-8')
     }
 }
 

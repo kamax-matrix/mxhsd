@@ -32,6 +32,7 @@ import io.kamax.mxhsd.api.user.IHomeserverUser;
 import io.kamax.mxhsd.core.session.server.ServerSession;
 import io.kamax.mxhsd.core.session.user.UserSession;
 import io.kamax.mxhsd.core.user.HomeserverUser;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,14 +42,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Homeserver implements IHomeServer {
 
-    private Logger log = LoggerFactory.getLogger(Homeserver.class);
+    private final Logger log = LoggerFactory.getLogger(Homeserver.class);
 
     private HomeserverState state;
 
     private Map<String, IUserSession> sessions = new ConcurrentHashMap<>(); // FIXME need session manager
 
     public Homeserver(HomeserverState state) {
+        if (StringUtils.isAnyBlank(state.getAppName(), state.getAppVersion())) {
+            throw new IllegalArgumentException("Application name and version must be set");
+        }
+
         this.state = state;
+
+        log.info("Homeserver is {}/{}", state.getAppName(), state.getAppVersion());
     }
 
     @Override
