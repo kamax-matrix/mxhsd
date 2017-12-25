@@ -21,9 +21,9 @@
 package io.kamax.mxhsd.core.federation;
 
 import com.google.common.net.InetAddresses;
-import io.kamax.mxhsd.api.federation._FederationDomainResolver;
+import io.kamax.mxhsd.api.federation.IFederationDomainResolver;
 
-public class FederationDomainResolver implements _FederationDomainResolver {
+public class FederationDomainResolver implements IFederationDomainResolver {
 
     public static class Builder {
 
@@ -74,7 +74,7 @@ public class FederationDomainResolver implements _FederationDomainResolver {
             return domain.toLowerCase();
         }
 
-        return domain;
+        return domain + ":" + port;
     }
 
 }

@@ -20,8 +20,27 @@
 
 package io.kamax.mxhsd.api.federation;
 
-public interface _FederationDomainResolver {
+import com.google.gson.JsonObject;
+import io.kamax.matrix._MatrixID;
 
-    String resolve(String domain);
+import java.util.Map;
+
+public interface IFederationClient {
+
+    JsonObject makeJoin(String residentHsDomain, String roomId, _MatrixID joiner);
+
+    JsonObject sendJoin(JsonObject o);
+
+    JsonObject sendTransaction(JsonObject o);
+
+    JsonObject getRoomState(String roomId);
+
+    JsonObject getEvent(String id);
+
+    JsonObject backfill(String fromEventId, long limit);
+
+    JsonObject frontfill(String fromEventId, long limit);
+
+    JsonObject query(String domain, String type, Map<String, String> parameters);
 
 }

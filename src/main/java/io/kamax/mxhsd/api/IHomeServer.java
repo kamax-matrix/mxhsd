@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.api;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.session.server.IServerSession;
 import io.kamax.mxhsd.api.session.user.IUserSession;
 
@@ -64,5 +65,12 @@ public interface IHomeServer {
      * @return The server session
      */
     IServerSession getServerSession(String signature);
+
+    /**
+     * Get the latest public keys/certificates information
+     *
+     * @return Signed object with the latest crypto info
+     */
+    JsonObject getPublicCrypto();
 
 }

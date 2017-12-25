@@ -23,8 +23,10 @@ package io.kamax.mxhsd.core;
 import io.kamax.matrix.sign.KeyManager;
 import io.kamax.matrix.sign.SignatureManager;
 import io.kamax.mxhsd.api.auth.IAuthProvider;
+import io.kamax.mxhsd.api.crypto.ICryptoManager;
 import io.kamax.mxhsd.api.device.IDeviceManager;
 import io.kamax.mxhsd.api.event.IEventManager;
+import io.kamax.mxhsd.api.federation.IRemoteHomeServerManager;
 import io.kamax.mxhsd.api.room.IRoomManager;
 import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
 
@@ -37,8 +39,10 @@ public class HomeserverState {
     private IDeviceManager devMgr;
     private KeyManager keyMgr;
     private SignatureManager signMgr;
+    private ICryptoManager cryptoMgr;
     private IEventManager evMgr;
     private IRoomManager roomMgr;
+    private IRemoteHomeServerManager hsMgr;
     private ICoreRoomDirectory roomDir;
 
     public String getAppName() {
@@ -97,6 +101,14 @@ public class HomeserverState {
         this.signMgr = signMgr;
     }
 
+    public ICryptoManager getCryptoMgr() {
+        return cryptoMgr;
+    }
+
+    public void setCryptoMgr(ICryptoManager cryptoMgr) {
+        this.cryptoMgr = cryptoMgr;
+    }
+
     public IEventManager getEvMgr() {
         return evMgr;
     }
@@ -111,6 +123,14 @@ public class HomeserverState {
 
     public void setRoomMgr(IRoomManager roomMgr) {
         this.roomMgr = roomMgr;
+    }
+
+    public IRemoteHomeServerManager getHsMgr() {
+        return hsMgr;
+    }
+
+    public void setHsMgr(IRemoteHomeServerManager hsMgr) {
+        this.hsMgr = hsMgr;
     }
 
     public ICoreRoomDirectory getRoomDir() {

@@ -20,8 +20,11 @@
 
 package io.kamax.mxhsd.spring.client.controller.r0.room.directory;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
+import io.kamax.mxhsd.api.exception.NotFoundException;
+import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
@@ -35,24 +38,50 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping(path = ClientAPIr0.Directory + "/room", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RoomAliasController extends JsonController {
 
+    private final String aliasVariable = "/{alias:.+}";
+
     private IHomeServer hs;
 
     public RoomAliasController(HomeserverService svc) {
         this.hs = svc.get();
     }
 
-    @PutMapping(path = "/{alias:.+}")
+    @GetMapping(aliasVariable)
+    public String resolveAlias(
+            HttpServletRequest req,
+            @RequestParam("access_token") String token,
+            @PathVariable String alias) {
+        log(req);
+
+        IRoomAliasLookup lookup = hs.getUserSession(token).getRoomDirectory().lookup(alias)
+                .orElseThrow(() -> new NotFoundException(alias));
+
+        JsonObject o = new JsonObject();
+        o.addProperty("room_id", lookup.getId());
+        o.add("servers", GsonUtil.asArrayObj(lookup.getServers()));
+
+        return toJson(o);
+    }
+
+    @PutMapping(aliasVariable)
     public String addAlias(
             HttpServletRequest req,
             @RequestParam("access_token") String token,
             @PathVariable String alias) {
+        log(req);
+
         String roomId = GsonUtil.getOrThrow(getJsonObject(req), "room_id");
         hs.getUserSession(token).getRoomDirectory().add(alias, roomId);
         return EmptyJsonResponse.stringify();
     }
 
-    @DeleteMapping("/{alias:.+}")
-    public String removeAlias(@RequestParam("access_token") String token, @PathVariable String alias) {
+    @DeleteMapping(aliasVariable)
+    public String removeAlias(
+            HttpServletRequest req,
+            @RequestParam("access_token") String token,
+            @PathVariable String alias) {
+        log(req);
+
         hs.getUserSession(token).getRoomDirectory().remove(alias);
         return EmptyJsonResponse.stringify();
     }

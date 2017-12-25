@@ -44,7 +44,7 @@ public interface IUserSession {
 
     IUserRoom getRoom(String id);
 
-    IUserRoom joinRoom(String id); // TODO move into obj representing the user view of a room
+    IUserRoom joinRoom(String alias); // TODO move into obj representing the user view of a room
 
     void leaveRoom(String id); // TODO move into obj representing the user view of a room
 

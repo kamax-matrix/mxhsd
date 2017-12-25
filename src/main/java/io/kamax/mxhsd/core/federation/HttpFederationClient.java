@@ -24,7 +24,7 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.federation.FederationException;
-import io.kamax.mxhsd.api.federation._FederationClient;
+import io.kamax.mxhsd.api.federation.IFederationClient;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
@@ -34,17 +34,31 @@ import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.DefaultHttpRequestFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Optional;
 
-public class HttpFederationClient implements _FederationClient {
+public class HttpFederationClient implements IFederationClient {
+
+    private final Logger log = LoggerFactory.getLogger(HttpFederationClient.class);
 
     private HomeserverState global;
     private FederationDomainResolver resolver;
@@ -56,9 +70,19 @@ public class HttpFederationClient implements _FederationClient {
         this.global = global;
         this.resolver = resolver;
 
-        this.client = HttpClientBuilder.create()
-                .setUserAgent(global.getAppName() + "/" + global.getAppVersion())
-                .build();
+        try {
+            SocketConfig sockConf = SocketConfig.custom().setSoTimeout(2000).setSoLinger(2000).build();
+            SSLContext sslContext = SSLContextBuilder.create().loadTrustMaterial(new TrustSelfSignedStrategy()).build();
+            HostnameVerifier hostnameVerifier = new NoopHostnameVerifier();
+            SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
+            this.client = HttpClients.custom()
+                    .setUserAgent(global.getAppName() + "/" + global.getAppVersion())
+                    .setDefaultSocketConfig(sockConf)
+                    .setSSLSocketFactory(sslSocketFactory)
+                    .build();
+        } catch (KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected HttpEntity getJsonEntity(Object o) {
@@ -97,14 +121,16 @@ public class HttpFederationClient implements _FederationClient {
         String sign = global.getSignMgr().sign(GsonUtil.get().toJson(authObj));
         String key = "ed25519:" + global.getKeyMgr().getCurrentIndex();
         String target = "https://" + resolver.resolve(domain) + path;
+        log.info("Fetching [{}] {}", domain, target);
 
         HttpGet req = new HttpGet(target);
-        req.setHeader("Authentication",
-                "X-Matrix origin=\"" + global.getDomain() + "\",key=\"" + key + "\",sign=\"" + sign + "\"");
+        req.setHeader("Authorization",
+                "X-Matrix origin=\"" + global.getDomain() + "\",key=\"" + key + "\",sig=\"" + sign + "\"");
         try (CloseableHttpResponse res = client.execute(HttpHost.create(domain), req)) {
-            JsonObject body = getBody(res.getEntity());
             int resStatus = res.getStatusLine().getStatusCode();
+            JsonObject body = getBody(res.getEntity());
             if (resStatus == 200) {
+                log.info("Got answer");
                 return body;
             } else {
                 throw new FederationException(resStatus, body);
@@ -181,8 +207,15 @@ public class HttpFederationClient implements _FederationClient {
     }
 
     @Override
-    public JsonObject query(String type, Map<String, String> parameters) {
-        throw new NotImplementedException("");
+    public JsonObject query(String domain, String type, Map<String, String> parameters) {
+        String path = "/_matrix/federation/v1/query/" + type;
+        if (parameters != null && !parameters.isEmpty()) {
+            StringBuilder b = new StringBuilder("?");
+            parameters.forEach((k, v) -> b.append(k).append("=").append(v).append("&"));
+            String v = b.toString();
+            path += v.substring(0, v.length() - 2);
+        }
+        return sendGet(domain, path);
     }
 
 }

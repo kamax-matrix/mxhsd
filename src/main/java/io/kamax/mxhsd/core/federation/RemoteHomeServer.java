@@ -24,8 +24,8 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.federation._FederationClient;
-import io.kamax.mxhsd.api.federation._RemoteHomeServer;
+import io.kamax.mxhsd.api.federation.IFederationClient;
+import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.room.directory.RoomAliasLookup;
@@ -36,11 +36,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class RemoteHomeServer implements _RemoteHomeServer {
+public class RemoteHomeServer implements IRemoteHomeServer {
 
     private HomeserverState global;
     private String domain;
-    private _FederationClient client;
+    private IFederationClient client;
 
     public RemoteHomeServer(HomeserverState global, String domain) {
         this.global = global;
@@ -66,7 +66,7 @@ public class RemoteHomeServer implements _RemoteHomeServer {
     @Override
     public Optional<IRoomAliasLookup> lookup(String roomAlias) {
         Map<String, String> parms = new HashMap<>();
-        JsonObject obj = client.query("directory", parms);
+        JsonObject obj = client.query(domain, "directory", parms);
         String roomId = GsonUtil.getOrThrow(obj, "room_id");
         List<String> servers = GsonUtil.asList(GsonUtil.getArrayOrThrow(obj, "servers"), String.class);
         return Optional.of(new RoomAliasLookup(roomId, roomAlias, servers));
@@ -74,7 +74,7 @@ public class RemoteHomeServer implements _RemoteHomeServer {
 
     @Override
     public JsonObject makeJoin(String roomId, _MatrixID joiner) {
-        throw new NotImplementedException("");
+        return client.makeJoin(domain, roomId, joiner);
     }
 
     @Override

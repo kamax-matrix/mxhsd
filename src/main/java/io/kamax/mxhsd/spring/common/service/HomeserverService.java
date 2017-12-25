@@ -26,8 +26,10 @@ import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.IHomeserverConfig;
 import io.kamax.mxhsd.core.Homeserver;
 import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.crypto.CryptoManager;
 import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
+import io.kamax.mxhsd.core.federation.RemoteHomeServerManager;
 import io.kamax.mxhsd.core.room.RoomManager;
 import io.kamax.mxhsd.core.room.directory.GlobalRoomDirectory;
 import io.kamax.mxhsd.spring.common.config.InfoBuildConfig;
@@ -37,26 +39,33 @@ import org.springframework.stereotype.Service;
 @Service
 public class HomeserverService {
 
+    private HomeserverState state;
     private IHomeServer srv;
 
     @Autowired
     public HomeserverService(InfoBuildConfig info, IHomeserverConfig cfg) {
-        HomeserverState state = new HomeserverState();
+        state = new HomeserverState();
         state.setAppName(info.getName());
         state.setAppVersion(info.getVersion());
         state.setDomain(cfg.getDomain());
         state.setKeyMgr(KeyManager.fromFile("data/sign.key"));
         state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));
+        state.setCryptoMgr(new CryptoManager(state));
         state.setEvMgr(new EventManager(state));
         state.setRoomMgr(new RoomManager(state));
         state.setAuthMgr(new DumbAuthProvider());
         state.setDevMgr(new DeviceManager());
+        state.setHsMgr(new RemoteHomeServerManager(state));
         state.setRoomDir(new GlobalRoomDirectory(state));
         srv = new Homeserver(state);
     }
 
     public IHomeServer get() {
         return srv;
+    }
+
+    public HomeserverState getState() {
+        return state;
     }
 
 }

@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.spring.federation;
 
+import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import io.kamax.mxhsd.spring.federation.config.FederationConnectorConfig;
 import org.apache.coyote.http11.Http11NioProtocol;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +30,17 @@ import org.springframework.boot.context.embedded.tomcat.TomcatConnectorCustomize
 import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
 import org.springframework.context.annotation.Bean;
 
+import java.io.File;
+
 @SpringBootApplication
 public class MxhsdFederationApp {
 
     private FederationConnectorConfig cfg;
 
     @Autowired
-    public MxhsdFederationApp(FederationConnectorConfig cfg) {
+    public MxhsdFederationApp(FederationConnectorConfig cfg, HomeserverService hsSvc) {
         this.cfg = cfg;
+        hsSvc.getState().getCryptoMgr().addTlsKey(new File(cfg.getCert()));
     }
 
     @Bean

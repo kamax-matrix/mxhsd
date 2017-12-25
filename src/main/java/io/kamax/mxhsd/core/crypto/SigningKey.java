@@ -18,27 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.federation;
+package io.kamax.mxhsd.core.crypto;
 
-import com.google.gson.JsonObject;
-import io.kamax.matrix._MatrixID;
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.crypto.ISigningKey;
 
-import java.util.Optional;
+public abstract class SigningKey implements ISigningKey {
 
-public interface _RemoteHomeServer {
+    private String keyId;
 
-    String getDomain();
+    public SigningKey(String keyId) {
+        this.keyId = keyId;
+    }
 
-    String getImplementationName();
-
-    String getImplementationVersion();
-
-    Optional<IRoomAliasLookup> lookup(String roomAlias);
-
-    JsonObject makeJoin(String roomId, _MatrixID joiner);
-
-    JsonObject sendJoin(ISignedEvent ev);
+    @Override
+    public String getKeyId() {
+        return keyId;
+    }
 
 }

@@ -20,8 +20,11 @@
 
 package io.kamax.mxhsd.core;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import io.kamax.matrix.MatrixID;
 import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.device.IDevice;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
@@ -36,6 +39,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,6 +96,42 @@ public class Homeserver implements IHomeServer {
     @Override
     public IServerSession getServerSession(String signature) {
         return new ServerSession(state);
+    }
+
+    @Override
+    public JsonObject getPublicCrypto() {
+        JsonObject keys = new JsonObject();
+        state.getCryptoMgr().getKeys().forEach(key -> {
+            JsonObject keyJson = new JsonObject();
+            keyJson.addProperty("key", key.getPublicKey());
+            keys.add(key.getId(), keyJson);
+        });
+
+        JsonObject oldKeys = new JsonObject();
+        state.getCryptoMgr().getOldKeys().forEach(key -> {
+            JsonObject keyJson = new JsonObject();
+            keyJson.addProperty("key", key.getPublicKey());
+            keyJson.addProperty("expired_ts", key.getExpiration().toEpochMilli());
+            keys.add(key.getId(), keyJson);
+        });
+
+        JsonArray tlsKeys = new JsonArray();
+        state.getCryptoMgr().getTlsKeys().forEach(key -> {
+            JsonObject keyJson = new JsonObject();
+            keyJson.addProperty("sha256", key.getFingerprint());
+        });
+
+        JsonObject obj = new JsonObject();
+        obj.addProperty("server_name", state.getDomain());
+        // FIXME remove one hour hardcoding
+        obj.addProperty("valid_until_ts", Instant.now().plusSeconds(3600).toEpochMilli());
+        obj.add("old_verify_keys", oldKeys);
+        obj.add("verify_keys", keys);
+        obj.add("tls_fingerprints", tlsKeys);
+
+        JsonObject sign = state.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(obj));
+        obj.add("signatures", sign);
+        return obj;
     }
 
 }

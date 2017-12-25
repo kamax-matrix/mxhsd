@@ -18,29 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.federation;
+package io.kamax.mxhsd.core.crypto;
 
-import com.google.gson.JsonObject;
-import io.kamax.matrix._MatrixID;
+import io.kamax.mxhsd.api.crypto.ITlsKey;
 
-import java.util.Map;
+public class TlsKey implements ITlsKey {
 
-public interface _FederationClient {
+    private String fingerprint;
 
-    JsonObject makeJoin(String residentHsDomain, String roomId, _MatrixID joiner);
+    public TlsKey(String fingerprint) {
+        this.fingerprint = fingerprint;
+    }
 
-    JsonObject sendJoin(JsonObject o);
-
-    JsonObject sendTransaction(JsonObject o);
-
-    JsonObject getRoomState(String roomId);
-
-    JsonObject getEvent(String id);
-
-    JsonObject backfill(String fromEventId, long limit);
-
-    JsonObject frontfill(String fromEventId, long limit);
-
-    JsonObject query(String type, Map<String, String> parameters);
+    @Override
+    public String getFingerprint() {
+        return fingerprint;
+    }
 
 }
