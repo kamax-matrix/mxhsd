@@ -54,6 +54,8 @@ public class GenericHomeserverTest {
     @Before
     public void beforeClass() {
         state = new HomeserverState();
+        state.setAppName("mxhsd");
+        state.setAppVersion("0-Testing");
         state.setDomain("localhost:8779");
         state.setDevMgr(new DeviceManager());
         state.setAuthMgr((domain, user, password) -> new MatrixID(user, domain));
