@@ -18,11 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.federation;
+package io.kamax.mxhsd.core.federation;
 
 import com.google.common.net.InetAddresses;
+import io.kamax.mxhsd.api.federation._FederationDomainResolver;
 
-public class FederationDomainResolver {
+public class FederationDomainResolver implements _FederationDomainResolver {
 
     public static class Builder {
 
@@ -54,6 +55,7 @@ public class FederationDomainResolver {
     private int port = 8448;
     private String prefix = "_matrix._tcp.";
 
+    @Override
     public String resolve(String domain) {
         // This is a literal IP address without any port
         // We add the default port and return the value

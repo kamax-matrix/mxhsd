@@ -20,15 +20,8 @@
 
 package io.kamax.mxhsd.api.federation;
 
-import com.google.gson.JsonObject;
+public interface _FederationDomainResolver {
 
-import java.util.Map;
-
-public class HttpFederationClient implements IFederationClient<JsonObject, String, Map<String, String>, String> {
-
-    @Override
-    public String send(JsonObject namespace, String metadata, Map<String, String> payload) {
-        return null;
-    }
+    String resolve(String domain);
 
 }

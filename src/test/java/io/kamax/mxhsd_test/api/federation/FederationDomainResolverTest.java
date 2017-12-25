@@ -20,7 +20,7 @@
 
 package io.kamax.mxhsd_test.api.federation;
 
-import io.kamax.mxhsd.api.federation.FederationDomainResolver;
+import io.kamax.mxhsd.core.federation.FederationDomainResolver;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 

@@ -20,8 +20,24 @@
 
 package io.kamax.mxhsd.api.federation;
 
-public interface IFederationClient<N, M, P, R> {
+import com.google.gson.JsonObject;
 
-    R send(N namespace, M metadata, P payload);
+public class FederationException extends RuntimeException {
+
+    private int status;
+    private JsonObject body;
+
+    public FederationException(int status, JsonObject body) {
+        this.status = status;
+        this.body = body;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public JsonObject getBody() {
+        return body;
+    }
 
 }

@@ -22,23 +22,25 @@ package io.kamax.mxhsd.api.federation;
 
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 
-import java.util.Optional;
+import java.util.Map;
 
-public interface _RemoteHomeServer {
+public interface _FederationClient {
 
-    String getDomain();
+    JsonObject makeJoin(String residentHsDomain, String roomId, _MatrixID joiner);
 
-    String getImplementationName();
+    JsonObject sendJoin(JsonObject o);
 
-    String getImplementationVersion();
+    JsonObject sendTransaction(JsonObject o);
 
-    Optional<IRoomAliasLookup> lookup(String roomAlias);
+    JsonObject getRoomState(String roomId);
 
-    JsonObject makeJoin(String roomId, _MatrixID joiner);
+    JsonObject getEvent(String id);
 
-    JsonObject sendJoin(ISignedEvent ev);
+    JsonObject backfill(String fromEventId, long limit);
+
+    JsonObject frontfill(String fromEventId, long limit);
+
+    JsonObject query(String type, Map<String, String> parameters);
 
 }
