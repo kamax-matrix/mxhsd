@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd_test.api.federation;
 
+import io.kamax.mxhsd.api.federation.IRemoteAddress;
 import io.kamax.mxhsd.core.federation.FederationDomainResolver;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
@@ -40,8 +41,8 @@ public class FederationDomainResolverTest {
         String address = "127.0.0.1";
         String expected = "127.0.0.1:8448";
 
-        FederationDomainResolver o = getResolver();
-        String resolved = o.resolve(address).toString();
+        IRemoteAddress addr = getResolver().resolve(address);
+        String resolved = addr.getHost() + ":" + addr.getPort();
 
         assertTrue(resolved, StringUtils.equals(expected, resolved));
     }
@@ -51,8 +52,8 @@ public class FederationDomainResolverTest {
         String address = "::1";
         String expected = "[::1]:8448";
 
-        FederationDomainResolver o = getResolver();
-        String resolved = o.resolve(address).toString();
+        IRemoteAddress addr = getResolver().resolve(address);
+        String resolved = addr.getHost() + ":" + addr.getPort();
 
         assertTrue(resolved, StringUtils.equals(expected, resolved));
     }
@@ -62,8 +63,8 @@ public class FederationDomainResolverTest {
         String address = "localhost:1";
         String expected = "localhost:1";
 
-        FederationDomainResolver o = getResolver();
-        String resolved = o.resolve(address).toString();
+        IRemoteAddress addr = getResolver().resolve(address);
+        String resolved = addr.getHost() + ":" + addr.getPort();
 
         assertTrue(resolved, StringUtils.equals(expected, resolved));
     }
@@ -73,8 +74,8 @@ public class FederationDomainResolverTest {
         String address = "localhost";
         String expected = "localhost:8448";
 
-        FederationDomainResolver o = getResolver();
-        String resolved = o.resolve(address).toString();
+        IRemoteAddress addr = getResolver().resolve(address);
+        String resolved = addr.getHost() + ":" + addr.getPort();
 
         assertTrue(resolved, StringUtils.equals(expected, resolved));
     }

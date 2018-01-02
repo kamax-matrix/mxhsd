@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 public class RoomAlias {
 
     private static final String sigill = "#";
-    private static final Pattern idPattern = Pattern.compile(sigill + "(.*):(.+)");
+    private static final Pattern idPattern = Pattern.compile(sigill + "(.*?):(.+)");
 
     private String id;
     private String localpart;

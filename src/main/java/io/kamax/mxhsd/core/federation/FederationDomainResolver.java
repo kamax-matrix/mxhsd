@@ -63,7 +63,8 @@ public class FederationDomainResolver implements IFederationDomainResolver {
         // This is a literal IP address without any port
         // We add the default port and return the value
         if (InetAddresses.isInetAddress(domain)) {
-            return new RemoteAddress(domain, port);
+            String host = InetAddresses.toUriString(InetAddresses.forString(domain));
+            return new RemoteAddress(host, port);
         }
 
         // This is an IP address with a port in it
