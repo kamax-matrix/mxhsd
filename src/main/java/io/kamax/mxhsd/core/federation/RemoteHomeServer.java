@@ -66,6 +66,7 @@ public class RemoteHomeServer implements IRemoteHomeServer {
     @Override
     public Optional<IRoomAliasLookup> lookup(String roomAlias) {
         Map<String, String> parms = new HashMap<>();
+        parms.put("room_alias", roomAlias);
         JsonObject obj = client.query(domain, "directory", parms);
         String roomId = GsonUtil.getOrThrow(obj, "room_id");
         List<String> servers = GsonUtil.asList(GsonUtil.getArrayOrThrow(obj, "servers"), String.class);

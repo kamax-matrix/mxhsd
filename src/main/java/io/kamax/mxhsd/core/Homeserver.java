@@ -119,6 +119,7 @@ public class Homeserver implements IHomeServer {
         state.getCryptoMgr().getTlsKeys().forEach(key -> {
             JsonObject keyJson = new JsonObject();
             keyJson.addProperty("sha256", key.getFingerprint());
+            tlsKeys.add(keyJson);
         });
 
         JsonObject obj = new JsonObject();

@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 @CrossOrigin
 public class JsonController {
@@ -43,7 +44,8 @@ public class JsonController {
     private Gson gson = GsonUtil.buildPretty();
 
     public void log(HttpServletRequest req) {
-        log.info("Request {} {}", req.getMethod(), req.getRequestURL());
+        log.info("Request {} {} | {}", req.getMethod(), req.getRequestURL(), req.getQueryString());
+        Optional.ofNullable(req.getHeader("Authorization")).ifPresent(h -> log.info("Authorization header: {}", h));
     }
 
     protected String getBody(HttpServletRequest req) {

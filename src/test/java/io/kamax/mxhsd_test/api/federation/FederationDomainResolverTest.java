@@ -41,7 +41,7 @@ public class FederationDomainResolverTest {
         String expected = "127.0.0.1:8448";
 
         FederationDomainResolver o = getResolver();
-        String resolved = o.resolve(address);
+        String resolved = o.resolve(address).toString();
 
         assertTrue(resolved, StringUtils.equals(expected, resolved));
     }
@@ -52,7 +52,7 @@ public class FederationDomainResolverTest {
         String expected = "[::1]:8448";
 
         FederationDomainResolver o = getResolver();
-        String resolved = o.resolve(address);
+        String resolved = o.resolve(address).toString();
 
         assertTrue(resolved, StringUtils.equals(expected, resolved));
     }
@@ -63,14 +63,20 @@ public class FederationDomainResolverTest {
         String expected = "localhost:1";
 
         FederationDomainResolver o = getResolver();
-        String resolved = o.resolve(address);
+        String resolved = o.resolve(address).toString();
 
         assertTrue(resolved, StringUtils.equals(expected, resolved));
     }
 
     @Test
     public void validHostnameLiteral() {
-        // FIXME do test
+        String address = "localhost";
+        String expected = "localhost:8448";
+
+        FederationDomainResolver o = getResolver();
+        String resolved = o.resolve(address).toString();
+
+        assertTrue(resolved, StringUtils.equals(expected, resolved));
     }
 
 }

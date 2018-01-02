@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Maxime Dor
  *
  * https://www.kamax.io/
  *
@@ -20,8 +20,10 @@
 
 package io.kamax.mxhsd.api.federation;
 
-public interface IFederationDomainResolver {
+public interface IRemoteAddress {
 
-    IRemoteAddress resolve(String domain);
+    String getHost();
+
+    int getPort();
 
 }

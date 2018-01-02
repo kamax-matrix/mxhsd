@@ -22,6 +22,9 @@ package io.kamax.mxhsd.core.federation;
 
 import com.google.common.net.InetAddresses;
 import io.kamax.mxhsd.api.federation.IFederationDomainResolver;
+import io.kamax.mxhsd.api.federation.IRemoteAddress;
+
+import java.net.URI;
 
 public class FederationDomainResolver implements IFederationDomainResolver {
 
@@ -56,25 +59,26 @@ public class FederationDomainResolver implements IFederationDomainResolver {
     private String prefix = "_matrix._tcp.";
 
     @Override
-    public String resolve(String domain) {
+    public IRemoteAddress resolve(String domain) {
         // This is a literal IP address without any port
         // We add the default port and return the value
         if (InetAddresses.isInetAddress(domain)) {
-            return InetAddresses.toUriString(InetAddresses.forString(domain)) + ":" + port;
+            return new RemoteAddress(domain, port);
         }
 
         // This is an IP address with a port in it
         // We return verbatim
         if (InetAddresses.isUriInetAddress(domain)) {
-            return domain;
+            URI v = URI.create(domain);
+            return new RemoteAddress(v.getHost(), v.getPort());
         }
-
 
         if (domain.contains(":")) {
-            return domain.toLowerCase();
+            URI v = URI.create("matrix://" + domain);
+            return new RemoteAddress(v.getHost(), v.getPort());
         }
 
-        return domain + ":" + port;
+        return new RemoteAddress(domain, port);
     }
 
 }
