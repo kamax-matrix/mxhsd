@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 public class RoomAlias {
 
     private static final String sigill = "#";
-    private static final Pattern idPattern = Pattern.compile(sigill + "(.*?):(.+)");
+    private static final Pattern idPattern = Pattern.compile(sigill + "(.+?):(.+)");
 
     private String id;
     private String localpart;
@@ -44,7 +44,7 @@ public class RoomAlias {
 
         Matcher m = idPattern.matcher(id);
         if (!m.matches()) {
-            throw new IllegalArgumentException(id + " is not a valid Room ID");
+            throw new IllegalArgumentException(id + " is not a valid Room alias");
         }
 
         RoomAlias r = new RoomAlias();
