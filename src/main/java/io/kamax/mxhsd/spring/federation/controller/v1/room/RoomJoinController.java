@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.spring.federation.controller.v1.join;
+package io.kamax.mxhsd.spring.federation.controller.v1.room;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

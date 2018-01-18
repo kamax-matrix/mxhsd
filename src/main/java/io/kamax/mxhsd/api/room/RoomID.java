@@ -53,6 +53,15 @@ public class RoomID {
         return r;
     }
 
+    public static boolean is(String id) {
+        try {
+            from(id);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     private RoomID() {
         // cannot instanciate directly
     }

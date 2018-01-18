@@ -28,10 +28,9 @@ import io.kamax.mxhsd.api.device.IDevice;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.event.ISignedEventStream;
 import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
-import io.kamax.mxhsd.api.room.IRoom;
-import io.kamax.mxhsd.api.room.IRoomCreateOptions;
-import io.kamax.mxhsd.api.room.IRoomState;
-import io.kamax.mxhsd.api.room.RoomEventType;
+import io.kamax.mxhsd.api.exception.NotFoundException;
+import io.kamax.mxhsd.api.room.*;
+import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
 import io.kamax.mxhsd.api.session.user.IUserSession;
@@ -90,7 +89,8 @@ public class UserSession implements IUserSession {
     @Handler
     private void getEvent(ISignedEventStreamEntry ev) {
         synchronized (this) {
-            notifyAll(); // let's wake up waiting threads
+            log.info("We got new data to sync with: {}", ev.get().getId());
+            UserSession.this.notifyAll(); // let's wake up waiting threads
         }
     }
 
@@ -273,7 +273,6 @@ public class UserSession implements IUserSession {
 
     private ISyncData fetchNext(ISyncOptions options, int fromIndex, int toIndex) {
         SyncData.Builder syncData = SyncData.build().setToken(Integer.toString(toIndex));
-        String mxid = user.getId().getId();
         int amount = toIndex - fromIndex;
 
         ISignedEventStream stream = global.getEvMgr().getBackwardStreamFrom(toIndex);
@@ -305,7 +304,7 @@ public class UserSession implements IUserSession {
                     try {
                         // we wait at least 1ms and at most 500ms
                         // FIXME this should not be here. Use async request handling in Spring instead (or similar)
-                        wait(Math.max(Math.min(endTs.toEpochMilli() - Instant.now().toEpochMilli(), 500), 1));
+                        UserSession.this.wait(Math.max(Math.min(endTs.toEpochMilli() - Instant.now().toEpochMilli(), 500), 1));
                     } catch (InterruptedException e) {
                         // we got interrupted, let's try to fetch again
                     }
@@ -339,14 +338,31 @@ public class UserSession implements IUserSession {
 
     @Override
     public IRoom getRoom(String id) {
-        return global.getRoomMgr().findRoom(id).orElseThrow(() -> new IllegalArgumentException("Unknown room " + id));
+        return global.getRoomMgr().getRoom(id);
+    }
+
+    private IRoom joinLocalRoom(String roomId) {
+        IRoom room = global.getRoomMgr().getRoom(roomId);
+        room.inject(new RoomMembershipEvent(user.getId().getId(), RoomMembership.Join.get(), user.getId().getId()));
+        return room;
     }
 
     @Override
-    public IRoom joinRoom(String id) {
-        IRoom room = global.getRoomMgr().getRoom(id);
-        room.inject(new RoomMembershipEvent(user.getId().getId(), RoomMembership.Join.get(), user.getId().getId()));
-        return room;
+    public IRoom joinRoom(String idOrAlias) {
+        if (RoomAlias.is(idOrAlias)) {
+            IRoomAliasLookup lookup = global.getRoomDir()
+                    .lookup(idOrAlias).orElseThrow(() -> new NotFoundException(idOrAlias));
+
+            return global.getRoomMgr()
+                    .getRoom(lookup)
+                    .joinAs(user.getId());
+        }
+
+        if (!RoomID.is(idOrAlias)) {
+            throw new IllegalArgumentException("Not a valid room ID or alias: " + idOrAlias);
+        }
+
+        return joinLocalRoom(idOrAlias);
     }
 
     @Override

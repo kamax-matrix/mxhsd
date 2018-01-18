@@ -29,16 +29,14 @@ import io.kamax.mxhsd.api.event.*;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.exception.InvalidRequestException;
 import io.kamax.mxhsd.api.room.*;
+import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -52,7 +50,7 @@ public class Room implements IRoom {
 
     private String id;
     private RoomState state;
-    private Map<String, RoomState> prevStates; // FIXME caching
+    private Map<String, RoomState> prevStates = new ConcurrentHashMap<>(); // FIXME caching
 
     private BlockingQueue<ISignedEvent> extremities = new LinkedBlockingQueue<>();
 
@@ -61,6 +59,33 @@ public class Room implements IRoom {
         this.id = id;
         this.prevStates = new ConcurrentHashMap<>();
         setCurrentState(new RoomState.Builder(global, id).build());
+    }
+
+    public Room(HomeserverState global, String id, List<ISignedEvent> initialState, List<ISignedEvent> authChain) {
+        this.global = global;
+        this.id = id;
+
+        // We order events so we can build a state properly
+        List<ISignedEvent> c = authChain.stream().unordered()
+                .distinct()
+                // FIXME compute and use topological order
+                .sorted(Comparator.comparingLong(ISignedEvent::getDepth)
+                        .thenComparing(ISignedEvent::getTimestamp))
+                .collect(Collectors.toList());
+
+        List<ISignedEvent> s = initialState.stream().unordered()
+                .distinct()
+                // FIXME compute and use topological order
+                .sorted(Comparator.comparingLong(ISignedEvent::getDepth)
+                        .thenComparing(ISignedEvent::getTimestamp))
+                .collect(Collectors.toList());
+
+        RoomState.Builder b = new RoomState.Builder(global, id);
+        c.forEach(b::addEvent);
+        setCurrentState(b.build());
+
+        c.forEach(e -> global.getEvMgr().store(e));
+        s.forEach(e -> global.getEvMgr().store(e));
     }
 
     @Override
@@ -131,12 +156,11 @@ public class Room implements IRoom {
     @Override
     public synchronized IRoomState getStateFor(String id) {
         // FIXME this is dumb, we need a way to calculate the state for an arbitrary event
-        RoomState state = prevStates.get(id);
-        if (state == null) {
-            throw new RuntimeException("No previous state for event " + id + " - how?!");
-        }
-
-        return state;
+        return Optional.ofNullable(prevStates.get(id)).orElseGet(() -> {
+            RoomState.Builder b = new RoomState.Builder(global, this.id);
+            b.addEvent(getCurrentState().getCreation());
+            return b.build();
+        });
     }
 
     @Override
@@ -186,6 +210,8 @@ public class Room implements IRoom {
 
     @Override
     public JsonObject makeJoin(_MatrixID mxid) {
+        // FIXME check if a join would be allowed
+
         JsonArray prevEvents = new JsonArray();
         global.getEvMgr().getBackwardStreamFrom(state.getStreamIndex())
                 .getNext(1)
@@ -237,6 +263,18 @@ public class Room implements IRoom {
         Collection<String> eventIds = state.getEvents().values();
         List<ISignedEvent> events = global.getEvMgr().get(eventIds);
         return new RemoteJoinRoomState(events);
+    }
+
+    @Override
+    public IRoom joinAs(_MatrixID userId) {
+        inject(new RoomMembershipEvent(userId.getId(), RoomMembership.Join.get(), userId.getId()));
+        return this;
+    }
+
+    @Override
+    public void inject(ISignedEvent ev) {
+        // FIXME make it properly appear in room history
+        global.getEvMgr().store(ev);
     }
 
 }

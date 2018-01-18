@@ -29,14 +29,13 @@ Version 0.1.0 aims to include the following features/abilities implemented to th
     - Membership
       - [X] Join
       - [X] Leave
-      - [ ] Forget
     - Usage
       - [X] Send events
     - Alias
-      - [ ] List
-      - [ ] Add
-      - [ ] Remove
-      - [ ] Lookup
+      - [X] List
+      - [X] Add
+      - [X] Remove
+      - [X] Lookup
   - Events
     - [X] Sync
     
@@ -44,28 +43,26 @@ Version 0.1.0 aims to include the following features/abilities implemented to th
   - Federation
     - Keys
       - Lookup
-        - [ ] Inbound
-        - [ ] Outbound
+        - [X] Inbound
     - Protocol
       - Sign
-        - [ ] Requests
-        - [ ] Events
+        - [X] Requests
+        - [X] Events
     - Rooms
       - Membership
         - Join
           - [ ] Inbound
-          - [ ] Outbound
+          - [X] Outbound
         - [ ] Leave
       - Usage
         - [ ] Send events
       - Alias
-        - [ ] Lookup
+        - [X] Lookup
     - Events
       - [ ] Inbound
       - [ ] Outbound
    - Admin
     - [ ] Administration page(s)
-    - [ ] Manage authentication backends - LDAP only
 
 ## Support
 Via Matrix: [#mxhsd:kamax.io](https://matrix.to/#/#mxhsd:kamax.io) - [Static view](https://view.matrix.org/room/!MDGUnxWASkbvkdZMpE:kamax.io/)

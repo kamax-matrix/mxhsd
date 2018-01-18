@@ -20,10 +20,36 @@
 
 package io.kamax.mxhsd.api.event;
 
+import com.google.gson.JsonArray;
+
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
-public interface IEventReference extends IEventIdReference {
+public class EventReference implements IEventReference {
 
-    Map<String, String> getHashes();
+    private String id;
+    private Map<String, String> hashes;
+
+    public EventReference(String id, Map<String, String> hashes) {
+        this.id = id;
+        this.hashes = new HashMap<>(hashes);
+    }
+
+    public EventReference(JsonArray reference) {
+        this.id = reference.get(0).getAsString();
+        this.hashes = new HashMap<>();
+        reference.get(1).getAsJsonObject().entrySet().forEach(e -> hashes.put(e.getKey(), e.getValue().getAsString()));
+    }
+
+    @Override
+    public String getEventId() {
+        return id;
+    }
+
+    @Override
+    public Map<String, String> getHashes() {
+        return Collections.unmodifiableMap(hashes);
+    }
 
 }

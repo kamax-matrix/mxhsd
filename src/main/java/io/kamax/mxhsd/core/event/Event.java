@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.IEventReference;
 
 import java.time.Instant;
 import java.util.*;
@@ -34,16 +35,18 @@ public class Event implements IEvent {
     private String type;
     private String roomId;
     private String sender;
+    private long timestamp;
     private long depth;
-    private Set<String> parents;
-    private Set<String> authorization;
+    private Set<IEventReference> parents;
+    private Set<IEventReference> authorization;
     private String json;
 
-    public Event(String id, String type, String sender, String roomId, long depth, Collection<String> parents, Collection<String> auth, String json) {
+    public Event(String id, String type, String sender, String roomId, long timestamp, long depth, Collection<IEventReference> parents, Collection<IEventReference> auth, String json) {
         this.id = id;
         this.type = type;
         this.sender = sender;
         this.roomId = roomId;
+        this.timestamp = timestamp;
         this.depth = depth;
         this.parents = new HashSet<>(parents);
         this.authorization = new HashSet<>(auth);
@@ -57,7 +60,7 @@ public class Event implements IEvent {
 
     @Override
     public Instant getTimestamp() {
-        return null;
+        return Instant.ofEpochMilli(timestamp);
     }
 
     @Override
@@ -86,12 +89,12 @@ public class Event implements IEvent {
     }
 
     @Override
-    public List<String> getParents() {
+    public List<IEventReference> getParents() {
         return Collections.unmodifiableList(new ArrayList<>(parents));
     }
 
     @Override
-    public List<String> getAuthorization() {
+    public List<IEventReference> getAuthorization() {
         return Collections.unmodifiableList(new ArrayList<>(authorization));
     }
 

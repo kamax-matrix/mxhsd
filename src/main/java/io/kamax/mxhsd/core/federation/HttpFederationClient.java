@@ -24,16 +24,20 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.exception.InvalidJsonException;
 import io.kamax.mxhsd.api.federation.FederationException;
 import io.kamax.mxhsd.api.federation.IFederationClient;
 import io.kamax.mxhsd.api.federation.IRemoteAddress;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -102,9 +106,14 @@ public class HttpFederationClient implements IFederationClient {
     }
 
     private String getAuthObj(String remoteDomain, String method, URI target, JsonObject content) {
+        String uri = target.getRawPath();
+        if (StringUtils.isNotBlank(target.getRawQuery())) {
+            uri += "?" + target.getRawQuery();
+        }
+
         JsonObject authObj = new JsonObject();
         authObj.addProperty("method", method);
-        authObj.addProperty("uri", target.getRawPath() + "?" + target.getRawQuery());
+        authObj.addProperty("uri", uri);
         authObj.addProperty("origin", global.getDomain());
         authObj.addProperty("destination", remoteDomain);
         Optional.ofNullable(content).ifPresent(c -> authObj.add("content", c));
@@ -120,7 +129,11 @@ public class HttpFederationClient implements IFederationClient {
             return new JsonObject();
         }
 
-        return GsonUtil.parseObj(raw);
+        try {
+            return GsonUtil.parseObj(raw);
+        } catch (InvalidJsonException e) {
+            return GsonUtil.parse(raw).getAsJsonArray().get(1).getAsJsonObject();
+        }
     }
 
     private JsonObject sendGet(URIBuilder target) {
@@ -169,8 +182,47 @@ public class HttpFederationClient implements IFederationClient {
         throw new NotImplementedException("");
     }
 
-    private JsonObject sendPut(String domain, String path, JsonObject playload) {
-        throw new NotImplementedException("");
+    private JsonObject sendPut(URIBuilder target, JsonObject payload) {
+        try {
+            if (!target.getScheme().equals("matrix")) {
+                throw new IllegalArgumentException("Scheme can only be matrix");
+            }
+
+            String domain = target.getHost();
+            target.setScheme("https");
+            IRemoteAddress addr = resolver.resolve(target.getHost());
+            target.setHost(addr.getHost());
+            target.setPort(addr.getPort());
+
+            return sendPut(domain, target.build(), payload);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private JsonObject sendPut(String domain, URI target, JsonObject payload) {
+        String authObj = getAuthObj(domain, "PUT", target, payload);
+        String sign = global.getSignMgr().sign(authObj);
+        String key = "ed25519:" + global.getKeyMgr().getCurrentIndex();
+
+        HttpPut req = new HttpPut(target);
+        req.setEntity(getJsonEntity(payload));
+        req.setHeader("Host", domain);
+        req.setHeader("Authorization",
+                "X-Matrix origin=" + global.getDomain() + ",key=\"" + key + "\",sig=\"" + sign + "\"");
+        log.info("Calling [{}] {}", domain, req);
+        try (CloseableHttpResponse res = client.execute(req)) {
+            int resStatus = res.getStatusLine().getStatusCode();
+            JsonObject body = getBody(res.getEntity());
+            if (resStatus == 200) {
+                log.info("Got answer");
+                return body;
+            } else {
+                throw new FederationException(resStatus, body);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private JsonObject sendDelete(String domain, String path, JsonObject playload) {
@@ -183,12 +235,14 @@ public class HttpFederationClient implements IFederationClient {
 
     @Override
     public JsonObject makeJoin(String residentHsDomain, String roomId, _MatrixID joiner) {
+        // FIXME refactor URL from Spring classes
         return sendGet(getUri(residentHsDomain, "/_matrix/federation/v1/make_join/" + roomId + "/" + joiner.getId()));
     }
 
     @Override
-    public JsonObject sendJoin(JsonObject o) {
-        throw new NotImplementedException("");
+    public JsonObject sendJoin(String residentHsDomain, ISignedEvent ev) {
+        // FIXME refactor URL from Spring classes
+        return sendPut(getUri(residentHsDomain, "/_matrix/federation/v1/send_join/" + ev.getRoomId() + "/" + ev.getId()), ev.getJson());
     }
 
     @Override
@@ -218,6 +272,7 @@ public class HttpFederationClient implements IFederationClient {
 
     @Override
     public JsonObject query(String domain, String type, Map<String, String> parameters) {
+        // FIXME refactor URL from Spring classes
         URIBuilder b = getUri(domain, "/_matrix/federation/v1/query/" + type);
         if (parameters != null && !parameters.isEmpty()) {
             parameters.forEach(b::addParameter);

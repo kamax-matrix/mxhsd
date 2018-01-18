@@ -20,12 +20,19 @@
 
 package io.kamax.mxhsd.core.session.server;
 
+import io.kamax.mxhsd.api.federation.ITransaction;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.session.server.IServerRoomDirectory;
 import io.kamax.mxhsd.api.session.server.IServerSession;
 import io.kamax.mxhsd.core.HomeserverState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 public class ServerSession implements IServerSession {
+
+    private final Logger log = LoggerFactory.getLogger(ServerSession.class);
 
     private HomeserverState global;
 
@@ -41,6 +48,23 @@ public class ServerSession implements IServerSession {
     @Override
     public IRoom getRoom(String id) {
         return global.getRoomMgr().getRoom(id);
+    }
+
+    @Override
+    public void push(ITransaction transaction) {
+        log.info("Processing transaction {} from {} sent at {}", transaction.getId(), transaction.getOrigin(), transaction.getOriginTimestamp());
+        log.info("Processing {} PDU(s)", transaction.getPdus().size());
+
+        // TODO make asynchronous
+        transaction.getPdus().forEach(sEv -> {
+            log.info("Processing event {} for room {}", sEv.getId(), sEv.getRoomId());
+            Optional<IRoom> rOpt = global.getRoomMgr().findRoom(sEv.getRoomId());
+            if (!rOpt.isPresent()) {
+                log.warn("Got event about unknown room {} from {}", sEv.getRoomId(), transaction.getOrigin());
+            } else {
+                rOpt.get().inject(sEv);
+            }
+        });
     }
 
 }

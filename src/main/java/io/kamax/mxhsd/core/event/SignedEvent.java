@@ -20,32 +20,57 @@
 
 package io.kamax.mxhsd.core.event;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
+import io.kamax.mxhsd.api.event.EventReference;
+import io.kamax.mxhsd.api.event.IEventReference;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SignedEvent extends Event implements ISignedEvent {
+
+    private static final transient Type hashesType = new TypeToken<Map<String, String>>() {
+    }.getType();
 
     private SignedEvent(String raw, JsonObject o) {
         this(EventKey.Id.getStringOrThrow(o),
                 EventKey.Type.getStringOrThrow(o),
                 EventKey.Sender.getStringOrThrow(o),
                 EventKey.RoomId.getStringOrThrow(o),
+                EventKey.Timestamp.getElement(o).getAsLong(),
                 EventKey.Depth.getElement(o).getAsLong(),
-                GsonUtil.asList(EventKey.PreviousEvents.getElement(o).getAsJsonArray(), String.class),
-                GsonUtil.asList(EventKey.AuthEvents.getElement(o).getAsJsonArray(), String.class),
+                GsonUtil.asList(EventKey.PreviousEvents.getElement(o).getAsJsonArray(), JsonArray.class).stream()
+                        .map(EventReference::new).collect(Collectors.toList()),
+                GsonUtil.asList(EventKey.AuthEvents.getElement(o).getAsJsonArray(), JsonArray.class).stream()
+                        .map(EventReference::new).collect(Collectors.toList()),
                 raw);
     }
 
-    public SignedEvent(String id, String type, String sender, String roomId, long depth, Collection<String> parents, Collection<String> auth, String json) {
-        super(id, type, sender, roomId, depth, parents, auth, json);
+    public SignedEvent(String id, String type, String sender, String roomId, long timestamp, long depth, Collection<IEventReference> parents, Collection<IEventReference> auth, String json) {
+        super(id, type, sender, roomId, timestamp, depth, parents, auth, json);
     }
 
     public SignedEvent(String raw) {
         this(raw, GsonUtil.parseObj(raw));
     }
+
+    public SignedEvent(JsonObject obj) {
+        this(MatrixJson.encodeCanonical(obj), obj);
+    }
+
+    @Override
+    public Map<String, String> getHashes() {
+        return GsonUtil.get().fromJson(EventKey.Hashes.getObj(getJson()), hashesType);
+    }
+
+
 
 }

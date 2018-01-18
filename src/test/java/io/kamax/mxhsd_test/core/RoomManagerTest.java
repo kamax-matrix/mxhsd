@@ -56,7 +56,7 @@ public class RoomManagerTest extends GenericHomeserverTest {
         opts.addInvitee(MatrixID.asValid("@test02:localhost"));
         IUserRoom room = session.createRoom(opts);
         assertTrue(StringUtils.isNotBlank(room.getId()));
-        // TODO check preset events and invite events
+        // FIXME check preset events and invite events
     }
 
     @Test
@@ -65,7 +65,7 @@ public class RoomManagerTest extends GenericHomeserverTest {
         String mxid = session.getUser().getId().getId();
         IUserRoom room = createRoomHelper(session);
         room.inject(new RoomMembershipEvent(mxid, RoomMembership.Leave.get(), mxid));
-        // TODO check the returned event content
+        // FIXME check the returned event content
         IRoomState state = room.getCurrentState();
         assertTrue(!state.getMembership(mxid).isPresent());
     }

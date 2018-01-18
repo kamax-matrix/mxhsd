@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.api.event;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.room.IRoomState;
 
 import java.util.Collection;
@@ -30,6 +31,8 @@ public interface IEventManager {
     IEvent populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents);
 
     ISignedEvent sign(IEvent ev);
+
+    ISignedEvent finalize(JsonObject ev);
 
     default ISignedEventStreamEntry store(IEvent ev) {
         return store(sign(ev));

@@ -80,7 +80,7 @@ public class RemoteHomeServer implements IRemoteHomeServer {
 
     @Override
     public JsonObject sendJoin(ISignedEvent ev) {
-        throw new NotImplementedException("");
+        return client.sendJoin(domain, ev);
     }
 
 }

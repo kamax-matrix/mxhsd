@@ -24,12 +24,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.event.EventKey;
-import io.kamax.mxhsd.api.event.IEventBuilder;
-import io.kamax.mxhsd.api.event.INakedEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.*;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,8 +39,8 @@ public class EventBuilder implements IEventBuilder {
     private String origin;
     private String roomId;
     private long depth = 0;
-    private Set<String> authorization = new HashSet<>();
-    private Set<String> parents = new HashSet<>();
+    private Set<IEventReference> authorization = new HashSet<>();
+    private Set<IEventReference> parents = new HashSet<>();
 
     public EventBuilder(INakedEvent base) {
         this.base = GsonUtil.parseObj(GsonUtil.get().toJson(base));
@@ -74,13 +72,14 @@ public class EventBuilder implements IEventBuilder {
 
     @Override
     public IEventBuilder addAuthorization(String evId) {
-        authorization.add(evId);
+        // FIXME handle hash correctly
+        authorization.add(new EventReference(evId, Collections.singletonMap("none", "NotImplemented")));
         return this;
     }
 
     @Override
     public IEventBuilder addParent(ISignedEvent ev) {
-        parents.add(ev.getId());
+        parents.add(new EventReference(ev.getId(), ev.getHashes()));
         if (depth <= ev.getDepth()) depth = ev.getDepth() + 1;
         return this;
     }
@@ -88,9 +87,17 @@ public class EventBuilder implements IEventBuilder {
     @Override
     public Event get() {
         JsonArray aEv = new JsonArray();
-        authorization.forEach(aEv::add);
+        authorization.forEach(p -> {
+            JsonArray v = new JsonArray();
+            v.add(p.getEventId());
+            v.add(GsonUtil.getObj(p.getHashes()));
+        });
         JsonArray pEv = new JsonArray();
-        parents.forEach(pEv::add);
+        parents.forEach(p -> {
+            JsonArray v = new JsonArray();
+            v.add(p.getEventId());
+            v.add(GsonUtil.getObj(p.getHashes()));
+        });
 
         base.add(EventKey.AuthEvents.get(), aEv);
         base.addProperty(EventKey.Depth.get(), depth);
@@ -106,6 +113,7 @@ public class EventBuilder implements IEventBuilder {
                 GsonUtil.getOrThrow(base, EventKey.Type.get()),
                 GsonUtil.getOrThrow(base, EventKey.Sender.get()),
                 GsonUtil.getOrThrow(base, EventKey.RoomId.get()),
+                EventKey.Timestamp.getElement(base).getAsLong(),
                 depth,
                 new HashSet<>(parents),
                 new HashSet<>(authorization),

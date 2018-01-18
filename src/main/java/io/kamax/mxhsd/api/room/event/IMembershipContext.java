@@ -20,10 +20,10 @@
 
 package io.kamax.mxhsd.api.room.event;
 
-import io.kamax.mxhsd.api.event.IEventReference;
+import io.kamax.mxhsd.api.event.IEventIdReference;
 import io.kamax.mxhsd.api.event.IStateKeyReference;
 
-public interface IMembershipContext extends IEventReference, IStateKeyReference {
+public interface IMembershipContext extends IEventIdReference, IStateKeyReference {
 
     String getMembership();
 

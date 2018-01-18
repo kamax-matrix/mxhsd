@@ -274,7 +274,7 @@ public class RoomState implements IRoomState {
         if (RoomEventType.Membership.is(type)) {
             String membership = content.get(RoomEventKey.Membership.get()).getAsString();
             if (Join.is(membership)) {
-                IEvent firstParentEv = global.getEvMgr().get(ev.getParents().get(0)).get();
+                IEvent firstParentEv = global.getEvMgr().get(ev.getParents().get(0).getEventId()).get();
                 if (RoomEventType.Creation.is(firstParentEv.getType()) && ev.getParents().size() == 1) {
                     String creator = EventKey.Content.getObj(firstParentEv.getJson()).get("creator").getAsString();
                     if (!StringUtils.equals(EventKey.StateKey.getString(evJson), creator)) {

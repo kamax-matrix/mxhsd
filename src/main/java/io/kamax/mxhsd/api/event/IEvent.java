@@ -33,10 +33,10 @@ public interface IEvent extends INakedEvent {
 
     String getRoomId();
 
-    List<String> getAuthorization();
+    List<IEventReference> getAuthorization();
 
     long getDepth();
 
-    List<String> getParents();
+    List<IEventReference> getParents();
 
 }

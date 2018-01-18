@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.api.session.server;
 
+import io.kamax.mxhsd.api.federation.ITransaction;
 import io.kamax.mxhsd.api.room.IServerRoom;
 
 public interface IServerSession {
@@ -27,5 +28,7 @@ public interface IServerSession {
     IServerRoomDirectory getDirectory();
 
     IServerRoom getRoom(String id);
+
+    void push(ITransaction transaction);
 
 }

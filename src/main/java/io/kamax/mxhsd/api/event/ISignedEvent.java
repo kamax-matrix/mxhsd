@@ -20,6 +20,10 @@
 
 package io.kamax.mxhsd.api.event;
 
+import java.util.Map;
+
 public interface ISignedEvent extends IEvent {
+
+    Map<String, String> getHashes();
 
 }

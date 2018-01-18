@@ -55,6 +55,15 @@ public class RoomAlias {
         return r;
     }
 
+    public static boolean is(String id) {
+        try {
+            from(id);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     private RoomAlias() {
         // cannot instanciate directly
     }

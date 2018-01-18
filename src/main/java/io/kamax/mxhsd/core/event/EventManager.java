@@ -147,22 +147,25 @@ public class EventManager implements IEventManager {
         return hsState.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(base));
     }
 
-    @Override
-    public ISignedEvent sign(IEvent ev) {
-        JsonObject base = hash(ev.getJson());
+    private ISignedEvent hashAndSign(JsonObject ev) {
+        JsonObject base = hash(ev);
         JsonObject signs = sign(base);
         base.add(EventKey.Signatures.get(), signs);
 
-        return new SignedEvent(
-                ev.getId(),
-                ev.getType(),
-                ev.getSender(),
-                ev.getRoomId(),
-                ev.getDepth(),
-                ev.getParents(),
-                ev.getAuthorization(),
-                MatrixJson.encodeCanonical(base)
-        );
+        return new SignedEvent(ev);
+    }
+
+    @Override
+    public ISignedEvent sign(IEvent ev) {
+        return hashAndSign(ev.getJson());
+    }
+
+    @Override
+    public ISignedEvent finalize(JsonObject ev) {
+        ev.addProperty(EventKey.Id.get(), getNextId());
+        ev.addProperty(EventKey.Origin.get(), hsState.getDomain());
+        ev.addProperty(EventKey.Timestamp.get(), System.currentTimeMillis());
+        return hashAndSign(ev);
     }
 
     @Override
@@ -172,6 +175,7 @@ public class EventManager implements IEventManager {
         ISignedEventStreamEntry entry = new SignedEventStreamEntry(Math.max(0, eventsStream.size() - 1), ev);
         eventsStream.add(entry);
         events.put(ev.getId(), entry);
+        log.info("Event {} was stored in position {}", ev.getId(), entry.streamIndex());
 
         eventBusNotification.publish(entry); // TODO we might want to do this async?
 

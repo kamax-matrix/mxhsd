@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Maxime Dor
  *
  * https://www.kamax.io/
  *
@@ -18,26 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd.api.federation;
 
-import io.kamax.mxhsd.api.exception.NotFoundException;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.event.ISignedEvent;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.Instant;
+import java.util.Collection;
 
-public interface IRoomManager {
+public interface ITransaction {
 
-    IRoom createRoom(IRoomCreateOptions options);
+    String getId();
 
-    default IRoom getRoom(String id) {
-        return findRoom(id).orElseThrow(() -> new NotFoundException(id));
-    }
+    String getOrigin();
 
-    IAliasRoom getRoom(IRoomAliasLookup lookup);
+    Instant getOriginTimestamp();
 
-    Optional<IRoom> findRoom(String id);
-
-    List<IRoom> listRooms();
+    Collection<ISignedEvent> getPdus();
 
 }

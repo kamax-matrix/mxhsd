@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Maxime Dor
  *
  * https://www.kamax.io/
  *
@@ -18,26 +18,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd.spring.federation.controller.v1.transaction;
 
-import io.kamax.mxhsd.api.exception.NotFoundException;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import com.google.gson.JsonObject;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface IRoomManager {
+public class TransactionJson {
 
-    IRoom createRoom(IRoomCreateOptions options);
+    private String origin;
+    private long originalServerTs;
+    private List<JsonObject> pdus;
 
-    default IRoom getRoom(String id) {
-        return findRoom(id).orElseThrow(() -> new NotFoundException(id));
+    public String getOrigin() {
+        return origin;
     }
 
-    IAliasRoom getRoom(IRoomAliasLookup lookup);
+    public long getOriginalServerTs() {
+        return originalServerTs;
+    }
 
-    Optional<IRoom> findRoom(String id);
-
-    List<IRoom> listRooms();
+    public List<JsonObject> getPdus() {
+        return pdus;
+    }
 
 }

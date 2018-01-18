@@ -20,16 +20,24 @@
 
 package io.kamax.mxhsd.core.room;
 
+import com.google.gson.JsonObject;
 import io.kamax.matrix.hs.RoomMembership;
+import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.federation.FederationException;
+import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.room.*;
+import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.*;
 import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.event.SignedEvent;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RoomManager implements IRoomManager {
 
@@ -44,7 +52,9 @@ public class RoomManager implements IRoomManager {
     }
 
     private boolean hasRoom(String id) {
-        return rooms.containsKey(id);
+        synchronized (rooms) {
+            return rooms.containsKey(id);
+        }
     }
 
     private String getId() {
@@ -81,66 +91,111 @@ public class RoomManager implements IRoomManager {
     }
 
     @Override
-    public synchronized IRoom createRoom(IRoomCreateOptions options) { // FIXME use RWLock
+    public IRoom createRoom(IRoomCreateOptions options) { // FIXME use RWLock
         String creator = options.getCreator().getId();
         String id = getId();
         Room room = new Room(state, id);
-        room.inject(new RoomCreateEvent(creator));
-        room.inject(new RoomMembershipEvent(creator, RoomMembership.Join.get(), creator));
-        room.inject(new RoomPowerLevelEvent(creator, getPowerLevelEvent(options)));
 
-        options.getPreset().ifPresent(p -> {
-            log.info("Checking presets for room  {} creation", id);
+        synchronized (rooms) {
+            room.inject(new RoomCreateEvent(creator));
+            room.inject(new RoomMembershipEvent(creator, RoomMembership.Join.get(), creator));
+            room.inject(new RoomPowerLevelEvent(creator, getPowerLevelEvent(options)));
 
-            if (StringUtils.equals(p, "public_chat")) {
-                log.info("Applying preset {} for room {}", p, id);
-                room.inject(new RoomJoinRulesEvent(creator, "public"));
-                room.inject(new RoomHistoryVisibilityEvent(creator, "shared"));
-            } else if (StringUtils.equals(p, "private_chat")) {
-                log.info("Applying preset {} for room {}", p, id);
-                room.inject(new RoomJoinRulesEvent(creator, "invite"));
-                room.inject(new RoomHistoryVisibilityEvent(creator, "shared"));
-            } else if (StringUtils.equals(p, "trusted_private_chat")) {
-                log.info("Applying preset {} for room {}", p, id);
-                room.inject(new RoomJoinRulesEvent(creator, "invite"));
-                room.inject(new RoomHistoryVisibilityEvent(creator, "shared"));
+            options.getPreset().ifPresent(p -> {
+                log.info("Checking presets for room  {} creation", id);
 
-                RoomPowerLevels pls = room.getCurrentState().getEffectivePowerLevels();
-                long creatorPl = pls.getForUser(creator);
-                RoomPowerLevels.Builder plsBuilder = RoomPowerLevels.Builder.from(pls);
-                options.getInvitees().forEach(iId -> plsBuilder.addUser(iId.getId(), creatorPl));
-                room.inject(new RoomPowerLevelEvent(creator, plsBuilder.build()));
-            } else {
-                log.info("Ignoring unknown preset {} for room {}", p, id);
+                if (StringUtils.equals(p, "public_chat")) {
+                    log.info("Applying preset {} for room {}", p, id);
+                    room.inject(new RoomJoinRulesEvent(creator, "public"));
+                    room.inject(new RoomHistoryVisibilityEvent(creator, "shared"));
+                } else if (StringUtils.equals(p, "private_chat")) {
+                    log.info("Applying preset {} for room {}", p, id);
+                    room.inject(new RoomJoinRulesEvent(creator, "invite"));
+                    room.inject(new RoomHistoryVisibilityEvent(creator, "shared"));
+                } else if (StringUtils.equals(p, "trusted_private_chat")) {
+                    log.info("Applying preset {} for room {}", p, id);
+                    room.inject(new RoomJoinRulesEvent(creator, "invite"));
+                    room.inject(new RoomHistoryVisibilityEvent(creator, "shared"));
+
+                    RoomPowerLevels pls = room.getCurrentState().getEffectivePowerLevels();
+                    long creatorPl = pls.getForUser(creator);
+                    RoomPowerLevels.Builder plsBuilder = RoomPowerLevels.Builder.from(pls);
+                    options.getInvitees().forEach(iId -> plsBuilder.addUser(iId.getId(), creatorPl));
+                    room.inject(new RoomPowerLevelEvent(creator, plsBuilder.build()));
+                } else {
+                    log.info("Ignoring unknown preset {} for room {}", p, id);
+                }
+            });
+
+            // FIXME handle initial_state
+
+            // TODO handle name
+
+            // TODO handle topic
+
+            options.getInvitees().forEach(mxId -> {
+                room.inject(new RoomMembershipEvent(creator, RoomMembership.Invite.get(), mxId.getId()));
+            });
+
+            // TODO handle invite_3pid
+
+            rooms.put(id, room);
+
+            log.info("Room {} created", id);
+            return room;
+        }
+    }
+
+    @Override
+    public IAliasRoom getRoom(final IRoomAliasLookup lookup) {
+        return findRoom(lookup.getId()).map(r -> (IAliasRoom) r).orElseGet(() -> {
+            if (lookup.getServers().isEmpty()) {
+                throw new IllegalArgumentException("Cannot join a room without resident homeservers");
             }
+
+            return userId -> {
+                for (String server : lookup.getServers()) {
+                    try {
+                        IRemoteHomeServer rHs = state.getHsMgr().get(server);
+                        JsonObject protoEv = rHs.makeJoin(lookup.getId(), userId).getAsJsonObject("event");
+                        log.info("Proto-event for remote join: {}", GsonUtil.getPrettyForLog(protoEv));
+                        ISignedEvent joinEv = state.getEvMgr().finalize(protoEv);
+                        JsonObject data = rHs.sendJoin(joinEv);
+                        log.info("Remote data before join: {}", GsonUtil.getPrettyForLog(data));
+
+                        List<ISignedEvent> state = GsonUtil.asList(data, "state", JsonObject.class)
+                                .stream().map(SignedEvent::new).collect(Collectors.toList());
+                        state.add(joinEv);
+                        List<ISignedEvent> authChain = GsonUtil.asList(data, "auth_chain", JsonObject.class)
+                                .stream().map(SignedEvent::new).collect(Collectors.toList());
+
+                        synchronized (rooms) {
+                            Room room = new Room(RoomManager.this.state, lookup.getId(), state, authChain);
+                            rooms.put(room.getId(), room);
+                            return room;
+                        }
+                    } catch (FederationException e) {
+                        log.warn("Unable to join {} using {}: {}", lookup.getAlias(), server, e.getMessage());
+                    }
+                }
+
+                throw new RuntimeException("Unable to join " + lookup.getAlias() + ": all servers failed");
+            };
         });
-
-        // FIXME handle initial_state
-
-        // TODO handle name
-
-        // TODO handle topic
-
-        options.getInvitees().forEach(mxId -> {
-            room.inject(new RoomMembershipEvent(creator, RoomMembership.Invite.get(), mxId.getId()));
-        });
-
-        // TODO handle invite_3pid
-
-        rooms.put(id, room);
-
-        log.info("Room {} created", id);
-        return room;
     }
 
     @Override
     public synchronized Optional<IRoom> findRoom(String id) { // FIXME use RWLock
-        return Optional.ofNullable(rooms.get(id));
+        synchronized (rooms) {
+            return Optional.ofNullable(rooms.get(id));
+        }
     }
 
     @Override
     public synchronized List<IRoom> listRooms() { // FIXME use RWLock
-        return new ArrayList<>(rooms.values());
+        synchronized (rooms) {
+            return new ArrayList<>(rooms.values());
+        }
     }
 
 }

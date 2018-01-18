@@ -69,6 +69,10 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
         return l;
     }
 
+    public static <T> List<T> asList(JsonObject obj, String member, Class<T> c) {
+        return asList(getArrayOrThrow(obj, member), c);
+    }
+
     public static JsonObject getObj(Object o) {
         return instance.toJsonTree(o).getAsJsonObject();
     }

@@ -21,6 +21,7 @@
 package io.kamax.mxhsd.api.federation;
 
 import com.google.gson.JsonObject;
+import io.kamax.mxhsd.GsonUtil;
 
 public class FederationException extends RuntimeException {
 
@@ -28,6 +29,7 @@ public class FederationException extends RuntimeException {
     private JsonObject body;
 
     public FederationException(int status, JsonObject body) {
+        super("Federation error - " + status + " - " + GsonUtil.getPrettyForLog(body));
         this.status = status;
         this.body = body;
     }
