@@ -53,7 +53,7 @@ public class RoomManagerTest extends GenericHomeserverTest {
         RoomCreateOptions opts = new RoomCreateOptions();
         opts.setCreator(session.getUser().getId());
         opts.setPreset("trusted_private_chat");
-        opts.addInvitee(new MatrixID("@test02:localhost"));
+        opts.addInvitee(MatrixID.asValid("@test02:localhost"));
         IUserRoom room = session.createRoom(opts);
         assertTrue(StringUtils.isNotBlank(room.getId()));
         // TODO check preset events and invite events
