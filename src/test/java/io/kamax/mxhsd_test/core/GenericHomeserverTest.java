@@ -58,7 +58,7 @@ public class GenericHomeserverTest {
         state.setAppVersion("0-Testing");
         state.setDomain("localhost:8779");
         state.setDevMgr(new DeviceManager());
-        state.setAuthMgr((domain, user, password) -> new MatrixID(user, domain));
+        state.setAuthMgr((domain, user, password) -> MatrixID.from(user, domain).valid());
         state.setKeyMgr(KeyManager.fromMemory());
         state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));
         state.setEvMgr(new EventManager(state));
