@@ -48,9 +48,31 @@ public class FederationDomainResolverTest {
     }
 
     @Test
+    public void validIPv4WithPort() {
+        String address = "127.0.0.1:1";
+        String expected = "127.0.0.1:1";
+
+        IRemoteAddress addr = getResolver().resolve(address);
+        String resolved = addr.getHost() + ":" + addr.getPort();
+
+        assertTrue(resolved, StringUtils.equals(expected, resolved));
+    }
+
+    @Test
     public void validIPv6Literal() {
         String address = "::1";
         String expected = "[::1]:8448";
+
+        IRemoteAddress addr = getResolver().resolve(address);
+        String resolved = addr.getHost() + ":" + addr.getPort();
+
+        assertTrue(resolved, StringUtils.equals(expected, resolved));
+    }
+
+    @Test
+    public void validIPv6WithPort() {
+        String address = "[::1]:1";
+        String expected = "[::1]:1";
 
         IRemoteAddress addr = getResolver().resolve(address);
         String resolved = addr.getHost() + ":" + addr.getPort();
