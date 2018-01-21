@@ -90,7 +90,7 @@ public class UserSession implements IUserSession {
     private void getEvent(ISignedEventStreamEntry ev) {
         synchronized (this) {
             log.info("We got new data to sync with: {}", ev.get().getId());
-            UserSession.this.notifyAll(); // let's wake up waiting threads
+            notifyAll(); // let's wake up waiting threads
         }
     }
 
@@ -182,6 +182,7 @@ public class UserSession implements IUserSession {
                     RoomMembershipEvent eventDetails = new RoomMembershipEvent(evFull.getJson());
                     boolean isAboutUs = StringUtils.equals(mxid, eventDetails.getStateKey());
                     if (isAboutUs) {
+                        log.info("Found membership about ourself in room {}: {}", room.getId(), eventDetails.getMembership());
                         builder.setMembership(eventDetails.getMembership());
 
                         if (RoomMembership.Join.is(eventDetails.getMembership())) {
@@ -223,7 +224,8 @@ public class UserSession implements IUserSession {
         entries.forEach(ev -> roomStreams.computeIfAbsent(ev.get().getRoomId(), rId -> new ArrayList<>()).add(ev));
         roomStreams.forEach((roomId, stream) -> {
             SyncRoomData data = buildSingleTimeline(global.getRoomMgr().getRoom(roomId), timelineIndex, stream);
-            data.getMembership().ifPresent(membership -> {
+            Optional<String> opt = data.getMembership();
+            opt.ifPresent(membership -> {
                 // TODO use the membership as key to add rooms to the global sync data, as it matches json key
                 if (RoomMembership.Invite.is(membership)) {
                     b.addInvited(data);
@@ -304,7 +306,7 @@ public class UserSession implements IUserSession {
                     try {
                         // we wait at least 1ms and at most 500ms
                         // FIXME this should not be here. Use async request handling in Spring instead (or similar)
-                        UserSession.this.wait(Math.max(Math.min(endTs.toEpochMilli() - Instant.now().toEpochMilli(), 500), 1));
+                        wait(Math.max(Math.min(endTs.toEpochMilli() - Instant.now().toEpochMilli(), 500), 1));
                     } catch (InterruptedException e) {
                         // we got interrupted, let's try to fetch again
                     }

@@ -48,6 +48,8 @@ public interface IRoomState {
 
     String getPowerLevelsEventId();
 
+    String getEventId();
+
     int getStreamIndex();
 
     boolean isAccessibleAs(String user);

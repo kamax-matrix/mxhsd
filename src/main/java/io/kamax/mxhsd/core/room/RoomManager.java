@@ -170,7 +170,7 @@ public class RoomManager implements IRoomManager {
                                 .stream().map(SignedEvent::new).collect(Collectors.toList());
 
                         synchronized (rooms) {
-                            Room room = new Room(RoomManager.this.state, lookup.getId(), state, authChain);
+                            Room room = new Room(RoomManager.this.state, lookup.getId(), state, authChain, joinEv);
                             rooms.put(room.getId(), room);
                             return room;
                         }

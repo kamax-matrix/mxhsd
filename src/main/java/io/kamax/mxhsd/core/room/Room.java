@@ -50,7 +50,7 @@ public class Room implements IRoom {
 
     private String id;
     private RoomState state;
-    private Map<String, RoomState> prevStates = new ConcurrentHashMap<>(); // FIXME caching
+    private Map<String, RoomState> prevStates;
 
     private BlockingQueue<ISignedEvent> extremities = new LinkedBlockingQueue<>();
 
@@ -61,27 +61,31 @@ public class Room implements IRoom {
         setCurrentState(new RoomState.Builder(global, id).build());
     }
 
-    public Room(HomeserverState global, String id, List<ISignedEvent> initialState, List<ISignedEvent> authChain) {
-        this.global = global;
-        this.id = id;
+    private Comparator<ISignedEvent> getEventComparator() {
+        return Comparator.comparingLong(ISignedEvent::getDepth)
+                .thenComparing(ISignedEvent::getTimestamp);
+    }
+
+    public Room(HomeserverState global, String id, List<ISignedEvent> initialState, List<ISignedEvent> authChain, ISignedEvent seed) {
+        this(global, id);
 
         // We order events so we can build a state properly
         List<ISignedEvent> c = authChain.stream().unordered()
                 .distinct()
                 // FIXME compute and use topological order
-                .sorted(Comparator.comparingLong(ISignedEvent::getDepth)
-                        .thenComparing(ISignedEvent::getTimestamp))
+                .sorted(getEventComparator())
                 .collect(Collectors.toList());
 
         List<ISignedEvent> s = initialState.stream().unordered()
                 .distinct()
                 // FIXME compute and use topological order
-                .sorted(Comparator.comparingLong(ISignedEvent::getDepth)
-                        .thenComparing(ISignedEvent::getTimestamp))
+                .sorted(getEventComparator())
                 .collect(Collectors.toList());
 
         RoomState.Builder b = new RoomState.Builder(global, id);
-        c.forEach(b::addEvent);
+        //c.forEach(b::addEvent);
+        s.forEach(b::addEvent);
+        b.withStreamIndex(seed.getId());
         setCurrentState(b.build());
 
         c.forEach(e -> global.getEvMgr().store(e));
@@ -100,6 +104,7 @@ public class Room implements IRoom {
 
     // FIXME use RWLock
     private synchronized void setCurrentState(RoomState state) {
+        if (state.getEventId() != null) prevStates.put(state.getEventId(), state);
         this.state = state;
     }
 
@@ -127,7 +132,7 @@ public class Room implements IRoom {
                 RoomState.Builder stateBuilder = new RoomState.Builder(global, id).from(val.getNewState());
                 log.info("Room {}: storing new event {}", id, ev.getId());
                 ISignedEventStreamEntry entry = global.getEvMgr().store(ev);
-                stateBuilder.withStreamIndex(entry.streamIndex());
+                stateBuilder.withStreamIndex(ev.getId());
 
                 // We update extremities info
                 extremities.add(entry.get());
@@ -245,7 +250,7 @@ public class Room implements IRoom {
         RoomState.Builder stateBuilder = new RoomState.Builder(global, id).from(eval.getNewState());
         log.info("Room {}: storing federated event {}", id, ev.getId());
         ISignedEventStreamEntry entry = global.getEvMgr().store(ev);
-        stateBuilder.withStreamIndex(entry.streamIndex());
+        stateBuilder.withStreamIndex(ev.getId());
 
         // We update extremities info
         // FIXME we should clean up those which we are aware of
@@ -272,8 +277,23 @@ public class Room implements IRoom {
     }
 
     @Override
-    public void inject(ISignedEvent ev) {
-        // FIXME make it properly appear in room history
+    public synchronized void inject(ISignedEvent ev) { // FIXME use RWLock
+        Optional<RoomState> parentOpt = ev.getParents().stream()
+                .filter(ref -> prevStates.containsKey(ref.getEventId()))
+                .map(ref -> global.getEvMgr().get(ref.getEventId()).get())
+                .max(getEventComparator()).map(e -> prevStates.get(e.getId()));
+
+        parentOpt.ifPresent(parent -> {
+            RoomEventAuthorization eval = parent.isAuthorized(ev);
+            if (!eval.isAuthorized()) {
+                log.debug("Room current state: {}", GsonUtil.getPrettyForLog(state));
+                log.error(eval.getReason());
+                throw new ForbiddenException("Unauthorized federated event");
+            }
+
+            prevStates.put(ev.getId(), new RoomState.Builder(global, id).from(eval.getNewState()).build());
+        });
+
         global.getEvMgr().store(ev);
     }
 

@@ -91,7 +91,7 @@ public class RoomState implements IRoomState {
             if (state instanceof RoomState) { // we simply copy the cache
                 RoomState other = (RoomState) state;
                 setEvents(other.events);
-                r.streamIndex = other.streamIndex;
+                r.evId = other.evId;
                 r.members = new HashMap<>(other.members);
                 r.pls = other.pls;
                 r.plsId = other.plsId;
@@ -147,8 +147,8 @@ public class RoomState implements IRoomState {
             }
         }
 
-        public Builder withStreamIndex(int streamIndex) {
-            r.streamIndex = streamIndex;
+        public Builder withStreamIndex(String evId) {
+            r.evId = evId;
             return this;
         }
 
@@ -157,7 +157,7 @@ public class RoomState implements IRoomState {
     private transient HomeserverState global;
 
     private String roomId;
-    private int streamIndex = 0;
+    private String evId;
     private Map<String, String> events = new HashMap<>();
     private Map<String, IMembershipContext> members = new HashMap<>();
     private RoomPowerLevels pls;
@@ -203,8 +203,13 @@ public class RoomState implements IRoomState {
     }
 
     @Override
+    public String getEventId() {
+        return evId;
+    }
+
+    @Override
     public int getStreamIndex() {
-        return streamIndex;
+        return global.getEvMgr().get(getEventId()).streamIndex();
     }
 
     @Override
