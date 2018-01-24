@@ -106,17 +106,20 @@ public class EventManager implements IEventManager {
     }
 
     @Override
-    public IEvent populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents) {
+    public IEventBuilder populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents) {
         return new EventBuilder(ev)
                 .setId(getNextId())
                 .setRoomId(roomId)
                 .setTimestamp(Instant.now())
                 .setOrigin(hsState.getDomain())
-                .addParents(parents)
-                .get();
+                .addParents(parents);
     }
 
-    private JsonObject hash(JsonObject base) {
+    private JsonObject clone(JsonObject o) {
+        return gson.fromJson(gson.toJson(o), JsonObject.class);
+    }
+
+    private JsonObject addHash(JsonObject base) { // TODO refactor into SDK
         base.remove(EventKey.Hashes.get());
         base.remove(EventKey.Signatures.get());
         JsonElement unsigned = base.remove(EventKey.Unsigned.get());
@@ -129,35 +132,33 @@ public class EventManager implements IEventManager {
         return base;
     }
 
-    private JsonObject sign(JsonObject base) {
-        JsonObject signBase = gson.fromJson(gson.toJson(base), JsonObject.class); // TODO how to do better?
+    private JsonObject getSignature(JsonObject event) { // TODO refactor into SDK
+        JsonObject toSign = clone(event); // TODO how to do better?
 
-        new HashSet<>(signBase.keySet()).forEach(key -> {
-            if (!essentialTopKeys.contains(key)) signBase.remove(key);
+        new HashSet<>(toSign.keySet()).forEach(key -> {
+            if (!essentialTopKeys.contains(key)) toSign.remove(key);
         });
 
-        JsonObject content = EventKey.Content.getObj(signBase);
-        List<String> essentials = essentialContentKeys.getOrDefault(EventKey.Type.getString(signBase), Collections.emptyList());
-        JsonObject newContent = new JsonObject();
-        content.keySet().forEach(key -> {
-            if (essentials.contains(key)) newContent.remove(key);
+        JsonObject content = EventKey.Content.getObj(toSign);
+        List<String> essentials = essentialContentKeys.getOrDefault(EventKey.Type.getString(toSign), Collections.emptyList());
+        new HashSet<>(content.keySet()).forEach(key -> {
+            if (!essentials.contains(key)) content.remove(key);
         });
-        signBase.add(EventKey.Content.get(), newContent);
+        toSign.add(EventKey.Content.get(), content);
 
-        return hsState.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(base));
+        return hsState.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(toSign));
     }
 
-    private ISignedEvent hashAndSign(JsonObject ev) {
-        JsonObject base = hash(ev);
-        JsonObject signs = sign(base);
-        base.add(EventKey.Signatures.get(), signs);
-
-        return new SignedEvent(ev);
+    public JsonObject hashAndSign(JsonObject ev) { // TODO refactor into SDK
+        JsonObject evHashed = addHash(ev);
+        JsonObject signatures = getSignature(evHashed);
+        evHashed.add(EventKey.Signatures.get(), signatures);
+        return evHashed;
     }
 
     @Override
     public ISignedEvent sign(IEvent ev) {
-        return hashAndSign(ev.getJson());
+        return new SignedEvent(hashAndSign(ev.getJson()));
     }
 
     @Override
@@ -165,7 +166,7 @@ public class EventManager implements IEventManager {
         ev.addProperty(EventKey.Id.get(), getNextId());
         ev.addProperty(EventKey.Origin.get(), hsState.getDomain());
         ev.addProperty(EventKey.Timestamp.get(), System.currentTimeMillis());
-        return hashAndSign(ev);
+        return new SignedEvent(hashAndSign(ev));
     }
 
     @Override

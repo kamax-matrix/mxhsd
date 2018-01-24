@@ -211,6 +211,7 @@ public class HttpFederationClient implements IFederationClient {
         req.setHeader("Authorization",
                 "X-Matrix origin=" + global.getDomain() + ",key=\"" + key + "\",sig=\"" + sign + "\"");
         log.info("Calling [{}] {}", domain, req);
+        log.info("Payload{}", GsonUtil.getPrettyForLog(payload));
         try (CloseableHttpResponse res = client.execute(req)) {
             int resStatus = res.getStatusLine().getStatusCode();
             JsonObject body = getBody(res.getEntity());
@@ -246,8 +247,8 @@ public class HttpFederationClient implements IFederationClient {
     }
 
     @Override
-    public JsonObject sendTransaction(JsonObject o) {
-        throw new NotImplementedException("");
+    public JsonObject sendTransaction(String domain, String id, JsonObject o) {
+        return sendPut(getUri(domain, "/_matrix/federation/v1/send/" + id + "/"), o);
     }
 
     @Override

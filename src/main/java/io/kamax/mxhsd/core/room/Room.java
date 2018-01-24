@@ -31,6 +31,7 @@ import io.kamax.mxhsd.api.exception.InvalidRequestException;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.core.HomeserverState;
+import net.engio.mbassy.bus.MBassador;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,14 +51,16 @@ public class Room implements IRoom {
 
     private String id;
     private RoomState state;
+    private MBassador<ISignedEvent> eventBus;
     private Map<String, RoomState> prevStates;
 
     private BlockingQueue<ISignedEvent> extremities = new LinkedBlockingQueue<>();
 
-    Room(HomeserverState global, String id) {
+    public Room(HomeserverState global, String id) {
         this.global = global;
         this.id = id;
         this.prevStates = new ConcurrentHashMap<>();
+        this.eventBus = new MBassador<>();
         setCurrentState(new RoomState.Builder(global, id).build());
     }
 
@@ -86,6 +89,7 @@ public class Room implements IRoom {
         //c.forEach(b::addEvent);
         s.forEach(b::addEvent);
         b.withStreamIndex(seed.getId());
+        extremities.add(seed);
         setCurrentState(b.build());
 
         c.forEach(e -> global.getEvMgr().store(e));
@@ -121,14 +125,17 @@ public class Room implements IRoom {
         extremities.drainTo(parents);
         try {
             log.info("Room {}: Injecting new event of type {}", id, evNaked.getType());
-            IEvent ev = global.getEvMgr().populate(evNaked, getId(), state, parents);
-            log.debug("Formalized event: {}", GsonUtil.getPrettyForLog(ev.getJson()));
-            RoomEventAuthorization val = state.isAuthorized(ev);
+            IEventBuilder evTempBuilder = global.getEvMgr().populate(evNaked, getId(), state, parents);
+            IEvent evTemp = evTempBuilder.get();
+            log.debug("Formalized event: {}", GsonUtil.getPrettyForLog(evTemp.getJson()));
+            RoomEventAuthorization val = state.isAuthorized(evTemp);
             if (!val.isAuthorized()) {
                 log.debug("Room current state: {}", GsonUtil.getPrettyForLog(state));
                 log.error(val.getReason());
                 throw new ForbiddenException("Unauthorized event");
             } else {
+                val.getBasedOn().forEach(evTempBuilder::addAuthorization);
+                IEvent ev = evTempBuilder.get();
                 RoomState.Builder stateBuilder = new RoomState.Builder(global, id).from(val.getNewState());
                 log.info("Room {}: storing new event {}", id, ev.getId());
                 ISignedEventStreamEntry entry = global.getEvMgr().store(ev);
@@ -151,6 +158,7 @@ public class Room implements IRoom {
                     log.debug("Room {} new state: {}", id, GsonUtil.getPrettyForLog(state));
                 }
 
+                eventBus.publish(evSigned);
                 return evSigned;
             }
         } finally {
@@ -264,6 +272,7 @@ public class Room implements IRoom {
         if (changed) {
             log.debug("Room {} new state: {}", id, GsonUtil.getPrettyForLog(state));
         }
+        eventBus.publish(ev);
 
         Collection<String> eventIds = state.getEvents().values();
         List<ISignedEvent> events = global.getEvMgr().get(eventIds);
@@ -295,6 +304,13 @@ public class Room implements IRoom {
         });
 
         global.getEvMgr().store(ev);
+        extremities.add(ev);
+        eventBus.publish(ev);
+    }
+
+    @Override
+    public void addListener(Object o) {
+        eventBus.subscribe(o);
     }
 
 }

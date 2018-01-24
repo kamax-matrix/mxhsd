@@ -23,20 +23,28 @@ package io.kamax.mxhsd.core.federation;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.INakedEvent;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.federation.IFederationClient;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
+import io.kamax.mxhsd.api.federation.ITransaction;
 import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.room.directory.RoomAliasLookup;
+import io.kamax.mxhsd.spring.federation.controller.v1.transaction.TransactionJson;
 import org.apache.commons.lang3.NotImplementedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class RemoteHomeServer implements IRemoteHomeServer {
+
+    private final Logger log = LoggerFactory.getLogger(RemoteHomeServer.class);
 
     private HomeserverState global;
     private String domain;
@@ -81,6 +89,16 @@ public class RemoteHomeServer implements IRemoteHomeServer {
     @Override
     public JsonObject sendJoin(ISignedEvent ev) {
         return client.sendJoin(domain, ev);
+    }
+
+    @Override
+    public void pushTransaction(ITransaction t) {
+        TransactionJson json = new TransactionJson();
+        json.setOrigin(t.getOrigin());
+        json.setOriginServerTs(t.getOriginTimestamp().toEpochMilli());
+        json.setPdus(t.getPdus().stream().map(INakedEvent::getJson).collect(Collectors.toList()));
+        JsonObject answer = client.sendTransaction(domain, t.getId(), GsonUtil.getObj(json));
+        log.info("HS {} response:{}", domain, GsonUtil.getPrettyForLog(answer));
     }
 
 }

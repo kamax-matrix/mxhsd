@@ -40,4 +40,6 @@ public interface IRoomManager {
 
     List<IRoom> listRooms();
 
+    IAllRoomsHander forAllRooms();
+
 }

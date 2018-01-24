@@ -33,7 +33,7 @@ public interface IEventBuilder {
 
     IEventBuilder setRoomId(String roomId);
 
-    IEventBuilder addAuthorization(String evId);
+    IEventBuilder addAuthorization(IEventReference evRef);
 
     IEventBuilder addParent(ISignedEvent parent);
 

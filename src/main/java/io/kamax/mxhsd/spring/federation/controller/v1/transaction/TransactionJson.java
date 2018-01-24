@@ -27,19 +27,31 @@ import java.util.List;
 public class TransactionJson {
 
     private String origin;
-    private long originalServerTs;
+    private long originServerTs;
     private List<JsonObject> pdus;
 
     public String getOrigin() {
         return origin;
     }
 
-    public long getOriginalServerTs() {
-        return originalServerTs;
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public long getOriginServerTs() {
+        return originServerTs;
+    }
+
+    public void setOriginServerTs(long originalServerTs) {
+        this.originServerTs = originalServerTs;
     }
 
     public List<JsonObject> getPdus() {
         return pdus;
+    }
+
+    public void setPdus(List<JsonObject> pdus) {
+        this.pdus = pdus;
     }
 
 }

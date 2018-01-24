@@ -18,14 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd.api.federation;
 
 import io.kamax.mxhsd.api.event.ISignedEvent;
 
-public interface IRoom extends IServerRoom, IUserRoom, IAliasRoom {
+public interface IFederationNotifier {
 
-    void inject(ISignedEvent ev);
-
-    void addListener(Object o);
+    void send(ISignedEvent ev, String destination);
 
 }

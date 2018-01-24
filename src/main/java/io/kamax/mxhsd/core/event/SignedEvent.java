@@ -71,6 +71,4 @@ public class SignedEvent extends Event implements ISignedEvent {
         return GsonUtil.get().fromJson(EventKey.Hashes.getObj(getJson()), hashesType);
     }
 
-
-
 }

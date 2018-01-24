@@ -25,6 +25,7 @@ import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventKey;
 import io.kamax.mxhsd.api.room.RoomEventType;
@@ -158,17 +159,17 @@ public class RoomState implements IRoomState {
 
     private String roomId;
     private String evId;
-    private Map<String, String> events = new HashMap<>();
+    private Map<String, String> events = new HashMap<>(); // TODO we should keep IEventReference to speed up
     private Map<String, IMembershipContext> members = new HashMap<>();
     private RoomPowerLevels pls;
     private String plsId;
 
-    private IEvent getEv(String id) {
+    private ISignedEvent getEv(String id) {
         return global.getEvMgr().get(id).get();
     }
 
     @Override
-    public IEvent getCreation() {
+    public ISignedEvent getCreation() {
         return getEv(events.get(RoomEventType.Creation.get()));
     }
 
@@ -222,6 +223,13 @@ public class RoomState implements IRoomState {
         return Optional.ofNullable(events.get(type + key));
     }
 
+    private ISignedEvent getEventFor(String type, String key) {
+        return findEventFor(type, key)
+                .map(id -> global.getEvMgr().get(id).get())
+                .orElseThrow(() -> new RuntimeException("Cannot find internal event for state key " +
+                        type + key + " in room " + roomId));
+    }
+
     @Override
     public Map<String, String> getEvents() {
         return Collections.unmodifiableMap(events);
@@ -260,6 +268,7 @@ public class RoomState implements IRoomState {
         RoomEventAuthorization.Builder auth = new RoomEventAuthorization.Builder(roomId, ev);
         Builder stateBuilder = new Builder(global, roomId).from(this); // we'll only make an update to our current state
         stateBuilder.addEvent(ev);
+
         if (RoomEventType.Creation.is(type)) {
             if (!ev.getParents().isEmpty()) {
                 return auth.deny(ev, "there is a previous event");
@@ -267,6 +276,7 @@ public class RoomState implements IRoomState {
 
             return auth.allow(stateBuilder);
         }
+        auth.basedOn(getCreation());
 
         RoomPowerLevels effectivePls = getEffectivePowerLevels();
         String sender = EventKey.Sender.getString(evJson);
@@ -294,25 +304,29 @@ public class RoomState implements IRoomState {
                 }
 
                 if (isMembership(senderMs, Join)) {
+                    auth.basedOn(getEv(members.get(sender).getEventId()));
                     return auth.allow(this);
                 }
 
                 if (isMembership(senderMs, Invite)) {
+                    auth.basedOn(getEv(members.get(sender).getEventId()));
                     return auth.allow(stateBuilder);
                 }
 
                 String rule = findEventFor("join_rule", "")
                         .map(id -> RoomJoinRulesEvent.get(getEventJson(id)).getRule())
                         .orElse("private");
-                if (!StringUtils.equals(rule, "public") && false) {
+                if (!StringUtils.equals(rule, "public")) {
                     return auth.deny(ev, "room is not public and sender was never invited");
                 }
+                auth.basedOn(getEv(findEventFor("join_rule", "").orElse("")));
 
                 return auth.allow(stateBuilder);
             } else if (Invite.is(membership)) {
                 if (!hasMembership(sender, Join)) {
                     return auth.deny(ev, "sender cannot invite without being in the room");
                 }
+                auth.basedOn(getEv(members.get(sender).getEventId()));
 
                 if (isMembership(getMembershipOrDefault(target), Ban, Join)) {
                     return auth.deny(ev, "invitee is already in the room or is banned from the room");
@@ -321,11 +335,13 @@ public class RoomState implements IRoomState {
                 if (!effectivePls.canInvite(senderPl)) {
                     return auth.deny(ev, "sender does not have minimum invite PL");
                 }
+                auth.basedOn(getEventFor(RoomEventType.PowerLevels.get(), ""));
 
                 return auth.allow(stateBuilder);
             } else if (Leave.is(membership)) {
                 boolean isSame = StringUtils.equals(sender, target);
                 if (isSame && hasMembership(sender, Invite, Join)) {
+                    auth.basedOn(getEv(members.get(target).getEventId()));
                     return auth.allow(stateBuilder);
                 }
 
@@ -345,11 +361,13 @@ public class RoomState implements IRoomState {
                     return auth.deny(ev, "sender PL is not higher than target PL");
                 }
 
+                auth.basedOn(getEventFor(RoomEventType.PowerLevels.get(), ""));
                 return auth.allow(stateBuilder);
             } else if (Ban.is(membership)) {
                 if (!isMembership(senderMs, Join)) {
                     return auth.deny(ev, "sender cannot ban in a room they are not in");
                 }
+                auth.basedOn(getEv(members.get(sender).getEventId()));
 
                 if (!effectivePls.canBan(senderPl)) {
                     return auth.deny(ev, "sender does not have minimum ban PL");
@@ -358,6 +376,7 @@ public class RoomState implements IRoomState {
                 if (senderPl <= targetPl) {
                     return auth.deny(ev, "sender PL is not higher than target PL");
                 }
+                auth.basedOn(getEventFor(RoomEventType.PowerLevels.get(), ""));
 
                 return auth.allow(stateBuilder);
             } else {
@@ -368,6 +387,7 @@ public class RoomState implements IRoomState {
         if (!isMembership(senderMs, Join)) {
             return auth.deny(ev, "sender " + sender + " is not in the room");
         }
+        auth.basedOn(getEv(members.get(sender).getEventId()));
 
         // State events definition: https://matrix.org/speculator/spec/HEAD/client_server/unstable.html#state-event-fields
         // FIXME must clarify spec that state_key is mandatory on state events, and only there
@@ -385,22 +405,26 @@ public class RoomState implements IRoomState {
             if (!effectivePls.canReplace(sender, senderPl, newPls)) {
                 return auth.deny(ev, "sender is missing minimum PL to change room PLs");
             }
+            auth.basedOn(getEventFor(RoomEventType.PowerLevels.get(), ""));
 
             return auth.allow(stateBuilder);
         }
 
         if (RoomEventType.Redaction.is(ev.getType())) {
             if (pls.canRedact(senderPl)) {
+                auth.basedOn(getEventFor(RoomEventType.PowerLevels.get(), ""));
                 return auth.allow(stateBuilder);
             }
 
             if (StringUtils.equals(sender, target)) {
+                auth.basedOn(getEventFor(RoomEventType.PowerLevels.get(), ""));
                 return auth.allow(stateBuilder);
             }
 
             return auth.deny(ev, "sender does not have minimum redact PL");
         }
 
+        auth.basedOn(getEventFor(RoomEventType.PowerLevels.get(), ""));
         return auth.allow(stateBuilder);
     }
 

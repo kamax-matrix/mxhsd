@@ -31,6 +31,8 @@ import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.*;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.event.SignedEvent;
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -44,17 +46,39 @@ public class RoomManager implements IRoomManager {
     private Logger log = LoggerFactory.getLogger(RoomManager.class);
 
     private HomeserverState state;
-    private Map<String, IRoom> rooms;
+    private Map<String, Room> rooms;
+    private IAllRoomsHander arHandler;
 
     public RoomManager(HomeserverState state) {
         this.state = state;
-        rooms = new HashMap<>();
+        this.rooms = new HashMap<>();
+        this.arHandler = new IAllRoomsHander() {
+
+            private MBassador<ISignedEvent> bus = new MBassador<>();
+
+            @Handler
+            private void receiver(ISignedEvent ev) {
+                bus.publish(ev);
+            }
+
+            @Override
+            public void addListener(Object o) {
+                bus.subscribe(o);
+            }
+
+        };
     }
 
     private boolean hasRoom(String id) {
         synchronized (rooms) {
             return rooms.containsKey(id);
         }
+    }
+
+    private Room registerRoom(Room r) {
+        rooms.put(r.getId(), r);
+        r.addListener(arHandler);
+        return r;
     }
 
     private String getId() {
@@ -91,7 +115,7 @@ public class RoomManager implements IRoomManager {
     }
 
     @Override
-    public IRoom createRoom(IRoomCreateOptions options) { // FIXME use RWLock
+    public Room createRoom(IRoomCreateOptions options) { // FIXME use RWLock
         String creator = options.getCreator().getId();
         String id = getId();
         Room room = new Room(state, id);
@@ -139,7 +163,7 @@ public class RoomManager implements IRoomManager {
 
             // TODO handle invite_3pid
 
-            rooms.put(id, room);
+            registerRoom(room);
 
             log.info("Room {} created", id);
             return room;
@@ -170,9 +194,7 @@ public class RoomManager implements IRoomManager {
                                 .stream().map(SignedEvent::new).collect(Collectors.toList());
 
                         synchronized (rooms) {
-                            Room room = new Room(RoomManager.this.state, lookup.getId(), state, authChain, joinEv);
-                            rooms.put(room.getId(), room);
-                            return room;
+                            return registerRoom(new Room(RoomManager.this.state, lookup.getId(), state, authChain, joinEv));
                         }
                     } catch (FederationException e) {
                         log.warn("Unable to join {} using {}: {}", lookup.getAlias(), server, e.getMessage());
@@ -196,6 +218,11 @@ public class RoomManager implements IRoomManager {
         synchronized (rooms) {
             return new ArrayList<>(rooms.values());
         }
+    }
+
+    @Override
+    public IAllRoomsHander forAllRooms() {
+        return arHandler;
     }
 
 }

@@ -1,6 +1,112 @@
+/*
+ * mxhsd - Corporate Matrix Homeserver
+ * Copyright (C) 2018 Maxime Dor
+ *
+ * https://www.kamax.io/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package io.kamax.mxhsd_test.core.room;
+
+import io.kamax.matrix.MatrixID;
+import io.kamax.matrix.hs.RoomMembership;
+import io.kamax.matrix.sign.KeyManager;
+import io.kamax.matrix.sign.KeyMemoryStore;
+import io.kamax.matrix.sign.SignatureManager;
+import io.kamax.mxhsd.api.event.IEventReference;
+import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.room.PowerLevel;
+import io.kamax.mxhsd.api.room.RoomEventType;
+import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
+import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
+import io.kamax.mxhsd.api.room.event.RoomMessageEvent;
+import io.kamax.mxhsd.api.room.event.RoomPowerLevelEvent;
+import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.event.EventManager;
+import io.kamax.mxhsd.core.room.Room;
+import io.kamax.mxhsd.core.room.RoomPowerLevels;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static junit.framework.TestCase.assertTrue;
 
 public class RoomTest {
 
+    private static HomeserverState internals;
+    private static MatrixID user;
+
+    private Room room;
+
+    private boolean containsAll(Collection<IEventReference> c, String... v) {
+        return c.stream().map(IEventReference::getEventId).collect(Collectors.toList()).containsAll(Arrays.asList(v));
+    }
+
+    @BeforeClass
+    public static void beforeClass() {
+        internals = new HomeserverState();
+        internals.setDomain("localhost");
+        internals.setKeyMgr(new KeyManager(new KeyMemoryStore("")));
+        internals.setSignMgr(new SignatureManager(internals.getKeyMgr(), internals.getDomain()));
+        internals.setEvMgr(new EventManager(internals));
+
+        user = MatrixID.from("user", internals.getDomain()).valid();
+    }
+
+    @Before
+    public void before() {
+        room = new Room(internals, UUID.randomUUID().toString().replace("-", ""));
+    }
+
+    @Test
+    public void eventRelationships() {
+        // TODO refactor so this and RoomManager can use some nice default builder
+        RoomPowerLevels pls = new RoomPowerLevels.Builder()
+                .setStateDefault(PowerLevel.Moderator)
+                .setEventsDefault(PowerLevel.None)
+                .addEvent(RoomEventType.HistoryVisibility.get(), PowerLevel.Admin)
+                .addEvent(RoomEventType.PowerLevels.get(), PowerLevel.Admin)
+                .setUsersDefault(PowerLevel.None)
+                .addUser(user.getId(), PowerLevel.Admin)
+                .setBan(PowerLevel.Moderator)
+                .setInvite(PowerLevel.None)
+                .setKick(PowerLevel.Moderator)
+                .setRedact(PowerLevel.Moderator)
+                .build();
+
+        ISignedEvent cEv = room.inject(new RoomCreateEvent(user.getId()));
+        assertTrue(cEv.getAuthorization().isEmpty());
+        assertTrue(cEv.getParents().isEmpty());
+
+        ISignedEvent cJEv = room.inject(new RoomMembershipEvent(user.getId(), RoomMembership.Join.get(), user.getId()));
+        assertTrue(cJEv.getAuthorization().size() == 1);
+        assertTrue(containsAll(cJEv.getAuthorization(), cEv.getId()));
+        assertTrue(containsAll(cJEv.getParents(), cEv.getId()));
+
+        ISignedEvent plEv = room.inject(new RoomPowerLevelEvent(user.getId(), pls));
+        assertTrue(containsAll(plEv.getAuthorization(), cEv.getId(), cJEv.getId()));
+        assertTrue(containsAll(plEv.getParents(), cJEv.getId()));
+
+        ISignedEvent mEv = room.inject(new RoomMessageEvent(user.getId(), "a"));
+        assertTrue(containsAll(mEv.getAuthorization(), cEv.getId(), cJEv.getId(), plEv.getId()));
+        assertTrue(containsAll(mEv.getParents(), plEv.getId()));
+    }
 
 }

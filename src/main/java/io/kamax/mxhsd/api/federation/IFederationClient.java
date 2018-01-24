@@ -32,7 +32,7 @@ public interface IFederationClient {
 
     JsonObject sendJoin(String residentHsDomain, ISignedEvent ev);
 
-    JsonObject sendTransaction(JsonObject o);
+    JsonObject sendTransaction(String domain, String id, JsonObject o);
 
     JsonObject getRoomState(String roomId);
 

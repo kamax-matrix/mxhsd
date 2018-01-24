@@ -27,7 +27,6 @@ import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.*;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -71,9 +70,8 @@ public class EventBuilder implements IEventBuilder {
     }
 
     @Override
-    public IEventBuilder addAuthorization(String evId) {
-        // FIXME handle hash correctly
-        authorization.add(new EventReference(evId, Collections.singletonMap("none", "NotImplemented")));
+    public IEventBuilder addAuthorization(IEventReference ref) {
+        authorization.add(new EventReference(ref.getEventId(), ref.getHashes()));
         return this;
     }
 
@@ -91,12 +89,14 @@ public class EventBuilder implements IEventBuilder {
             JsonArray v = new JsonArray();
             v.add(p.getEventId());
             v.add(GsonUtil.getObj(p.getHashes()));
+            aEv.add(v);
         });
         JsonArray pEv = new JsonArray();
         parents.forEach(p -> {
             JsonArray v = new JsonArray();
             v.add(p.getEventId());
             v.add(GsonUtil.getObj(p.getHashes()));
+            pEv.add(v);
         });
 
         base.add(EventKey.AuthEvents.get(), aEv);

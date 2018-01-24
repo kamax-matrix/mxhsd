@@ -20,7 +20,7 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
 import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
@@ -30,7 +30,7 @@ import java.util.Set;
 
 public interface IRoomState {
 
-    IEvent getCreation(); // FIXME this should be IRoomCreationContext, IEventReference or ISignedEvent
+    ISignedEvent getCreation(); // FIXME this should be IRoomCreationContext, IEventReference or ISignedEvent
 
     Set<IMembershipContext> getMemberships();
 

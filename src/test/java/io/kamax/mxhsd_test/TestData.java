@@ -18,14 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd_test;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
+public class TestData {
 
-public interface IRoom extends IServerRoom, IUserRoom, IAliasRoom {
-
-    void inject(ISignedEvent ev);
-
-    void addListener(Object o);
+    public static final String SIGN_KEY_SEED = "YJDBA9Xnr2sVqXD9Vj7XVUnmFZcZrlw8Md7kMW+3XA1";
 
 }

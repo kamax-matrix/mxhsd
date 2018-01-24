@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.spring.federation.controller.v1.transaction;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.core.event.SignedEvent;
@@ -60,11 +61,13 @@ public class TransactionController extends JsonController {
             @PathVariable String transactionId
     ) {
         log(req);
-        TransactionJson json = GsonUtil.get().fromJson(getBody(req), TransactionJson.class);
+        JsonObject tRaw = getJsonObject(req);
+        TransactionJson json = GsonUtil.get().fromJson(tRaw, TransactionJson.class);
+        log.info("Transaction:{}", GsonUtil.getPrettyForLog(tRaw));
         hs.getServerSession("").push(new Transaction(
                 transactionId,
                 json.getOrigin(),
-                Instant.ofEpochMilli(json.getOriginalServerTs()),
+                Instant.ofEpochMilli(json.getOriginServerTs()),
                 json.getPdus().stream().map(SignedEvent::new).collect(Collectors.toList())));
 
         return EmptyJsonResponse.stringify();

@@ -20,11 +20,7 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
-
-public interface IRoom extends IServerRoom, IUserRoom, IAliasRoom {
-
-    void inject(ISignedEvent ev);
+public interface IAllRoomsHander {
 
     void addListener(Object o);
 

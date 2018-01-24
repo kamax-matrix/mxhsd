@@ -41,4 +41,6 @@ public interface IRemoteHomeServer {
 
     JsonObject sendJoin(ISignedEvent ev);
 
+    void pushTransaction(ITransaction t);
+
 }

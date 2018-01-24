@@ -29,6 +29,7 @@ import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.crypto.CryptoManager;
 import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
+import io.kamax.mxhsd.core.federation.FederationNotifier;
 import io.kamax.mxhsd.core.federation.RemoteHomeServerManager;
 import io.kamax.mxhsd.core.room.RoomManager;
 import io.kamax.mxhsd.core.room.directory.GlobalRoomDirectory;
@@ -53,6 +54,7 @@ public class HomeserverService {
         state.setCryptoMgr(new CryptoManager(state));
         state.setEvMgr(new EventManager(state));
         state.setRoomMgr(new RoomManager(state));
+        state.setFedNotif(new FederationNotifier(state));
         state.setAuthMgr(new DumbAuthProvider());
         state.setDevMgr(new DeviceManager());
         state.setHsMgr(new RemoteHomeServerManager(state));

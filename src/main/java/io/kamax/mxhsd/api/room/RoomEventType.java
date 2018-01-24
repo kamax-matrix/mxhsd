@@ -34,6 +34,7 @@ public enum RoomEventType {
     HistoryVisibility("m.room.history_visibility", true),
     JoinRules("m.room.join_rules", true),
     Membership("m.room.member", true),
+    Message("m.room.message", false),
     PowerLevels("m.room.power_levels", true),
     Redaction("m.room.redaction", false),
     ThirdPartyInvite("m.room.third_party_invite", true),

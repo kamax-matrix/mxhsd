@@ -54,7 +54,7 @@ public class RoomMembershipEvent extends NakedContentEvent {
         super(RoomEventType.Membership.get(), sender);
         this.stateKey = target;
         this.membership = membership;
-        content = GsonUtil.get().toJsonTree(new Content(membership)).getAsJsonObject();
+        setContent(new Content(membership));
     }
 
     public String getStateKey() {

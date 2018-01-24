@@ -26,6 +26,7 @@ import io.kamax.mxhsd.api.auth.IAuthProvider;
 import io.kamax.mxhsd.api.crypto.ICryptoManager;
 import io.kamax.mxhsd.api.device.IDeviceManager;
 import io.kamax.mxhsd.api.event.IEventManager;
+import io.kamax.mxhsd.api.federation.IFederationNotifier;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServerManager;
 import io.kamax.mxhsd.api.room.IRoomManager;
 import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
@@ -42,6 +43,7 @@ public class HomeserverState {
     private ICryptoManager cryptoMgr;
     private IEventManager evMgr;
     private IRoomManager roomMgr;
+    private IFederationNotifier fedNotif;
     private IRemoteHomeServerManager hsMgr;
     private ICoreRoomDirectory roomDir;
 
@@ -99,6 +101,14 @@ public class HomeserverState {
 
     public void setSignMgr(SignatureManager signMgr) {
         this.signMgr = signMgr;
+    }
+
+    public IFederationNotifier getFedNotif() {
+        return fedNotif;
+    }
+
+    public void setFedNotif(IFederationNotifier fedNotif) {
+        this.fedNotif = fedNotif;
     }
 
     public ICryptoManager getCryptoMgr() {

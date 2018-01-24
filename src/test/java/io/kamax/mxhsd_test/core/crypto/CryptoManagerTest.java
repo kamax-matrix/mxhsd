@@ -48,7 +48,7 @@ public class CryptoManagerTest {
     @Test
     public void addTlsCertificate() {
         assertTrue(mgr.getTlsKeys().isEmpty());
-        mgr.addTlsKey(new File("src/test/resources/cryptoMgrTest.crt"));
+        mgr.addTlsKey(new File("src/test/resources/crypto/cryptoMgrTest.crt"));
         assertTrue(mgr.getTlsKeys().size() == 1);
         assertTrue(StringUtils.equals("37KmCUkPRv50zS4fl9kcaLXJrZda4WYZb+e6lRpKo2M", mgr.getTlsKeys().get(0).getFingerprint()));
     }

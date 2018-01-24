@@ -20,8 +20,15 @@
 
 package io.kamax.mxhsd.core.room;
 
+import io.kamax.mxhsd.api.event.EventReference;
 import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.IEventReference;
+import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.IRoomState;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class RoomEventAuthorization {
 
@@ -43,6 +50,11 @@ public class RoomEventAuthorization {
             return o;
         }
 
+        public Builder basedOn(ISignedEvent ev) {
+            o.basedOn.add(new EventReference(ev.getId(), ev.getHashes()));
+            return this;
+        }
+
         public RoomEventAuthorization allow(RoomState.Builder b) {
             return allow(b.build());
         }
@@ -62,6 +74,7 @@ public class RoomEventAuthorization {
     }
 
     private IEvent ev;
+    private List<IEventReference> basedOn = new ArrayList<>();
     private boolean isAuthorized;
     private String reason;
     private IRoomState newState;
@@ -77,6 +90,10 @@ public class RoomEventAuthorization {
 
     public IEvent getEvent() {
         return ev;
+    }
+
+    public List<IEventReference> getBasedOn() {
+        return Collections.unmodifiableList(basedOn);
     }
 
     public boolean isAuthorized() {

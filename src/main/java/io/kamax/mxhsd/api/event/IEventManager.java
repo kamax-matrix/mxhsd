@@ -28,7 +28,7 @@ import java.util.List;
 
 public interface IEventManager {
 
-    IEvent populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents);
+    IEventBuilder populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents);
 
     ISignedEvent sign(IEvent ev);
 
