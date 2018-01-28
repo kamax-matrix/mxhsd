@@ -26,6 +26,7 @@ import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -42,8 +43,15 @@ public class KeyController extends JsonController {
         this.hs = svc.get();
     }
 
-    @GetMapping("/server/{keyId:.+}")
+    @GetMapping("/server")
     public String getKeys(HttpServletRequest req) {
+        log(req);
+
+        return toJson(hs.getPublicCrypto());
+    }
+
+    @GetMapping("/server/{keyId:.+}")
+    public String getKey(HttpServletRequest req, @PathVariable String keyId) {
         log(req);
 
         return toJson(hs.getPublicCrypto());
