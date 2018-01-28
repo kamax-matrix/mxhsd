@@ -28,7 +28,11 @@ public class DumbAuthProvider implements IAuthProvider {
 
     @Override
     public _MatrixID login(String domain, String user, char[] password) {
-        return new MatrixID(user, domain);
+        try {
+            return MatrixID.from(user).acceptable();
+        } catch (IllegalArgumentException e) {
+            return MatrixID.from(user, domain).acceptable();
+        }
     }
 
 }
