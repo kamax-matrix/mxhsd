@@ -83,7 +83,7 @@ public class EventManager implements IEventManager {
         essentialContentKeys.put(RoomEventType.Aliases.get(), Collections.singletonList("aliases"));
         essentialContentKeys.put(RoomEventType.Creation.get(), Collections.singletonList("creator"));
         essentialContentKeys.put(RoomEventType.HistoryVisibility.get(), Collections.singletonList("history_visiblity"));
-        essentialContentKeys.put(RoomEventType.JoinRules.get(), Collections.singletonList("join_rule"));
+        essentialContentKeys.put(RoomEventType.JoinRules.get(), Collections.singletonList(EventContentKey.JoinRule));
         essentialContentKeys.put(RoomEventType.Membership.get(), Collections.singletonList("membership"));
         essentialContentKeys.put(RoomEventType.PowerLevels.get(), Arrays.asList(
                 "ban",

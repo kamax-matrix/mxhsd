@@ -29,6 +29,7 @@ import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventKey;
 import io.kamax.mxhsd.api.room.RoomEventType;
+import io.kamax.mxhsd.api.room.RoomJoinRule;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
 import io.kamax.mxhsd.api.room.event.RoomJoinRulesEvent;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
@@ -313,13 +314,13 @@ public class RoomState implements IRoomState {
                     return auth.allow(stateBuilder);
                 }
 
-                String rule = findEventFor("join_rule", "")
+                String rule = findEventFor(RoomEventType.JoinRules.get(), "")
                         .map(id -> RoomJoinRulesEvent.get(getEventJson(id)).getRule())
-                        .orElse("private");
-                if (!StringUtils.equals(rule, "public")) {
+                        .orElse(RoomJoinRule.Private);
+                if (!StringUtils.equals(rule, RoomJoinRule.Public)) {
                     return auth.deny(ev, "room is not public and sender was never invited");
                 }
-                auth.basedOn(getEv(findEventFor("join_rule", "").orElse("")));
+                auth.basedOn(getEv(findEventFor(RoomEventType.JoinRules.get(), "").orElse("")));
 
                 return auth.allow(stateBuilder);
             } else if (Invite.is(membership)) {

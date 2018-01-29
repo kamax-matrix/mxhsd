@@ -46,7 +46,7 @@ public class GlobalRoomDirectory implements ICoreRoomDirectory {
     private Map<String, List<String>> idToAliases = new ConcurrentHashMap<>();
 
     public GlobalRoomDirectory(HomeserverState global) {
-        (this.global = global).getEvMgr().addListener(this);
+        (this.global = global).getRoomMgr().forAllRooms().addListener(this);
     }
 
     @Handler
