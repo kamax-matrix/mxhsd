@@ -39,7 +39,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RegistrationController extends JsonController {
 
-    private final Logger log = LoggerFactory.getLogger(RegistrationController.class);
+    private final Logger logger = LoggerFactory.getLogger(RegistrationController.class);
 
     private IHomeServer hs;
 
@@ -50,7 +50,7 @@ public class RegistrationController extends JsonController {
 
     @RequestMapping(method = POST, path = "/register")
     public String register(HttpServletRequest req) {
-        log(req);
+        log(logger, req);
 
         throw new ForbiddenException("Not implemented");
     }

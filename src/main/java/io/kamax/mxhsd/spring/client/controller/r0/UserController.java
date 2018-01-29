@@ -28,6 +28,8 @@ import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.common.controller.InvalidRequestException;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +46,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
 @RequestMapping(path = ClientAPIr0.Base + "/user/{userId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class UserController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     private IHomeServer hs;
 
     @Autowired
@@ -53,14 +57,14 @@ public class UserController extends JsonController {
 
     @RequestMapping(method = POST, path = "/filter")
     public String createFilter(HttpServletRequest req, @PathVariable String userId, @RequestParam("access_token") String token) throws IOException {
-        log(req);
+        log(logger, req);
 
         String body = getBody(req);
         IUserFilter filter = hs.getUserSession(token).getForUser(new MatrixID(userId)).getUser().createFilter(body);
 
         JsonObject reply = new JsonObject();
         reply.addProperty("filter_id", filter.getId());
-        return toJson(reply);
+        return toJson(logger, reply);
     }
 
     @RequestMapping(method = GET, path = "/filter/{filterId:.+}")
@@ -70,7 +74,7 @@ public class UserController extends JsonController {
             @PathVariable String userId,
             @PathVariable String filterId
     ) {
-        log(req);
+        log(logger, req);
 
         IUserFilter filter = hs.getUserSession(token).getForUser(new MatrixID(userId)).getUser()
                 .findFilter(filterId).orElseThrow(() -> new InvalidRequestException("M_UKNOWN", "Invalid filter ID"));
@@ -87,7 +91,7 @@ public class UserController extends JsonController {
             @PathVariable String userId,
             @PathVariable String type
     ) {
-        log(req);
+        log(logger, req);
 
         return EmptyJsonResponse.stringify();
     }
@@ -97,7 +101,7 @@ public class UserController extends JsonController {
     public String openIdRequestToken(
             HttpServletRequest req
     ) {
-        log(req);
+        log(logger, req);
 
         JsonObject json = new JsonObject();
         json.addProperty("access_token", "dummy");
@@ -105,7 +109,7 @@ public class UserController extends JsonController {
         json.addProperty("expires_in", Integer.MAX_VALUE); // a long time
         json.addProperty("matrix_server_name", hs.getDomain());
 
-        return toJson(json);
+        return toJson(logger, json);
     }
 
 }

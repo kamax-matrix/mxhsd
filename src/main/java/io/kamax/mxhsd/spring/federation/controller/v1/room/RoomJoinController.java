@@ -34,6 +34,8 @@ import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import io.kamax.mxhsd.spring.federation.controller.v1.FederationAPIv1;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +45,8 @@ import javax.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping(path = FederationAPIv1.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RoomJoinController extends JsonController {
+
+    private final Logger logger = LoggerFactory.getLogger(RoomJoinController.class);
 
     private IHomeServer hs;
 
@@ -57,11 +61,11 @@ public class RoomJoinController extends JsonController {
             @PathVariable("roomId") String roomId,
             @PathVariable("mxIdRaw") String mxIdRaw
     ) {
-        log(req);
+        log(logger, req);
 
         _MatrixID mxId = MatrixID.asValid(mxIdRaw);
         JsonObject event = hs.getServerSession("").getRoom(roomId).makeJoin(mxId);
-        return toJson(GsonUtil.getObj("event", event));
+        return toJson(logger, GsonUtil.getObj("event", event));
     }
 
     @PutMapping("/send_join/{roomId:.+}/{eventId:.+}")
@@ -70,10 +74,10 @@ public class RoomJoinController extends JsonController {
             @PathVariable String roomId,
             @PathVariable String eventId
     ) {
-        log(req);
+        log(logger, req);
 
         ISignedEvent ev = new SignedEvent(getBody(req));
-        toJson(ev);
+        toJson(logger, ev);
         if (!StringUtils.equals(eventId, ev.getId())) {
             throw new InvalidRequestException("Event ID in the path request [" + eventId + "] and in the event [" + ev.getId() + "] do not match");
         }
@@ -82,7 +86,7 @@ public class RoomJoinController extends JsonController {
         JsonObject obj = new JsonObject();
         obj.add("auth_chain", new JsonArray());
         obj.add("state", GsonUtil.asArrayObj(state.getState()));
-        return toJson(state);
+        return toJson(logger, state);
     }
 
 }

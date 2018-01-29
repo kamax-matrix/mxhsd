@@ -20,14 +20,14 @@
 
 package io.kamax.mxhsd.spring.client.controller.r0.sync;
 
-import com.google.gson.Gson;
-import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.core.sync.SyncOptions;
 import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,9 +42,9 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 @RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class SyncController extends JsonController {
 
-    private IHomeServer hs;
+    private Logger logger = LoggerFactory.getLogger(SyncController.class);
 
-    private Gson gson = GsonUtil.build();
+    private IHomeServer hs;
 
     @Autowired
     public SyncController(HomeserverService svc) {
@@ -59,11 +59,9 @@ public class SyncController extends JsonController {
             @RequestParam(required = false) String since,
             @RequestParam(required = false) Long timeout
     ) {
-        log(req);
-
         SyncOptions options = new SyncOptions().setFilterId(filter).setSince(since).setTimeout(timeout);
         ISyncData data = hs.getUserSession(token).fetchData(options);
-        return toJson(new SyncResponse(data));
+        return toJson(logger, new SyncResponse(data));
     }
 
 }

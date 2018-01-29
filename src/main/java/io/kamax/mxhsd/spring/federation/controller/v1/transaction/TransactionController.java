@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 @RequestMapping(path = FederationAPIv1.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class TransactionController extends JsonController {
 
-    private final Logger log = LoggerFactory.getLogger(TransactionController.class);
+    private final Logger logger = LoggerFactory.getLogger(TransactionController.class);
 
     private IHomeServer hs;
 
@@ -60,10 +60,10 @@ public class TransactionController extends JsonController {
             HttpServletRequest req,
             @PathVariable String transactionId
     ) {
-        log(req);
+        log(logger, req);
         JsonObject tRaw = getJsonObject(req);
         TransactionJson json = GsonUtil.get().fromJson(tRaw, TransactionJson.class);
-        log.info("Transaction:{}", GsonUtil.getPrettyForLog(tRaw));
+        logger.info("Transaction:{}", GsonUtil.getPrettyForLog(tRaw));
         hs.getServerSession("").push(new Transaction(
                 transactionId,
                 json.getOrigin(),

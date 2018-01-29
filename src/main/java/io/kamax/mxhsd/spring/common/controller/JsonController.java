@@ -43,7 +43,7 @@ public class JsonController {
 
     private Gson gson = GsonUtil.buildPretty();
 
-    public void log(HttpServletRequest req) {
+    public void log(Logger log, HttpServletRequest req) {
         log.info("Request {} {} | {}", req.getMethod(), req.getRequestURL(), req.getQueryString());
         Optional.ofNullable(req.getHeader("Authorization")).ifPresent(h -> log.info("Authorization header: {}", h));
     }
@@ -69,7 +69,7 @@ public class JsonController {
         return GsonUtil.parseObj(getJson(req));
     }
 
-    protected String toJson(Object o) {
+    protected String toJson(Logger log, Object o) {
         String json = gson.toJson(o);
         log.info("To json:\n{}", json);
         return json;

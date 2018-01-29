@@ -40,16 +40,16 @@ import java.util.Enumeration;
 @RequestMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class DefaultFederationController extends JsonController {
 
-    private Logger log = LoggerFactory.getLogger(DefaultFederationController.class);
+    private final Logger logger = LoggerFactory.getLogger(DefaultFederationController.class);
 
     @RequestMapping("/**")
     public String catchAll(HttpServletRequest req, HttpServletResponse res) {
-        log(req);
+        log(logger, req);
 
         Enumeration<String> headerNames = req.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String name = headerNames.nextElement();
-            log.info("{}: {}", name, req.getHeader(name));
+            logger.info("{}: {}", name, req.getHeader(name));
         }
 
         StringBuffer postData = new StringBuffer();
@@ -66,19 +66,19 @@ public class DefaultFederationController extends JsonController {
             }
         }
 
-        log.debug("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
+        logger.debug("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
         if (postData.length() > 0) {
-            log.info("POST data: {}", postData);
+            logger.info("POST data: {}", postData);
         }
         try {
             String body = IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8);
             if (StringUtils.isNotBlank(body)) {
-                log.info("Body: {}", body);
+                logger.info("Body: {}", body);
             } else {
-                log.info("No body");
+                logger.info("No body");
             }
         } catch (IOException e) {
-            log.debug("Body: Unable to read", e);
+            logger.debug("Body: Unable to read", e);
         }
 
         res.setStatus(HttpServletResponse.SC_NOT_FOUND);

@@ -29,6 +29,8 @@ import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +46,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping(path = ClientAPIr0.Room, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RoomMembershipController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(RoomMembershipController.class);
+
     private IHomeServer hs;
 
     @Autowired
@@ -53,7 +57,7 @@ public class RoomMembershipController extends JsonController {
 
     @RequestMapping(method = POST, path = "/invite")
     public String inviteToRoom(HttpServletRequest req, @PathVariable String roomId, @RequestParam("access_token") String token) {
-        log(req);
+        log(logger, req);
 
         JsonObject o = getJsonObject(req);
         String sender = hs.getUserSession(token).getUser().getId().getId();
@@ -66,7 +70,7 @@ public class RoomMembershipController extends JsonController {
 
     @RequestMapping(method = POST, path = "/leave")
     public String leaveRoom(HttpServletRequest req, @PathVariable String roomId, @RequestParam("access_token") String token) {
-        log(req);
+        log(logger, req);
 
         hs.getUserSession(token).leaveRoom(roomId);
 

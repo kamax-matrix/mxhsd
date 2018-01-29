@@ -69,6 +69,7 @@ public class Homeserver implements IHomeServer {
 
     @Override
     public IUserSession login(String username, char[] password) {
+        log.info("Performing user authentication of {}", username);
         _MatrixID mxid = new MatrixID(state.getAuthMgr().login(getDomain(), username, password).getId());
         if (!mxid.isValid()) {
             log.warn("Invalid Matrix ID from auth backend: {}", mxid);

@@ -39,11 +39,11 @@ import java.util.Enumeration;
 @RequestMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class DefaultClientController extends JsonController {
 
-    private Logger log = LoggerFactory.getLogger(DefaultClientController.class);
+    private final Logger logger = LoggerFactory.getLogger(DefaultClientController.class);
 
     @RequestMapping("/**")
     public String catchAll(HttpServletRequest req, HttpServletResponse res) {
-        log(req);
+        log(logger, req);
 
         StringBuffer postData = new StringBuffer();
         Enumeration<String> postParms = req.getParameterNames();
@@ -59,14 +59,14 @@ public class DefaultClientController extends JsonController {
             }
         }
 
-        log.debug("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
+        logger.debug("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
         if (postData.length() > 0) {
-            log.debug("POST data: {}", postData);
+            logger.debug("POST data: {}", postData);
         }
         try {
-            log.debug("Body: {}", IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8));
+            logger.debug("Body: {}", IOUtils.toString(req.getInputStream(), StandardCharsets.UTF_8));
         } catch (IOException e) {
-            log.debug("Body: Unable to read", e);
+            logger.debug("Body: Unable to read", e);
         }
 
         res.setStatus(HttpServletResponse.SC_NOT_FOUND);

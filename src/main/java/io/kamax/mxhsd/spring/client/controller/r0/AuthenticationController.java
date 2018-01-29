@@ -29,6 +29,8 @@ import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import org.apache.commons.lang3.NotImplementedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +47,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class AuthenticationController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
+
     private Gson gson = GsonUtil.build();
 
     private IHomeServer hs;
@@ -56,14 +60,14 @@ public class AuthenticationController extends JsonController {
 
     @RequestMapping(method = GET, path = "/login")
     public String getLogin(HttpServletRequest req) {
-        log(req);
+        log(logger, req);
 
         return "{\"flows\":[{\"type\":\"m.login.password\"}]}";
     }
 
     @RequestMapping(method = POST, path = "/login")
     public String postLogin(HttpServletRequest req) throws IOException {
-        log(req);
+        log(logger, req);
 
         JsonObject obj = GsonUtil.parse(getJson(req)).getAsJsonObject();
         String username = GsonUtil.getOrThrow(obj, "user");
@@ -76,19 +80,19 @@ public class AuthenticationController extends JsonController {
         reply.addProperty("home_server", hs.getDomain());
         reply.addProperty("device_id", session.getDevice().getId());
 
-        return toJson(reply);
+        return toJson(logger, reply);
     }
 
     @RequestMapping(method = POST, path = "/tokenrefresh")
     public String tokenRefresh(HttpServletRequest req) {
-        log(req);
+        log(logger, req);
 
         throw new NotImplementedException("tokenrefresh");
     }
 
     @RequestMapping(method = POST, path = "/logout")
     public String logout(HttpServletRequest req, @RequestParam("access_token") String accessToken) {
-        log(req);
+        log(logger, req);
 
         hs.findUserSession(accessToken).ifPresent(IUserSession::logout);
 

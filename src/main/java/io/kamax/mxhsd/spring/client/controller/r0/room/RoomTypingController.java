@@ -25,6 +25,8 @@ import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +41,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 @RestController
 @RequestMapping(path = ClientAPIr0.Room + "/typing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RoomTypingController extends JsonController {
+
+    private final Logger logger = LoggerFactory.getLogger(RoomTypingController.class);
 
     private IHomeServer hs;
 
@@ -56,7 +60,7 @@ public class RoomTypingController extends JsonController {
             @PathVariable String mxId,
             @RequestParam("access_token") String token
     ) {
-        log(req);
+        log(logger, req);
 
         return EmptyJsonResponse.stringify();
     }

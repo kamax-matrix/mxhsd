@@ -22,6 +22,8 @@ package io.kamax.mxhsd.spring.client.controller.unstable.e2ee;
 
 import io.kamax.mxhsd.spring.client.controller.unstable.ClientAPIunstable;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,11 +36,13 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping(path = ClientAPIunstable.Base + "/keys", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class KeysController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(KeysController.class);
+
     @RequestMapping(method = POST, path = "/upload/{keyId:.+}")
     public String keyUpload(
             HttpServletRequest req
     ) {
-        log(req);
+        log(logger, req);
 
         return "{\"one_time_key_counts\":{\"signed_curve25519\":0}}";
     }

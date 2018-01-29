@@ -29,6 +29,8 @@ import io.kamax.mxhsd.api.room.IRoomEventChunk;
 import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +47,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 @RequestMapping(path = ClientAPIr0.Room, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RoomEventController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(RoomEventController.class);
+
     private IHomeServer hs;
 
     @Autowired
@@ -60,7 +64,7 @@ public class RoomEventController extends JsonController {
             @PathVariable String txnId, // FIXME use!
             @RequestParam("access_token") String token
     ) {
-        log(req);
+        log(logger, req);
 
         long before = System.currentTimeMillis();
         JsonObject json = getJsonObject(req);
@@ -72,7 +76,7 @@ public class RoomEventController extends JsonController {
         response.addProperty("event_id", fullEv.getId()); // FIXME no hardcoding, use enum
         long after = System.currentTimeMillis();
 
-        return toJson(response);
+        return toJson(logger, response);
     }
 
     @RequestMapping(method = GET, path = "/messages")
@@ -86,7 +90,7 @@ public class RoomEventController extends JsonController {
             @RequestParam(value = "limit", required = false) int limit,
             @RequestParam(value = "filter", required = false) String filter
     ) {
-        log(req);
+        log(logger, req);
 
         IRoomEventChunk page = hs.getUserSession(token).getRoom(roomId).getEventsChunk(from, limit);
 
@@ -97,7 +101,7 @@ public class RoomEventController extends JsonController {
         json.addProperty("end", page.getEndToken());
         json.add("chunk", evs);
 
-        return toJson(json);
+        return toJson(logger, json);
     }
 
 }

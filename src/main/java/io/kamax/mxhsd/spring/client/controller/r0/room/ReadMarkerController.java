@@ -27,6 +27,8 @@ import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +44,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping(path = ClientAPIr0.Room, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class ReadMarkerController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(ReadMarkerController.class);
+
     private IHomeServer hs;
 
     @Autowired
@@ -55,7 +59,7 @@ public class ReadMarkerController extends JsonController {
             @RequestParam("access_token") String token,
             @PathVariable String roomId
     ) {
-        log(req);
+        log(logger, req);
 
         JsonObject json = getJsonObject(req);
         json.keySet().forEach(key -> {

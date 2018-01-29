@@ -29,6 +29,8 @@ import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +46,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping(path = ClientAPIr0.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RoomController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(RoomController.class);
+
     private IHomeServer hs;
 
     @Autowired
@@ -53,7 +57,7 @@ public class RoomController extends JsonController {
 
     @RequestMapping(method = POST, path = "/createRoom")
     public String createRoom(HttpServletRequest req, @RequestParam("access_token") String token) {
-        log(req);
+        log(logger, req);
 
         JsonObject o = getJsonObject(req);
         RoomCreateOptions options = new RoomCreateOptions(); // FIXME handle all options correctly
@@ -69,7 +73,7 @@ public class RoomController extends JsonController {
 
         JsonObject reply = new JsonObject();
         reply.addProperty("room_id", room.getId());
-        return toJson(reply);
+        return toJson(logger, reply);
     }
 
     @RequestMapping(method = POST, path = "/join/{roomIdOrAlias:.+}")
@@ -78,14 +82,14 @@ public class RoomController extends JsonController {
             @PathVariable String roomIdOrAlias,
             @RequestParam("access_token") String token
     ) {
-        log(req);
+        log(logger, req);
 
         IUserRoom r = hs.getUserSession(token).joinRoom(roomIdOrAlias);
 
         JsonObject json = new JsonObject();
         json.addProperty("room_id", r.getId());
 
-        return toJson(json);
+        return toJson(logger, json);
     }
 
 

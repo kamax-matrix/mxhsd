@@ -21,6 +21,8 @@
 package io.kamax.mxhsd.spring.client.controller;
 
 import io.kamax.mxhsd.spring.common.controller.JsonController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,9 +35,11 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 @RequestMapping(path = ClientAPI.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class VersionController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(VersionController.class);
+
     @RequestMapping(method = GET, path = "/versions")
     public String getVersions(HttpServletRequest req) {
-        log(req);
+        log(logger, req);
 
         return "{\"versions\":[\"r0.2.0\"]}";
     }

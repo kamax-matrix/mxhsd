@@ -23,6 +23,8 @@ package io.kamax.mxhsd.spring.client.controller.r0.voip;
 import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,10 +37,12 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 @RequestMapping(path = ClientAPIr0.Base + "/voip", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class TurnServersController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(TurnServersController.class);
+
     // TODO implement
     @RequestMapping(method = GET, path = "/turnServer")
     public String getTurnUri(HttpServletRequest req) {
-        log(req);
+        log(logger, req);
 
         return EmptyJsonResponse.stringify();
     }

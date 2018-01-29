@@ -25,6 +25,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,12 +39,14 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 @RequestMapping(path = ClientAPIr0.Base + "/pushrules", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class PushRuleController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(PushRuleController.class);
+
     private Gson gson = GsonUtil.build();
 
     // FIXME clean up
     @RequestMapping(method = GET, path = "/")
     public String list(HttpServletRequest req) {
-        log(req);
+        log(logger, req);
 
         JsonObject global = new JsonObject();
         global.add("content", new JsonArray());
@@ -53,7 +57,7 @@ public class PushRuleController extends JsonController {
         JsonObject reply = new JsonObject();
         reply.add("global", global);
 
-        return toJson(reply);
+        return toJson(logger, reply);
     }
 
 }

@@ -8,6 +8,8 @@ import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import io.kamax.mxhsd.spring.federation.controller.v1.FederationAPIv1;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +24,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 @RequestMapping(path = FederationAPIv1.Query, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RoomDirectoryController extends JsonController {
 
+    private final Logger logger = LoggerFactory.getLogger(RoomDirectoryController.class);
+
     private IHomeServer hs;
 
     @Autowired
@@ -31,7 +35,7 @@ public class RoomDirectoryController extends JsonController {
 
     @RequestMapping(method = GET, path = "/directory")
     public String queryRoomAlias(HttpServletRequest req, @RequestParam("room_alias") String roomAlias) {
-        log(req);
+        log(logger, req);
 
         IRoomAliasLookup lookup = hs.getServerSession("").getDirectory().lookup(roomAlias)
                 .orElseThrow(() -> new NotFoundException("No room with alias " + roomAlias + " exists"));
@@ -42,7 +46,7 @@ public class RoomDirectoryController extends JsonController {
         body.addProperty("room_id", lookup.getId());
         body.add("servers", servers);
 
-        return toJson(body);
+        return toJson(logger, body);
     }
 
 }
