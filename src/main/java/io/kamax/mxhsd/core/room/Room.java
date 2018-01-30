@@ -38,9 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class Room implements IRoom {
@@ -280,6 +278,22 @@ public class Room implements IRoom {
     }
 
     @Override
+    public List<ISignedEvent> getEventsRange(Collection<String> firstEvId, Collection<String> lastEvId, long limit, long minDepth) {
+        int realLimit = Math.min(50, (int) limit);
+
+        BlockingQueue<ISignedEvent> events = new ArrayBlockingQueue<>(realLimit);
+        RecursiveAction getEvTask = new GetChildEventsRecursiveAction(lastEvId, firstEvId, minDepth, events);
+        ForkJoinPool.commonPool().execute(getEvTask);
+        try {
+            getEvTask.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new ArrayList<>(events);
+    }
+
+    @Override
     public IRoom joinAs(_MatrixID userId) {
         inject(new RoomMembershipEvent(userId.getId(), RoomMembership.Join.get(), userId.getId()));
         return this;
@@ -300,7 +314,9 @@ public class Room implements IRoom {
                 throw new ForbiddenException("Unauthorized federated event");
             }
 
-            prevStates.put(ev.getId(), new RoomState.Builder(global, id).from(eval.getNewState()).build());
+            RoomState newState = new RoomState.Builder(global, id).from(eval.getNewState()).build();
+            prevStates.put(ev.getId(), newState);
+            setCurrentState(newState);
         });
 
         global.getEvMgr().store(ev);
@@ -311,6 +327,32 @@ public class Room implements IRoom {
     @Override
     public void addListener(Object o) {
         eventBus.subscribe(o);
+    }
+
+    private class GetChildEventsRecursiveAction extends RecursiveAction {
+
+        private Collection<String> parents;
+        private Collection<String> childLimit;
+        private long minDepth;
+        private BlockingQueue<ISignedEvent> sink;
+
+        public GetChildEventsRecursiveAction(Collection<String> parents, Collection<String> childLimit, long minDepth, BlockingQueue<ISignedEvent> sink) {
+            this.parents = parents;
+            this.childLimit = childLimit;
+            this.minDepth = minDepth;
+            this.sink = sink;
+        }
+
+        @Override
+        protected void compute() {
+            parents.forEach(evId -> {
+                ISignedEvent ev = global.getEvMgr().get(evId).get();
+                if (ev.getDepth() >= minDepth && sink.offer(ev) && !childLimit.contains(ev.getId())) {
+                    List<String> parents = ev.getParents().stream().map(IEventIdReference::getEventId).collect(Collectors.toList());
+                    new GetChildEventsRecursiveAction(parents, childLimit, minDepth, sink).fork().join();
+                }
+            });
+        }
     }
 
 }

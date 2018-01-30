@@ -26,8 +26,16 @@ public class InvalidRequestException extends MatrixException {
         this("M_INVALID_INPUT", message);
     }
 
+    public InvalidRequestException(String message, Throwable t) {
+        this("M_INVALID_INPUT", message, t);
+    }
+
     public InvalidRequestException(String code, String message) {
         super(code, message);
+    }
+
+    public InvalidRequestException(String code, String message, Throwable t) {
+        super(code, message, t);
     }
 
 }

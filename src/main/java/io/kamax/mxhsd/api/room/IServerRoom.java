@@ -24,10 +24,15 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 
+import java.util.Collection;
+import java.util.List;
+
 public interface IServerRoom extends ICoreRoom {
 
     JsonObject makeJoin(_MatrixID mxid);
 
     RemoteJoinRoomState injectJoin(ISignedEvent ev);
+
+    List<ISignedEvent> getEventsRange(Collection<String> earliestEv, Collection<String> latestEv, long limit, long minDepth);
 
 }
