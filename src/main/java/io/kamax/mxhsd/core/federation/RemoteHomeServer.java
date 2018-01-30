@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.core.federation;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.GsonUtil;
@@ -97,8 +98,13 @@ public class RemoteHomeServer implements IRemoteHomeServer {
         json.setOrigin(t.getOrigin());
         json.setOriginServerTs(t.getOriginTimestamp().toEpochMilli());
         json.setPdus(t.getPdus().stream().map(INakedEvent::getJson).collect(Collectors.toList()));
-        JsonObject answer = client.sendTransaction(domain, t.getId(), GsonUtil.getObj(json));
+        JsonObject answer = client.sendTransaction(domain, t.getId(), GsonUtil.makeObj(json));
         log.info("HS {} response:{}", domain, GsonUtil.getPrettyForLog(answer));
+    }
+
+    @Override
+    public JsonObject send(String method, String path, Map<String, String> parameters, JsonElement payload) {
+        return client.send(domain, method, path, parameters, payload);
     }
 
 }

@@ -73,15 +73,15 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
         return asList(getArrayOrThrow(obj, member), c);
     }
 
-    public static JsonObject getObj(Object o) {
+    public static JsonObject makeObj(Object o) {
         return instance.toJsonTree(o).getAsJsonObject();
     }
 
-    public static JsonObject getObj(String key, Object value) {
-        return getObj(key, instance.toJsonTree(value));
+    public static JsonObject makeObj(String key, Object value) {
+        return makeObj(key, instance.toJsonTree(value));
     }
 
-    public static JsonObject getObj(String key, JsonElement el) {
+    public static JsonObject makeObj(String key, JsonElement el) {
         JsonObject obj = new JsonObject();
         obj.add(key, el);
         return obj;
@@ -125,6 +125,10 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
 
     public static JsonArray getArrayOrThrow(JsonObject obj, String member) {
         return findArray(obj, member).orElseThrow(() -> new InvalidJsonException("Not an array"));
+    }
+
+    public static JsonObject getObjOrThrow(JsonObject obj, String member) {
+        return findObj(obj, member).orElseThrow(() -> new InvalidJsonException("No object for member " + member));
     }
 
     public static String getString(JsonObject o, String key) {

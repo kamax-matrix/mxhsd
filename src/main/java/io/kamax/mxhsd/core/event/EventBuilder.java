@@ -88,14 +88,14 @@ public class EventBuilder implements IEventBuilder {
         authorization.forEach(p -> {
             JsonArray v = new JsonArray();
             v.add(p.getEventId());
-            v.add(GsonUtil.getObj(p.getHashes()));
+            v.add(GsonUtil.makeObj(p.getHashes()));
             aEv.add(v);
         });
         JsonArray pEv = new JsonArray();
         parents.forEach(p -> {
             JsonArray v = new JsonArray();
             v.add(p.getEventId());
-            v.add(GsonUtil.getObj(p.getHashes()));
+            v.add(GsonUtil.makeObj(p.getHashes()));
             pEv.add(v);
         });
 

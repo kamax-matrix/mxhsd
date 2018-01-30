@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.api.federation;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.event.ISignedEvent;
@@ -27,6 +28,8 @@ import io.kamax.mxhsd.api.event.ISignedEvent;
 import java.util.Map;
 
 public interface IFederationClient {
+
+    JsonObject send(String domain, String method, String url, Map<String, String> parameters, JsonElement body);
 
     JsonObject makeJoin(String residentHsDomain, String roomId, _MatrixID joiner);
 

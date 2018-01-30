@@ -20,11 +20,13 @@
 
 package io.kamax.mxhsd.api.federation;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
 
+import java.util.Map;
 import java.util.Optional;
 
 public interface IRemoteHomeServer {
@@ -42,5 +44,7 @@ public interface IRemoteHomeServer {
     JsonObject sendJoin(ISignedEvent ev);
 
     void pushTransaction(ITransaction t);
+
+    JsonObject send(String method, String path, Map<String, String> parameters, JsonElement payload);
 
 }

@@ -53,7 +53,7 @@ public class RoomCreateEvent extends NakedContentEvent {
 
     public RoomCreateEvent(String sender, String creator) {
         super(RoomEventType.Creation.get(), sender);
-        content = GsonUtil.getObj(new Content(creator));
+        content = GsonUtil.makeObj(new Content(creator));
     }
 
     public String getCreator() {

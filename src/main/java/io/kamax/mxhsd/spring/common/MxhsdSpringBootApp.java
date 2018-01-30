@@ -23,6 +23,7 @@ package io.kamax.mxhsd.spring.common;
 import io.kamax.mxhsd.spring.client.MxhsdClientApp;
 import io.kamax.mxhsd.spring.common.controller.DefaultExceptionHandler;
 import io.kamax.mxhsd.spring.federation.MxhsdFederationApp;
+import io.kamax.mxhsd.spring.management.MxhsdManagementApp;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
@@ -36,6 +37,7 @@ public class MxhsdSpringBootApp {
 
             builder.child(MxhsdClientApp.class).sources(DefaultExceptionHandler.class).run(args);
             builder.child(MxhsdFederationApp.class).sources(DefaultExceptionHandler.class).run(args);
+            builder.child(MxhsdManagementApp.class).sources(DefaultExceptionHandler.class).run(args);
         } catch (Throwable t) {
             System.exit(1);
         }

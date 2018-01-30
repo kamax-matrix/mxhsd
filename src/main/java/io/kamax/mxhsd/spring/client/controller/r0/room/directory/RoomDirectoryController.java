@@ -48,7 +48,7 @@ public class RoomDirectoryController extends JsonController {
 
     @RequestMapping(method = GET, path = "/{roomId:.+}")
     public String getRoomVisibility(@PathVariable String roomId) {
-        return toJson(logger, GsonUtil.getObj("visibility", "private"));
+        return toJson(logger, GsonUtil.makeObj("visibility", "private"));
     }
 
 }

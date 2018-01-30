@@ -79,7 +79,7 @@ public class RoomGetEventsController extends JsonController {
 
         List<ISignedEvent> events = hs.getServerSession("").getRoom(roomId).getEventsRange(earliestEv, latestEv, limit, minDepth);
         JsonArray evArray = GsonUtil.asArray(events.stream().map(INakedEvent::getJson).collect(Collectors.toList()));
-        return toJson(logger, GsonUtil.getObj("events", evArray));
+        return toJson(logger, GsonUtil.makeObj("events", evArray));
     }
 
 }

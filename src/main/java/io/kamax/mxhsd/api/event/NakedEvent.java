@@ -67,7 +67,7 @@ public class NakedEvent implements INakedEvent {
 
     @Override
     public JsonObject getJson() {
-        return GsonUtil.getObj(this);
+        return GsonUtil.makeObj(this);
     }
 
 }

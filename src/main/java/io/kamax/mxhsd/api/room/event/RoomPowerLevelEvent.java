@@ -43,7 +43,7 @@ public class RoomPowerLevelEvent extends NakedContentEvent {
     }
 
     public RoomPowerLevelEvent(String sender, RoomPowerLevels pls) {
-        super(RoomEventType.PowerLevels.get(), sender, GsonUtil.getObj(pls));
+        super(RoomEventType.PowerLevels.get(), sender, GsonUtil.makeObj(pls));
     }
 
 }

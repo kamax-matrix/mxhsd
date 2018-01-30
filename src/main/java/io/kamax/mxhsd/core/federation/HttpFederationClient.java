@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.core.federation;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.json.MatrixJson;
@@ -105,7 +106,7 @@ public class HttpFederationClient implements IFederationClient {
         return getAuthObj(remoteDomain, method, target, null);
     }
 
-    private String getAuthObj(String remoteDomain, String method, URI target, JsonObject content) {
+    private String getAuthObj(String remoteDomain, String method, URI target, JsonElement content) {
         String uri = target.getRawPath();
         if (StringUtils.isNotBlank(target.getRawQuery())) {
             uri += "?" + target.getRawQuery();
@@ -182,7 +183,7 @@ public class HttpFederationClient implements IFederationClient {
         throw new NotImplementedException("");
     }
 
-    private JsonObject sendPut(URIBuilder target, JsonObject payload) {
+    private JsonObject sendPut(URIBuilder target, JsonElement payload) {
         try {
             if (!target.getScheme().equals("matrix")) {
                 throw new IllegalArgumentException("Scheme can only be matrix");
@@ -200,7 +201,7 @@ public class HttpFederationClient implements IFederationClient {
         }
     }
 
-    private JsonObject sendPut(String domain, URI target, JsonObject payload) {
+    private JsonObject sendPut(String domain, URI target, JsonElement payload) {
         String authObj = getAuthObj(domain, "PUT", target, payload);
         String sign = global.getSignMgr().sign(authObj);
         String key = "ed25519:" + global.getKeyMgr().getCurrentIndex();
@@ -232,6 +233,26 @@ public class HttpFederationClient implements IFederationClient {
 
     private URIBuilder getUri(String domain, String path) {
         return new URIBuilder(URI.create("matrix://" + domain + path));
+    }
+
+    @Override
+    public JsonObject send(String domain, String method, String url, Map<String, String> parameters, JsonElement body) {
+        URIBuilder b = getUri(domain, url);
+        if (parameters != null && !parameters.isEmpty()) {
+            parameters.forEach(b::addParameter);
+        }
+
+        if (StringUtils.equals("GET", method)) {
+            if (body != null) {
+                throw new IllegalArgumentException("Cannot send body with GET");
+            }
+
+            return sendGet(b);
+        } else if (StringUtils.equals("PUT", method)) {
+            return sendPut(b, body);
+        } else {
+            throw new NotImplementedException(method);
+        }
     }
 
     @Override

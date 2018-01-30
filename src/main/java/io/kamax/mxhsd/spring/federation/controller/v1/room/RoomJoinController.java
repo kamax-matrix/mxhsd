@@ -65,7 +65,7 @@ public class RoomJoinController extends JsonController {
 
         _MatrixID mxId = MatrixID.asValid(mxIdRaw);
         JsonObject event = hs.getServerSession("").getRoom(roomId).makeJoin(mxId);
-        return toJson(logger, GsonUtil.getObj("event", event));
+        return toJson(logger, GsonUtil.makeObj("event", event));
     }
 
     @PutMapping("/send_join/{roomId:.+}/{eventId:.+}")

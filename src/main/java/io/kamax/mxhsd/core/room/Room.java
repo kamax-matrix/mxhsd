@@ -231,7 +231,7 @@ public class Room implements IRoom {
         JsonObject event = new JsonObject();
         event.addProperty(EventKey.Type.get(), RoomEventType.Membership.get());
         event.add(EventKey.AuthEvents.get(), GsonUtil.asArray(getCreation().getId()));
-        event.add("content", GsonUtil.getObj("membership", RoomMembership.Join.get()));
+        event.add("content", GsonUtil.makeObj("membership", RoomMembership.Join.get()));
         event.addProperty(EventKey.Depth.get(), Integer.MAX_VALUE);
         event.addProperty(EventKey.Origin.get(), global.getDomain());
         event.addProperty(EventKey.Timestamp.get(), Instant.now().toEpochMilli());
