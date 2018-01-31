@@ -21,7 +21,6 @@
 package io.kamax.mxhsd.core.room.directory;
 
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
 import io.kamax.mxhsd.api.room.RoomAlias;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
@@ -50,8 +49,8 @@ public class GlobalRoomDirectory implements ICoreRoomDirectory {
     }
 
     @Handler
-    public void handleEvents(ISignedEventStreamEntry evSE) {
-        ISignedEvent ev = evSE.get();
+    public void handleEvents(ISignedEvent ev) {
+        log.debug("Received event {}", ev.getId());
         if (!RoomEventType.Aliases.is(ev.getType())) {
             return;
         }
