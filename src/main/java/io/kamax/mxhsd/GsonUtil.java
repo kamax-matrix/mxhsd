@@ -66,7 +66,6 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
     }
 
     public static <T> List<T> asList(JsonArray a, Class<T> c) {
-        System.out.println(getPrettyForLog(a));
         List<T> l = new ArrayList<>();
         a.forEach(v -> l.add(GsonUtil.get().fromJson(v, c)));
         return l;
