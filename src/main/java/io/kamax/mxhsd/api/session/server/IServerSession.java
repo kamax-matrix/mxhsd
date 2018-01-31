@@ -25,6 +25,8 @@ import io.kamax.mxhsd.api.room.IServerRoom;
 
 public interface IServerSession {
 
+    IServerEventManager getEventMgr();
+
     IServerRoomDirectory getDirectory();
 
     IServerRoom getRoom(String id);

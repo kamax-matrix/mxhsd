@@ -62,4 +62,6 @@ public interface IRoomState {
 
     Map<String, String> getEvents();
 
+    IRoomStateSnapshot getSnapshot();
+
 }

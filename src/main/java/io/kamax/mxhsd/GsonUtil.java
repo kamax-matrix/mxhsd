@@ -23,10 +23,7 @@ package io.kamax.mxhsd;
 import com.google.gson.*;
 import io.kamax.mxhsd.api.exception.InvalidJsonException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class GsonUtil { // FIXME refactor into matrix-java-sdk
@@ -60,6 +57,12 @@ public class GsonUtil { // FIXME refactor into matrix-java-sdk
 
     public static JsonArray asArray(String... elements) {
         return asArray(Arrays.stream(elements).map(JsonPrimitive::new).collect(Collectors.toList()));
+    }
+
+    public static JsonArray asArray(Collection<String> elements) {
+        JsonArray a = new JsonArray();
+        elements.forEach(a::add);
+        return a;
     }
 
     public static <T> List<T> asList(JsonArray a, Class<T> c) {

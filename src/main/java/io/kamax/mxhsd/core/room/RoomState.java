@@ -26,17 +26,16 @@ import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.room.IRoomState;
-import io.kamax.mxhsd.api.room.RoomEventKey;
-import io.kamax.mxhsd.api.room.RoomEventType;
-import io.kamax.mxhsd.api.room.RoomJoinRule;
+import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
 import io.kamax.mxhsd.api.room.event.RoomJoinRulesEvent;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.event.GetAuthChainTask;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 
 import static io.kamax.matrix.hs.RoomMembership.*;
 
@@ -234,6 +233,13 @@ public class RoomState implements IRoomState {
     @Override
     public Map<String, String> getEvents() {
         return Collections.unmodifiableMap(events);
+    }
+
+    @Override
+    public IRoomStateSnapshot getSnapshot() {
+        List<String> state = new ArrayList<>(getEvents().values());
+        Set<String> authChain = ForkJoinPool.commonPool().invoke(new GetAuthChainTask(state, s -> global.getEvMgr().get(s).get()));
+        return new RoomStateSnapshot(state, authChain);
     }
 
     private JsonObject getEventJson(String id) {

@@ -22,6 +22,7 @@ package io.kamax.mxhsd.core.session.server;
 
 import io.kamax.mxhsd.api.federation.ITransaction;
 import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.session.server.IServerEventManager;
 import io.kamax.mxhsd.api.session.server.IServerRoomDirectory;
 import io.kamax.mxhsd.api.session.server.IServerSession;
 import io.kamax.mxhsd.core.HomeserverState;
@@ -38,6 +39,11 @@ public class ServerSession implements IServerSession {
 
     public ServerSession(HomeserverState global) {
         this.global = global;
+    }
+
+    @Override
+    public IServerEventManager getEventMgr() {
+        return ids -> global.getEvMgr().get(ids);
     }
 
     @Override
