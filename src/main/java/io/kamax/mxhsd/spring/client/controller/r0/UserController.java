@@ -77,7 +77,7 @@ public class UserController extends JsonController {
         log(logger, req);
 
         IUserFilter filter = hs.getUserSession(token).getForUser(new MatrixID(userId)).getUser()
-                .findFilter(filterId).orElseThrow(() -> new InvalidRequestException("M_UKNOWN", "Invalid filter ID"));
+                .findFilter(filterId).orElseThrow(() -> new InvalidRequestException("M_UNKNOWN", "Invalid filter ID"));
 
         return filter.getContent();
     }
