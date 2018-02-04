@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.concurrent.ForkJoinPool;
 
 public class FederationNotifier implements IFederationNotifier {
 
@@ -59,7 +60,7 @@ public class FederationNotifier implements IFederationNotifier {
                 .map(c -> MatrixID.asAcceptable(c.getStateKey()).getDomain())
                 .filter(id -> !global.getDomain().equals(id))
                 .unordered().distinct()
-                .forEach(d -> send(ev, d));
+                .forEach(d -> ForkJoinPool.commonPool().execute(() -> send(ev, d)));
     }
 
     @Override

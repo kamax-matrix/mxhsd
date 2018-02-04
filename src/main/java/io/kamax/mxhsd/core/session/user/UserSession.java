@@ -89,7 +89,7 @@ public class UserSession implements IUserSession {
     @Handler
     private void getEvent(ISignedEventStreamEntry ev) {
         synchronized (this) {
-            log.info("We got new data to sync with: {}", ev.get().getId());
+            log.debug("We got new data to sync with: {}", ev.get().getId());
             notifyAll(); // let's wake up waiting threads
         }
     }
@@ -223,22 +223,27 @@ public class UserSession implements IUserSession {
         Map<String, List<ISignedEventStreamEntry>> roomStreams = new HashMap<>();
         entries.forEach(ev -> roomStreams.computeIfAbsent(ev.get().getRoomId(), rId -> new ArrayList<>()).add(ev));
         roomStreams.forEach((roomId, stream) -> {
-            SyncRoomData data = buildSingleTimeline(global.getRoomMgr().getRoom(roomId), timelineIndex, stream);
-            Optional<String> opt = data.getMembership();
-            opt.ifPresent(membership -> {
-                // TODO use the membership as key to add rooms to the global sync data, as it matches json key
-                if (RoomMembership.Invite.is(membership)) {
-                    b.addInvited(data);
-                }
+            Optional<IRoom> opt = global.getRoomMgr().findRoom(roomId);
+            if (opt.isPresent()) {
+                SyncRoomData data = buildSingleTimeline(opt.get(), timelineIndex, stream);
+                Optional<String> rOpt = data.getMembership();
+                rOpt.ifPresent(membership -> {
+                    // TODO use the membership as key to add rooms to the global sync data, as it matches json key
+                    if (RoomMembership.Invite.is(membership)) {
+                        b.addInvited(data);
+                    }
 
-                if (RoomMembership.Join.is(membership)) {
-                    b.addJoined(data);
-                }
+                    if (RoomMembership.Join.is(membership)) {
+                        b.addJoined(data);
+                    }
 
-                if (RoomMembership.Leave.is(membership)) {
-                    b.addLeft(data);
-                }
-            });
+                    if (RoomMembership.Leave.is(membership)) {
+                        b.addLeft(data);
+                    }
+                });
+            } else {
+                log.warn("We have an event for an unknown room: {}", roomId);
+            }
         });
     }
 

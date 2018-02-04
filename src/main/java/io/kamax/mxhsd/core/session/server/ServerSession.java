@@ -59,7 +59,6 @@ public class ServerSession implements IServerSession {
     @Override
     public void push(ITransaction transaction) {
         log.info("Processing transaction {} from {} sent at {}", transaction.getId(), transaction.getOrigin(), transaction.getOriginTimestamp());
-        log.info("Processing {} PDU(s)", transaction.getPdus().size());
 
         // TODO make asynchronous
         transaction.getPdus().forEach(sEv -> {

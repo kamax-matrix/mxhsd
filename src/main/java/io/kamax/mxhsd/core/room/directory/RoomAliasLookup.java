@@ -28,11 +28,18 @@ import java.util.List;
 
 public class RoomAliasLookup extends RoomAliasMapping implements IRoomAliasLookup {
 
+    private String source;
     private List<String> servers;
 
-    public RoomAliasLookup(String id, String value, Collection<String> servers) {
+    public RoomAliasLookup(String source, String id, String value, Collection<String> servers) {
         super(id, value);
+        this.source = source;
         this.servers = new ArrayList<>(servers);
+    }
+
+    @Override
+    public String getSource() {
+        return source;
     }
 
     @Override

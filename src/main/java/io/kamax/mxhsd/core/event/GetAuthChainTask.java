@@ -22,6 +22,9 @@ package io.kamax.mxhsd.core.event;
 
 import io.kamax.mxhsd.api.event.IEventReference;
 import io.kamax.mxhsd.api.event.ISignedEvent;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -31,6 +34,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class GetAuthChainTask extends RecursiveTask<Set<String>> {
+
+    private final Logger logger = LoggerFactory.getLogger(GetAuthChainTask.class);
 
     private Collection<String> from;
     private Function<String, ISignedEvent> fetcher;
@@ -43,11 +48,21 @@ public class GetAuthChainTask extends RecursiveTask<Set<String>> {
     @Override
     protected Set<String> compute() {
         Set<String> ids = new HashSet<>();
+        if (from.isEmpty()) {
+            return ids;
+        }
 
         invokeAll(from.stream().map(id -> {
             ISignedEvent ev = fetcher.apply(id);
             return new GetAuthChainTask(ev.getAuthorization().stream()
                     .map(IEventReference::getEventId)
+                    .filter(authEvId -> {
+                        if (StringUtils.equals(id, authEvId)) {
+                            logger.warn("Event references itself in auth chain: {}", authEvId);
+                            return false;
+                        }
+                        return true;
+                    })
                     .collect(Collectors.toList()), fetcher);
         }).collect(Collectors.toList())).forEach(t -> ids.addAll(t.compute()));
 

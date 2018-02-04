@@ -24,6 +24,8 @@ import java.util.List;
 
 public interface IRoomAliasLookup extends IRoomAliasMapping {
 
+    String getSource();
+
     List<String> getServers();
 
 }

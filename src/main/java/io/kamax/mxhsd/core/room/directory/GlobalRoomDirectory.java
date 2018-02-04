@@ -76,7 +76,7 @@ public class GlobalRoomDirectory implements ICoreRoomDirectory {
         if (StringUtils.equals(global.getDomain(), ra.getDomain())) {
             return Optional.ofNullable(mappings.get(alias))
                     // FIXME lookup server list
-                    .map(id -> new RoomAliasLookup(id, alias, Collections.singletonList(global.getDomain())));
+                    .map(id -> new RoomAliasLookup(global.getDomain(), id, alias, Collections.singletonList(global.getDomain())));
         } else {
             return global.getHsMgr().get(ra.getDomain()).lookup(alias);
         }

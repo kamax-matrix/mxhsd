@@ -33,6 +33,8 @@ import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.event.GetAuthChainTask;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ForkJoinPool;
@@ -76,6 +78,8 @@ public class RoomState implements IRoomState {
 
     public static class Builder {
 
+        private final Logger logger = LoggerFactory.getLogger(Builder.class);
+
         private RoomState r;
 
         public Builder(HomeserverState globalState, String roomId) {
@@ -116,6 +120,11 @@ public class RoomState implements IRoomState {
         }
 
         public boolean addEvent(IEvent ev) {
+            if (!StringUtils.equals(r.roomId, ev.getRoomId())) {
+                logger.warn("Got event {} with an unexpected room ID {} instead of {}", ev.getId(), ev.getRoomId(), r.roomId);
+                return false;
+            }
+
             JsonObject json = ev.getJson();
             if (!json.has(EventKey.StateKey.get())) {
                 // Ignoring non-state event

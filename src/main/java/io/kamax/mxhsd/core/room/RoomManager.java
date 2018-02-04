@@ -21,10 +21,10 @@
 package io.kamax.mxhsd.core.room;
 
 import com.google.gson.JsonObject;
+import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.federation.FederationException;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
@@ -78,6 +78,7 @@ public class RoomManager implements IRoomManager {
     private Room registerRoom(Room r) {
         rooms.put(r.getId(), r);
         r.addListener(arHandler);
+        log.info("Registered room {}", r.getId());
         return r;
     }
 
@@ -170,33 +171,48 @@ public class RoomManager implements IRoomManager {
         }
     }
 
+    private Room joinRemoteRoom(String hs, String roomId, _MatrixID userId) {
+        IRemoteHomeServer rHs = state.getHsMgr().get(hs);
+        JsonObject protoEv = rHs.makeJoin(roomId, userId).getAsJsonObject("event");
+        log.debug("Proto-event for remote join: {}", GsonUtil.getPrettyForLog(protoEv));
+        ISignedEvent joinEv = state.getEvMgr().finalize(protoEv);
+        JsonObject data = rHs.sendJoin(joinEv);
+        log.debug("Remote data before join: {}", GsonUtil.getPrettyForLog(data));
+
+        List<ISignedEvent> state = GsonUtil.asList(data, "state", JsonObject.class)
+                .stream().map(SignedEvent::new).collect(Collectors.toList());
+        state.add(joinEv);
+        List<ISignedEvent> authChain = GsonUtil.asList(data, "auth_chain", JsonObject.class)
+                .stream().map(SignedEvent::new).collect(Collectors.toList());
+
+        synchronized (rooms) {
+            log.info("Processing state after join");
+            return registerRoom(new Room(RoomManager.this.state, roomId, state, authChain, joinEv));
+        }
+    }
+
     @Override
     public IAliasRoom getRoom(final IRoomAliasLookup lookup) {
         return findRoom(lookup.getId()).map(r -> (IAliasRoom) r).orElseGet(() -> {
+            List<String> servers = new ArrayList<>(lookup.getServers());
+
+            // We remove ourselves in case the remote server thinks we are already in the room
+            servers.remove(state.getDomain());
             if (lookup.getServers().isEmpty()) {
                 throw new IllegalArgumentException("Cannot join a room without resident homeservers");
+            }
+
+            // We want to try the server that answered the lookup first, if it's part of the room
+            if (lookup.getServers().contains(lookup.getSource())) {
+                servers.remove(lookup.getSource());
+                servers.add(0, lookup.getSource());
             }
 
             return userId -> {
                 for (String server : lookup.getServers()) {
                     try {
-                        IRemoteHomeServer rHs = state.getHsMgr().get(server);
-                        JsonObject protoEv = rHs.makeJoin(lookup.getId(), userId).getAsJsonObject("event");
-                        log.info("Proto-event for remote join: {}", GsonUtil.getPrettyForLog(protoEv));
-                        ISignedEvent joinEv = state.getEvMgr().finalize(protoEv);
-                        JsonObject data = rHs.sendJoin(joinEv);
-                        log.info("Remote data before join: {}", GsonUtil.getPrettyForLog(data));
-
-                        List<ISignedEvent> state = GsonUtil.asList(data, "state", JsonObject.class)
-                                .stream().map(SignedEvent::new).collect(Collectors.toList());
-                        state.add(joinEv);
-                        List<ISignedEvent> authChain = GsonUtil.asList(data, "auth_chain", JsonObject.class)
-                                .stream().map(SignedEvent::new).collect(Collectors.toList());
-
-                        synchronized (rooms) {
-                            return registerRoom(new Room(RoomManager.this.state, lookup.getId(), state, authChain, joinEv));
-                        }
-                    } catch (FederationException e) {
+                        return joinRemoteRoom(lookup.getSource(), lookup.getId(), userId);
+                    } catch (RuntimeException e) {
                         log.warn("Unable to join {} using {}: {}", lookup.getAlias(), server, e.getMessage());
                     }
                 }
