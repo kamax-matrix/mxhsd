@@ -164,10 +164,10 @@ public class RoomState implements IRoomState {
 
     }
 
-    private transient HomeserverState global;
+    private transient HomeserverState global; // FIXME this shouldn't be necessary
 
-    private String roomId;
-    private String evId;
+    private String roomId; // FIXME this shouldn't be necessary
+    private String evId; // FIXME this does not make sense. A state is not bound to an event
     private Map<String, String> events = new HashMap<>(); // TODO we should keep IEventReference to speed up
     private Map<String, IMembershipContext> members = new HashMap<>();
     private RoomPowerLevels pls;
@@ -225,6 +225,11 @@ public class RoomState implements IRoomState {
     @Override
     public boolean isAccessibleAs(String user) {
         return true;
+    }
+
+    @Override
+    public Optional<String> findEventFor(String combineKey) {
+        return Optional.ofNullable(events.get(combineKey));
     }
 
     @Override

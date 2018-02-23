@@ -20,8 +20,10 @@
 
 package io.kamax.mxhsd.api.room;
 
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
+import io.kamax.mxhsd.core.room.RoomEventAuthorization;
 import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
 import java.util.Map;
@@ -54,6 +56,8 @@ public interface IRoomState {
 
     boolean isAccessibleAs(String user);
 
+    Optional<String> findEventFor(String combineKey);
+
     Optional<String> findEventFor(String type, String key);
 
     default Optional<String> findEventFor(RoomEventType type, String key) {
@@ -63,5 +67,7 @@ public interface IRoomState {
     Map<String, String> getEvents();
 
     IRoomStateSnapshot getSnapshot();
+
+    RoomEventAuthorization isAuthorized(IEvent ev);
 
 }

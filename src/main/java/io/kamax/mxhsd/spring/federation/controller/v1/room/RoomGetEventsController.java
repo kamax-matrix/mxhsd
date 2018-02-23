@@ -67,9 +67,9 @@ public class RoomGetEventsController extends JsonController {
                 .map(a -> GsonUtil.asList(a, String.class))
                 .orElseThrow(() -> new InvalidRequestException("Missing key: earliest_events"));
 
-        List<String> latestEv = GsonUtil.findArray(body, "earliest_events")
+        List<String> latestEv = GsonUtil.findArray(body, "latest_events")
                 .map(a -> GsonUtil.asList(a, String.class))
-                .orElseThrow(() -> new InvalidRequestException("Missing key: earliest_events"));
+                .orElseThrow(() -> new InvalidRequestException("Missing key: latest_events"));
 
         // TODO check if this is mandatory
         long limit = GsonUtil.findLong(body, "limit").orElseThrow(() -> new InvalidRequestException("Missing key: limit"));
