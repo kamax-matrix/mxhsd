@@ -94,25 +94,9 @@ public class RoomManager implements IRoomManager {
 
     // TODO make it configurable via JSON data
     private RoomPowerLevels getPowerLevelEvent(IRoomCreateOptions options) {
-        return new RoomPowerLevels.Builder()
-                // Default state PL, moderator is a good compromise
-                .setStateDefault(PowerLevel.Moderator)
-
-                // Anyone can send any message events by default
-                .setEventsDefault(PowerLevel.None)
-                .addEvent(RoomEventType.HistoryVisibility.get(), PowerLevel.Admin)
-                .addEvent(RoomEventType.PowerLevels.get(), PowerLevel.Admin)
-
-                // Users don't get any PL by default, adding creator
-                .setUsersDefault(PowerLevel.None)
-                .addUser(options.getCreator().getId(), PowerLevel.Admin)
-
-                // Define some basic room management, anyone can invite
-                .setBan(PowerLevel.Moderator)
-                .setInvite(PowerLevel.None)
-                .setKick(PowerLevel.Moderator)
-                .setRedact(PowerLevel.Moderator)
-                .build();
+        return RoomPowerLevels.build()
+                .addUser(options.getCreator().getId(), PowerLevel.Admin) // Adding creator
+                .get();
     }
 
     @Override
@@ -146,7 +130,7 @@ public class RoomManager implements IRoomManager {
                     long creatorPl = pls.getForUser(creator);
                     RoomPowerLevels.Builder plsBuilder = RoomPowerLevels.Builder.from(pls);
                     options.getInvitees().forEach(iId -> plsBuilder.addUser(iId.getId(), creatorPl));
-                    room.inject(new RoomPowerLevelEvent(creator, plsBuilder.build()));
+                    room.inject(new RoomPowerLevelEvent(creator, plsBuilder.get()));
                 } else {
                     log.info("Ignoring unknown preset {} for room {}", p, id);
                 }

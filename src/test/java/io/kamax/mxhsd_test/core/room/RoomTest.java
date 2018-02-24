@@ -28,7 +28,6 @@ import io.kamax.matrix.sign.SignatureManager;
 import io.kamax.mxhsd.api.event.IEventReference;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.PowerLevel;
-import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.api.room.event.RoomMessageEvent;
@@ -77,19 +76,9 @@ public class RoomTest {
 
     @Test
     public void eventRelationships() {
-        // TODO refactor so this and RoomManager can use some nice default builder
-        RoomPowerLevels pls = new RoomPowerLevels.Builder()
-                .setStateDefault(PowerLevel.Moderator)
-                .setEventsDefault(PowerLevel.None)
-                .addEvent(RoomEventType.HistoryVisibility.get(), PowerLevel.Admin)
-                .addEvent(RoomEventType.PowerLevels.get(), PowerLevel.Admin)
-                .setUsersDefault(PowerLevel.None)
+        RoomPowerLevels pls = RoomPowerLevels.build().defaults()
                 .addUser(user.getId(), PowerLevel.Admin)
-                .setBan(PowerLevel.Moderator)
-                .setInvite(PowerLevel.None)
-                .setKick(PowerLevel.Moderator)
-                .setRedact(PowerLevel.Moderator)
-                .build();
+                .get();
 
         ISignedEvent cEv = room.inject(new RoomCreateEvent(user.getId()));
         assertTrue(cEv.getAuthorization().isEmpty());

@@ -25,6 +25,7 @@ import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.exception.MalformedEventException;
+import io.kamax.mxhsd.api.room.PowerLevel;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.event.PowerLevelKey;
 import org.apache.commons.lang3.StringUtils;
@@ -44,7 +45,7 @@ public class RoomPowerLevels {
         public static RoomPowerLevels initial() {
             Builder b = new Builder();
             b.levels.isInitialState = true;
-            return b.build();
+            return b.get();
         }
 
         public static Builder from(RoomPowerLevels orignal) {
@@ -99,9 +100,34 @@ public class RoomPowerLevels {
             return this;
         }
 
-        public RoomPowerLevels build() {
+        public RoomPowerLevels get() {
             return levels;
         }
+
+        public Builder defaults() {
+            // Admins can do these
+            addEvent(RoomEventType.HistoryVisibility.get(), PowerLevel.Admin);
+            addEvent(RoomEventType.PowerLevels.get(), PowerLevel.Admin);
+
+            // Moderators can do these
+            setStateDefault(PowerLevel.Moderator);
+            setBan(PowerLevel.Moderator);
+            setKick(PowerLevel.Moderator);
+            setRedact(PowerLevel.Moderator);
+
+            // Anyone can do these
+            setEventsDefault(PowerLevel.None);
+            setInvite(PowerLevel.None);
+
+            // Users don't get any PL by default
+            setUsersDefault(PowerLevel.None);
+
+            return this;
+        }
+    }
+
+    public static Builder build() {
+        return new Builder();
     }
 
     private transient boolean isInitialState = false;
