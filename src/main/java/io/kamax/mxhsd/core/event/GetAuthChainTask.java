@@ -22,7 +22,6 @@ package io.kamax.mxhsd.core.event;
 
 import io.kamax.mxhsd.api.event.IEventReference;
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,36 +36,37 @@ public class GetAuthChainTask extends RecursiveTask<Set<String>> {
 
     private final Logger logger = LoggerFactory.getLogger(GetAuthChainTask.class);
 
-    private Collection<String> from;
+    private Set<String> toProcess;
     private Function<String, ISignedEvent> fetcher;
 
-    public GetAuthChainTask(Collection<String> from, Function<String, ISignedEvent> fetcher) {
-        this.from = from;
+    public GetAuthChainTask(Collection<String> toProcess, Function<String, ISignedEvent> fetcher) {
+        this.toProcess = new HashSet<>(toProcess);
         this.fetcher = fetcher;
     }
 
     @Override
     protected Set<String> compute() {
         Set<String> ids = new HashSet<>();
-        if (from.isEmpty()) {
+        if (toProcess.isEmpty()) {
+            logger.debug("Ignoring empty source events");
             return ids;
         }
 
-        invokeAll(from.stream().map(id -> {
-            ISignedEvent ev = fetcher.apply(id);
-            return new GetAuthChainTask(ev.getAuthorization().stream()
-                    .map(IEventReference::getEventId)
-                    .filter(authEvId -> {
-                        if (StringUtils.equals(id, authEvId)) {
-                            logger.warn("Event references itself in auth chain: {}", authEvId);
-                            return false;
-                        }
-                        return true;
-                    })
-                    .collect(Collectors.toList()), fetcher);
-        }).collect(Collectors.toList())).forEach(t -> ids.addAll(t.compute()));
+        do {
+            Set<String> toProcessNext = new HashSet<>();
+            toProcess.forEach(id -> {
+                ISignedEvent ev = fetcher.apply(id);
+                toProcessNext.addAll(ev.getAuthorization().stream()
+                        .map(IEventReference::getEventId)
+                        // We only want unknown events
+                        .filter(authId -> !authId.equals(id) && !ids.contains(id))
+                        .collect(Collectors.toList()));
+            });
+            ids.addAll(toProcess);
+            toProcess = toProcessNext;
+        } while (toProcess.size() > 0);
 
-        return ids;
+        return ids.stream().sorted().collect(Collectors.toSet());
     }
 
 }
