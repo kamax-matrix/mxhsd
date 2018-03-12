@@ -29,9 +29,9 @@ import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.federation.IFederationClient;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.federation.ITransaction;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.core.HomeserverState;
-import io.kamax.mxhsd.core.room.directory.RoomAliasLookup;
+import io.kamax.mxhsd.core.room.directory.FederatedRoomAliasLookup;
 import io.kamax.mxhsd.spring.federation.controller.v1.transaction.TransactionJson;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
@@ -73,13 +73,13 @@ public class RemoteHomeServer implements IRemoteHomeServer {
     }
 
     @Override
-    public Optional<IRoomAliasLookup> lookup(String roomAlias) {
+    public Optional<IFederatedRoomAliasLookup> lookup(String roomAlias) {
         Map<String, String> parms = new HashMap<>();
         parms.put("room_alias", roomAlias);
         JsonObject obj = client.query(domain, "directory", parms);
         String roomId = GsonUtil.getOrThrow(obj, "room_id");
         List<String> servers = GsonUtil.asList(GsonUtil.getArrayOrThrow(obj, "servers"), String.class);
-        return Optional.of(new RoomAliasLookup(domain, roomId, roomAlias, servers));
+        return Optional.of(new FederatedRoomAliasLookup(domain, roomId, roomAlias, servers));
     }
 
     @Override

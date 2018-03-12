@@ -24,7 +24,7 @@ import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.exception.NotFoundException;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
@@ -57,7 +57,7 @@ public class RoomAliasController extends JsonController {
             @PathVariable String alias) {
         log(logger, req);
 
-        IRoomAliasLookup lookup = hs.getUserSession(token).getRoomDirectory().lookup(alias)
+        IFederatedRoomAliasLookup lookup = hs.getUserSession(token).getRoomDirectory().lookup(alias)
                 .orElseThrow(() -> new NotFoundException(alias));
 
         JsonObject o = new JsonObject();

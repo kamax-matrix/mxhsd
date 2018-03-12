@@ -20,8 +20,8 @@
 
 package io.kamax.mxhsd_test.core.room.directory;
 
-import io.kamax.mxhsd.api.room.RoomAlias;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.matrix.room.RoomAlias;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
 import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.core.room.directory.GlobalRoomDirectory;
@@ -52,12 +52,12 @@ public class UserRoomDirectoryTest extends GenericHomeserverTest {
         assertTrue(!uDir.lookup(alias).isPresent());
         uDir.add(alias, id);
 
-        IRoomAliasLookup lookup = uDir.lookup(alias).orElseThrow(IllegalStateException::new);
+        IFederatedRoomAliasLookup lookup = uDir.lookup(alias).orElseThrow(IllegalStateException::new);
         assertTrue(lookup.getId(), id.equals(lookup.getId()));
         assertTrue(alias.equals(lookup.getAlias()));
 
         uDir.remove(alias);
-        Optional<IRoomAliasLookup> o = uDir.lookup(alias);
+        Optional<IFederatedRoomAliasLookup> o = uDir.lookup(alias);
         assertTrue(!o.isPresent());
     }
 

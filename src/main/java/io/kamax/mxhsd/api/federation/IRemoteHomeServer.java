@@ -24,7 +24,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +37,7 @@ public interface IRemoteHomeServer {
 
     String getImplementationVersion();
 
-    Optional<IRoomAliasLookup> lookup(String roomAlias);
+    Optional<IFederatedRoomAliasLookup> lookup(String roomAlias);
 
     JsonObject makeJoin(String roomId, _MatrixID joiner);
 

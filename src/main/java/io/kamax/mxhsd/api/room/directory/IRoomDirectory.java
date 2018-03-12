@@ -24,6 +24,6 @@ import java.util.Optional;
 
 public interface IRoomDirectory {
 
-    Optional<IRoomAliasLookup> lookup(String alias);
+    Optional<IFederatedRoomAliasLookup> lookup(String alias);
 
 }

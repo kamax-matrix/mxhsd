@@ -18,14 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room.directory;
+package io.kamax.mxhsd.core.room.directory;
 
-import java.util.List;
+import io.kamax.matrix.room.RoomAliasLookup;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 
-public interface IRoomAliasLookup extends IRoomAliasMapping {
+import java.util.Collection;
 
-    String getSource();
+public class FederatedRoomAliasLookup extends RoomAliasLookup implements IFederatedRoomAliasLookup {
 
-    List<String> getServers();
+    private String source;
+
+    public FederatedRoomAliasLookup(String source, String id, String alias, Collection<String> servers) {
+        super(id, alias, servers);
+        this.source = source;
+    }
+
+    @Override
+    public String getSource() {
+        return source;
+    }
 
 }

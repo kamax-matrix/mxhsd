@@ -74,7 +74,7 @@ dependencies {
     compile 'com.google.guava:guava:23.6-jre'
 
     // Matrix Java SDK
-    compile 'io.kamax:matrix-java-sdk:0.0.6-5-g6f1d9f4'
+    compile 'io.kamax:matrix-java-sdk:0.0.8-4-g97bec76'
 
     // Spring boot for HTTP container
     compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'

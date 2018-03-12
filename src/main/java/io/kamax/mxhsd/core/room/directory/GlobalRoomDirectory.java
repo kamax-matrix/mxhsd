@@ -20,11 +20,11 @@
 
 package io.kamax.mxhsd.core.room.directory;
 
+import io.kamax.matrix.room.RoomAlias;
 import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.room.RoomAlias;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.RoomAliasEvent;
 import io.kamax.mxhsd.core.HomeserverState;
 import net.engio.mbassy.listener.Handler;
@@ -71,12 +71,12 @@ public class GlobalRoomDirectory implements ICoreRoomDirectory {
     }
 
     @Override
-    public Optional<IRoomAliasLookup> lookup(String alias) {
+    public Optional<IFederatedRoomAliasLookup> lookup(String alias) {
         RoomAlias ra = RoomAlias.from(alias);
         if (StringUtils.equals(global.getDomain(), ra.getDomain())) {
             return Optional.ofNullable(mappings.get(alias))
                     // FIXME lookup server list
-                    .map(id -> new RoomAliasLookup(global.getDomain(), id, alias, Collections.singletonList(global.getDomain())));
+                    .map(id -> new FederatedRoomAliasLookup(global.getDomain(), id, alias, Collections.singletonList(global.getDomain())));
         } else {
             return global.getHsMgr().get(ra.getDomain()).lookup(alias);
         }

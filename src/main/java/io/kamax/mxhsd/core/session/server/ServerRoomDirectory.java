@@ -20,7 +20,7 @@
 
 package io.kamax.mxhsd.core.session.server;
 
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.session.server.IServerRoomDirectory;
 import io.kamax.mxhsd.core.HomeserverState;
 
@@ -41,7 +41,7 @@ public class ServerRoomDirectory implements IServerRoomDirectory {
     }
 
     @Override
-    public Optional<IRoomAliasLookup> lookup(String alias) {
+    public Optional<IFederatedRoomAliasLookup> lookup(String alias) {
         return global.getRoomDir().lookup(alias);
     }
 

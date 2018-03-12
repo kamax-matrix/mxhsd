@@ -23,6 +23,7 @@ package io.kamax.mxhsd.core.session.user;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
+import io.kamax.matrix.room.RoomAlias;
 import io.kamax.mxhsd.ABuilder;
 import io.kamax.mxhsd.api.device.IDevice;
 import io.kamax.mxhsd.api.event.ISignedEvent;
@@ -30,7 +31,7 @@ import io.kamax.mxhsd.api.event.ISignedEventStream;
 import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
 import io.kamax.mxhsd.api.exception.NotFoundException;
 import io.kamax.mxhsd.api.room.*;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
 import io.kamax.mxhsd.api.session.user.IUserSession;
@@ -357,7 +358,7 @@ public class UserSession implements IUserSession {
     @Override
     public IRoom joinRoom(String idOrAlias) {
         if (RoomAlias.is(idOrAlias)) {
-            IRoomAliasLookup lookup = global.getRoomDir()
+            IFederatedRoomAliasLookup lookup = global.getRoomDir()
                     .lookup(idOrAlias).orElseThrow(() -> new NotFoundException(idOrAlias));
 
             return global.getRoomMgr()

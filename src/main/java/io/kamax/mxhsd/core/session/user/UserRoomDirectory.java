@@ -23,7 +23,7 @@ package io.kamax.mxhsd.core.session.user;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.RoomID;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.RoomAliasEvent;
 import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
 import io.kamax.mxhsd.core.HomeserverState;
@@ -47,7 +47,7 @@ public class UserRoomDirectory implements IUserRoomDirectory {
     }
 
     @Override
-    public Optional<IRoomAliasLookup> lookup(String alias) {
+    public Optional<IFederatedRoomAliasLookup> lookup(String alias) {
         return global.getRoomDir().lookup(alias);
     }
 

@@ -27,7 +27,7 @@ import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.room.*;
-import io.kamax.mxhsd.api.room.directory.IRoomAliasLookup;
+import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.*;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.event.SignedEvent;
@@ -176,7 +176,7 @@ public class RoomManager implements IRoomManager {
     }
 
     @Override
-    public IAliasRoom getRoom(final IRoomAliasLookup lookup) {
+    public IAliasRoom getRoom(final IFederatedRoomAliasLookup lookup) {
         return findRoom(lookup.getId()).map(r -> (IAliasRoom) r).orElseGet(() -> {
             List<String> servers = new ArrayList<>(lookup.getServers());
 

@@ -20,7 +20,7 @@
 
 package io.kamax.mxhsd_test.api.room;
 
-import io.kamax.mxhsd.api.room.RoomAlias;
+import io.kamax.matrix.room.RoomAlias;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
