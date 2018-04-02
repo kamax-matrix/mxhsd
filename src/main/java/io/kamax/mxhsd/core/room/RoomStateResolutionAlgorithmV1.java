@@ -92,6 +92,14 @@ public class RoomStateResolutionAlgorithmV1 implements IRoomStateResolutionAlgor
     // https://github.com/matrix-org/matrix-doc/blob/3dfa643b8b0353b76bc09a7beee69f94fdae60df/specification/server_server_api.rst#state-resolution-algorithm
     @Override
     public IRoomState resolve(Collection<IRoomState> states) {
+        if (states.isEmpty()) {
+            return new RoomState.Builder(global, roomId).build();
+        }
+
+        if (states.size() == 1) {
+            return states.iterator().next();
+        }
+
         /*
          We need collect all conflicting events between states which is defined as
          "different event_ids for the same (state_type, state_key)".
@@ -173,12 +181,10 @@ public class RoomStateResolutionAlgorithmV1 implements IRoomStateResolutionAlgor
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .map(fetcher)
-                    .collect(Collectors.toList());
-
-            toResolve.sort(Comparator.comparingLong(IEvent::getDepth).reversed().thenComparing((o1, o2) -> StringUtils.compare(
-                    MxBase64.encode(md.digest(o1.getId().getBytes(StandardCharsets.UTF_8))),
-                    MxBase64.encode(md.digest(o2.getId().getBytes(StandardCharsets.UTF_8)))
-            )));
+                    .sorted(Comparator.comparingLong(IEvent::getDepth).reversed().thenComparing((o1, o2) -> StringUtils.compare(
+                            MxBase64.encode(md.digest(o1.getId().getBytes(StandardCharsets.UTF_8))),
+                            MxBase64.encode(md.digest(o2.getId().getBytes(StandardCharsets.UTF_8)))
+                    ))).collect(Collectors.toList());
 
             for (ISignedEvent event : toResolve) {
                 RoomEventAuthorization auth = memberState.isAuthorized(event);
