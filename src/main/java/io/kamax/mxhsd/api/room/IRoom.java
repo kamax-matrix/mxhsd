@@ -22,7 +22,11 @@ package io.kamax.mxhsd.api.room;
 
 import io.kamax.mxhsd.api.event.ISignedEvent;
 
+import java.util.List;
+
 public interface IRoom extends IServerRoom, IUserRoom, IAliasRoom {
+
+    List<ISignedEvent> getExtremities();
 
     void inject(ISignedEvent ev);
 

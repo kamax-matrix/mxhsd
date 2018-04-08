@@ -60,7 +60,8 @@ public class FederationClientController extends JsonController {
         String method = GsonUtil.getString(body, "method");
         String path = GsonUtil.getString(body, "path");
         Map<String, String> parameters = new HashMap<>();
-        GsonUtil.getObjOrThrow(body, "parameters").entrySet().forEach(e -> parameters.put(e.getKey(), e.getValue().getAsString()));
+        GsonUtil.findObj(body, "parameters").orElse(new JsonObject())
+                .entrySet().forEach(e -> parameters.put(e.getKey(), e.getValue().getAsString()));
         JsonElement payload = body.get("body");
 
         try {

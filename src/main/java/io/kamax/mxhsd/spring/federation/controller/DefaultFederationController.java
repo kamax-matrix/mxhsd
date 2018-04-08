@@ -66,7 +66,7 @@ public class DefaultFederationController extends JsonController {
             }
         }
 
-        logger.debug("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
+        logger.warn("Unsupported URL: {} {}", req.getMethod(), req.getRequestURL());
         if (postData.length() > 0) {
             logger.info("POST data: {}", postData);
         }

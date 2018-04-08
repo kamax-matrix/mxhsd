@@ -173,7 +173,7 @@ public class EventManager implements IEventManager {
     public synchronized ISignedEventStreamEntry store(ISignedEvent ev) { // FIXME use RWLock
         eventBusFilter.publish(ev);
 
-        ISignedEventStreamEntry entry = new SignedEventStreamEntry(Math.max(0, eventsStream.size() - 1), ev);
+        ISignedEventStreamEntry entry = new SignedEventStreamEntry(eventsStream.size(), ev);
         eventsStream.add(entry);
         events.put(ev.getId(), entry);
         log.info("Event {} was stored in position {}", ev.getId(), entry.streamIndex());

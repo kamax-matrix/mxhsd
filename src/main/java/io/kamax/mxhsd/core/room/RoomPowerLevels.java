@@ -235,8 +235,13 @@ public class RoomPowerLevels {
                         return false;
                     }
 
-                    long oldPl = getForUser(id);
-                    return oldPl == withPl;
+                    long oldTargetPl = getForUser(id);
+                    long newTargetPl = newPls.users.getOrDefault(id, getUsersDefaultOrCompute());
+                    if (oldTargetPl == newTargetPl) {
+                        return false;
+                    }
+
+                    return oldTargetPl == withPl;
                 });
     }
 

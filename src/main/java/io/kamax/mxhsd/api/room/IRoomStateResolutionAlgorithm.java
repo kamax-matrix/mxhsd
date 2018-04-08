@@ -18,18 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room.event;
+package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.NakedContentEvent;
-import io.kamax.mxhsd.api.room.RoomEventType;
+import java.util.Collection;
 
-public class RoomHistoryVisibilityEvent extends NakedContentEvent {
+public interface IRoomStateResolutionAlgorithm {
 
-    private String stateKey = "";
-
-    public RoomHistoryVisibilityEvent(String sender, String visibility) {
-        super(RoomEventType.HistoryVisibility.get(), sender);
-        content.addProperty("history_visibility", visibility); // FIXME use enum
-    }
+    IRoomState resolve(Collection<IRoomState> states);
 
 }

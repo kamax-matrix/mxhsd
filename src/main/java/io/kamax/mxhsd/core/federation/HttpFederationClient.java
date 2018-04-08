@@ -38,6 +38,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.config.SocketConfig;
@@ -179,8 +180,48 @@ public class HttpFederationClient implements IFederationClient {
         }
     }
 
-    private JsonObject sendPost(String domain, URI target, JsonObject payload) {
-        throw new NotImplementedException("");
+    private JsonObject sendPost(URIBuilder target, JsonElement payload) {
+        try {
+            if (!target.getScheme().equals("matrix")) {
+                throw new IllegalArgumentException("Scheme can only be matrix");
+            }
+
+            String domain = target.getHost();
+            target.setScheme("https");
+            IRemoteAddress addr = resolver.resolve(target.getHost());
+            target.setHost(addr.getHost());
+            target.setPort(addr.getPort());
+
+            return sendPost(domain, target.build(), payload);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private JsonObject sendPost(String domain, URI target, JsonElement payload) {
+        String authObj = getAuthObj(domain, "POST", target, payload);
+        String sign = global.getSignMgr().sign(authObj);
+        String key = "ed25519:" + global.getKeyMgr().getCurrentIndex();
+
+        HttpPost req = new HttpPost(target);
+        req.setEntity(getJsonEntity(payload));
+        req.setHeader("Host", domain);
+        req.setHeader("Authorization",
+                "X-Matrix origin=" + global.getDomain() + ",key=\"" + key + "\",sig=\"" + sign + "\"");
+        log.info("Calling [{}] {}", domain, req);
+        log.info("Payload{}", GsonUtil.getPrettyForLog(payload));
+        try (CloseableHttpResponse res = client.execute(req)) {
+            int resStatus = res.getStatusLine().getStatusCode();
+            JsonObject body = getBody(res.getEntity());
+            if (resStatus == 200) {
+                log.info("Got answer");
+                return body;
+            } else {
+                throw new FederationException(resStatus, body);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private JsonObject sendPut(URIBuilder target, JsonElement payload) {
@@ -248,6 +289,8 @@ public class HttpFederationClient implements IFederationClient {
             }
 
             return sendGet(b);
+        } else if (StringUtils.equals("POST", method)) {
+            return sendPost(b, body);
         } else if (StringUtils.equals("PUT", method)) {
             return sendPut(b, body);
         } else {
