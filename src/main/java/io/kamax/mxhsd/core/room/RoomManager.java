@@ -94,7 +94,7 @@ public class RoomManager implements IRoomManager {
 
     // TODO make it configurable via JSON data
     private RoomPowerLevels getPowerLevelEvent(IRoomCreateOptions options) {
-        return RoomPowerLevels.build()
+        return RoomPowerLevels.build().defaults()
                 .addUser(options.getCreator().getId(), PowerLevel.Admin) // Adding creator
                 .get();
     }

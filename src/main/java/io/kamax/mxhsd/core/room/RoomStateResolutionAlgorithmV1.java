@@ -56,7 +56,7 @@ public class RoomStateResolutionAlgorithmV1 implements IRoomStateResolutionAlgor
         this.fetcher = fetcher;
     }
 
-    public IRoomState resolveAuth(Collection<IRoomState> states, String keyFull, IRoomState prevState) {
+    private IRoomState resolveAuth(Collection<IRoomState> states, String keyFull, IRoomState prevState) {
         // We collect all the events to resolve
         List<ISignedEvent> toResolve = states.stream()
                 .map(state -> state.findEventFor(keyFull))

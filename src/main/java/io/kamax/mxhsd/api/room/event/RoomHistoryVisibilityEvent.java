@@ -25,6 +25,8 @@ import io.kamax.mxhsd.api.room.RoomEventType;
 
 public class RoomHistoryVisibilityEvent extends NakedContentEvent {
 
+    private String stateKey = "";
+
     public RoomHistoryVisibilityEvent(String sender, String visibility) {
         super(RoomEventType.HistoryVisibility.get(), sender);
         content.addProperty("history_visibility", visibility); // FIXME use enum
