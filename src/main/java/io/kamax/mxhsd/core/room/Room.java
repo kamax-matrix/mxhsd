@@ -161,7 +161,6 @@ public class Room implements IRoom {
         IEventBuilder evTempBuilder = global.getEvMgr().populate(evNaked, getId(), state, parents);
         IEvent evTemp = evTempBuilder.get();
 
-        log.debug("Formalized event: {}", GsonUtil.getPrettyForLog(evTemp.getJson()));
         IRoomState parentState = roomStateAlgo.resolve(getStates(evTemp));
         RoomEventAuthorization eval = parentState.isAuthorized(evTemp);
         if (!eval.isAuthorized()) {
@@ -172,6 +171,7 @@ public class Room implements IRoom {
 
         eval.getBasedOn().forEach(evTempBuilder::addAuthorization);
         ISignedEvent evSigned = global.getEvMgr().sign(evTempBuilder.get());
+        log.debug("Signed event to inject: {}", GsonUtil.getPrettyForLog(evSigned.getJson()));
         inject(evSigned, eval);
         return evSigned;
     }
