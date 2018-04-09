@@ -37,10 +37,8 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RemoteHomeServer implements IRemoteHomeServer {
@@ -94,12 +92,20 @@ public class RemoteHomeServer implements IRemoteHomeServer {
 
     @Override
     public void pushTransaction(ITransaction t) {
-        TransactionJson json = new TransactionJson();
-        json.setOrigin(t.getOrigin());
-        json.setOriginServerTs(t.getOriginTimestamp().toEpochMilli());
-        json.setPdus(t.getPdus().stream().map(INakedEvent::getJson).collect(Collectors.toList()));
-        JsonObject answer = client.sendTransaction(domain, t.getId(), GsonUtil.makeObj(json));
-        log.info("HS {} response:{}", domain, GsonUtil.getPrettyForLog(answer));
+        try {
+            TransactionJson json = new TransactionJson();
+            json.setOrigin(t.getOrigin());
+            json.setOriginServerTs(t.getOriginTimestamp().toEpochMilli());
+            json.setPdus(t.getPdus().stream().map(INakedEvent::getJson).collect(Collectors.toList()));
+            JsonObject answer = client.sendTransaction(domain, t.getId(), GsonUtil.makeObj(json));
+            log.info("HS {} response:{}", domain, GsonUtil.getPrettyForLog(answer));
+        } catch (RuntimeException e) {
+            Throwable tr = e;
+            if (Objects.nonNull(e.getCause()) && e.getCause() instanceof IOException) {
+                tr = e.getCause();
+            }
+            log.warn("Outbound transaction {} failed: {}", t.getId(), tr.getMessage());
+        }
     }
 
     @Override

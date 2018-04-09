@@ -37,9 +37,11 @@ public class FederationNotifier implements IFederationNotifier {
     private final Logger log = LoggerFactory.getLogger(FederationNotifier.class);
 
     private final HomeserverState global;
+    private final ForkJoinPool pool; // FIXME this should be a scheduled executor?
 
     public FederationNotifier(HomeserverState global) {
         this.global = global;
+        this.pool = new ForkJoinPool(50);
         init();
     }
 
@@ -60,7 +62,7 @@ public class FederationNotifier implements IFederationNotifier {
                 .map(c -> MatrixID.asAcceptable(c.getStateKey()).getDomain())
                 .filter(id -> !global.getDomain().equals(id))
                 .unordered().distinct()
-                .forEach(d -> ForkJoinPool.commonPool().execute(() -> send(ev, d)));
+                .forEach(d -> pool.execute(() -> send(ev, d)));
     }
 
     @Override

@@ -54,13 +54,12 @@ public class SyncController extends JsonController {
     @RequestMapping(method = GET, path = "/sync")
     public String sync(
             HttpServletRequest req,
-            @RequestParam("access_token") String token,
             @RequestParam(required = false) String filter,
             @RequestParam(required = false) String since,
             @RequestParam(required = false) Long timeout
     ) {
         SyncOptions options = new SyncOptions().setFilterId(filter).setSince(since).setTimeout(timeout);
-        ISyncData data = hs.getUserSession(token).fetchData(options);
+        ISyncData data = hs.getUserSession(getAccessToken(req)).fetchData(options);
         return toJson(logger, new SyncResponse(data));
     }
 

@@ -23,6 +23,7 @@ package io.kamax.mxhsd.spring.common.controller;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.exception.AccessTokenNotFoundException;
 import io.kamax.mxhsd.api.exception.NoJsonException;
 import io.kamax.mxhsd.api.exception.UnknownException;
 import org.apache.commons.io.IOUtils;
@@ -35,9 +36,15 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 @CrossOrigin
 public class JsonController {
+
+    private final static String headerName = "Authorization";
+    private final static String headerValuePrefix = "Bearer ";
+    private final static String parameterName = "access_token";
 
     private final Logger log = LoggerFactory.getLogger(JsonController.class);
 
@@ -73,6 +80,29 @@ public class JsonController {
         String json = gson.toJson(o);
         log.info("To json:\n{}", json);
         return json;
+    }
+
+
+    private <T> Optional<T> findFirst(Supplier<Optional<T>>... suppliers) {
+        return Stream.of(suppliers).map(Supplier::get).filter(Optional::isPresent).map(Optional::get).findFirst();
+    }
+
+    private Optional<String> findAccessTokenInHeaders(HttpServletRequest request) {
+        return Optional.ofNullable(request.getHeader(headerName))
+                .filter(header -> StringUtils.startsWith(header, headerValuePrefix))
+                .map(header -> header.substring(headerValuePrefix.length()));
+    }
+
+    private Optional<String> findAccessTokenInQuery(HttpServletRequest request) {
+        return Optional.ofNullable(request.getParameter(parameterName));
+    }
+
+    protected Optional<String> findAccessToken(HttpServletRequest request) {
+        return findFirst(() -> findAccessTokenInHeaders(request), () -> findAccessTokenInQuery(request));
+    }
+
+    protected String getAccessToken(HttpServletRequest request) {
+        return findAccessToken(request).orElseThrow(AccessTokenNotFoundException::new);
     }
 
 }

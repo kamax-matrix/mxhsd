@@ -107,6 +107,13 @@ public class EventBuilder implements IEventBuilder {
         base.addProperty(EventKey.Timestamp.get(), timestamp.toEpochMilli());
         base.add(EventKey.PreviousEvents.get(), pEv);
 
+        // SYNAPSE-BUG
+        // This is required for synapse to accept various events event tho the spec does not mandate it
+        // Legacy key?
+        if (!base.has(EventKey.PreviousState.get())) {
+            base.add(EventKey.PreviousState.get(), new JsonArray());
+        }
+
         String json = MatrixJson.encodeCanonical(base);
         return new Event(
                 id,

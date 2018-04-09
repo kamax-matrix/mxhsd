@@ -79,12 +79,11 @@ public class RoomController extends JsonController {
     @RequestMapping(method = POST, path = "/join/{roomIdOrAlias:.+}")
     public String joinByRoomIdOrAlias(
             HttpServletRequest req,
-            @PathVariable String roomIdOrAlias,
-            @RequestParam("access_token") String token
+            @PathVariable String roomIdOrAlias
     ) {
         log(logger, req);
 
-        IUserRoom r = hs.getUserSession(token).joinRoom(roomIdOrAlias);
+        IUserRoom r = hs.getUserSession(getAccessToken(req)).joinRoom(roomIdOrAlias);
 
         JsonObject json = new JsonObject();
         json.addProperty("room_id", r.getId());

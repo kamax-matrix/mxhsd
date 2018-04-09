@@ -20,7 +20,10 @@
 
 package io.kamax.mxhsd.spring.common.controller;
 
+import com.google.gson.JsonObject;
+import io.kamax.matrix.json.GsonUtil;
 import io.kamax.mxhsd.api.exception.*;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -35,9 +38,12 @@ public class DefaultExceptionHandler {
     private static Logger log = LoggerFactory.getLogger(DefaultExceptionHandler.class);
 
     public static String handle(String erroCode, String error) {
-        log.info("Reply: {} - {}", erroCode, error);
+        log.debug("Reply: {} - {}", erroCode, error);
 
-        return "{\"errcode\":\"" + erroCode + "\",\"error\":\"" + error + "\"}";
+        JsonObject body = new JsonObject();
+        body.addProperty("errcode", erroCode);
+        body.addProperty("error", error);
+        return GsonUtil.get().toJson(body);
     }
 
     public static String handle(String error) {
@@ -94,6 +100,15 @@ public class DefaultExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public String handle(NotFoundException e) {
         return handleException(e);
+    }
+
+    @ResponseStatus(HttpStatus.NOT_IMPLEMENTED)
+    @ExceptionHandler(NotImplementedException.class)
+    public String handle(NotImplementedException e) {
+        JsonObject body = new JsonObject();
+        body.addProperty("errcode", "M_NOT_IMPLEMENTED");
+        body.addProperty("error", e.getMessage());
+        return GsonUtil.get().toJson(body);
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -69,7 +69,7 @@ public class SyncOptions implements ISyncOptions {
         return fullState;
     }
 
-    public SyncOptions setTimeout(long timeout) {
+    public SyncOptions setTimeout(Long timeout) {
         this.timeout = timeout;
 
         return this;

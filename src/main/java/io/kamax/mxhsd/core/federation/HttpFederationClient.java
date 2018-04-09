@@ -35,13 +35,13 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
@@ -77,7 +77,6 @@ public class HttpFederationClient implements IFederationClient {
         this.resolver = resolver;
 
         try {
-            SocketConfig sockConf = SocketConfig.custom().setSoTimeout(30000).build();
             // FIXME properly handle SSL context by validating certificate hostname
             SSLContext sslContext = SSLContextBuilder.create().loadTrustMaterial(new TrustAllStrategy()).build();
             HostnameVerifier hostnameVerifier = new NoopHostnameVerifier();
@@ -87,8 +86,11 @@ public class HttpFederationClient implements IFederationClient {
                     .disableAutomaticRetries()
                     .disableCookieManagement()
                     .disableRedirectHandling()
-                    .setDefaultSocketConfig(sockConf)
                     .setSSLSocketFactory(sslSocketFactory)
+                    .setDefaultRequestConfig(RequestConfig.custom()
+                            .setConnectTimeout(10000) // FIXME make configurable
+                            .setConnectionRequestTimeout(60000) // FIXME make configurable
+                            .build())
                     .setUserAgent(global.getAppName() + "/" + global.getAppVersion())
                     .build();
         } catch (KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
@@ -120,7 +122,7 @@ public class HttpFederationClient implements IFederationClient {
         authObj.addProperty("destination", remoteDomain);
         Optional.ofNullable(content).ifPresent(c -> authObj.add("content", c));
         String data = MatrixJson.encodeCanonical(authObj);
-        log.info("Auth object: {}", data);
+        log.debug("Auth object: {}", data);
         return data;
     }
 
@@ -209,7 +211,7 @@ public class HttpFederationClient implements IFederationClient {
         req.setHeader("Authorization",
                 "X-Matrix origin=" + global.getDomain() + ",key=\"" + key + "\",sig=\"" + sign + "\"");
         log.info("Calling [{}] {}", domain, req);
-        log.info("Payload{}", GsonUtil.getPrettyForLog(payload));
+        log.debug("Payload: {}", GsonUtil.getPrettyForLog(payload));
         try (CloseableHttpResponse res = client.execute(req)) {
             int resStatus = res.getStatusLine().getStatusCode();
             JsonObject body = getBody(res.getEntity());
@@ -253,7 +255,7 @@ public class HttpFederationClient implements IFederationClient {
         req.setHeader("Authorization",
                 "X-Matrix origin=" + global.getDomain() + ",key=\"" + key + "\",sig=\"" + sign + "\"");
         log.info("Calling [{}] {}", domain, req);
-        log.info("Payload{}", GsonUtil.getPrettyForLog(payload));
+        log.debug("Payload: {}", GsonUtil.getPrettyForLog(payload));
         try (CloseableHttpResponse res = client.execute(req)) {
             int resStatus = res.getStatusLine().getStatusCode();
             JsonObject body = getBody(res.getEntity());
