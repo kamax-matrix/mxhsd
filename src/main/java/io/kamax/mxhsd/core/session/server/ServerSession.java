@@ -60,7 +60,6 @@ public class ServerSession implements IServerSession {
     public void push(ITransaction transaction) {
         log.info("Processing transaction {} from {} sent at {}", transaction.getId(), transaction.getOrigin(), transaction.getOriginTimestamp());
 
-        // TODO make asynchronous
         transaction.getPdus().forEach(sEv -> {
             log.info("Processing event {} for room {}", sEv.getId(), sEv.getRoomId());
             Optional<IRoom> rOpt = global.getRoomMgr().findRoom(sEv.getRoomId());

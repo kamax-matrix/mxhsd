@@ -289,7 +289,7 @@ public class RoomPowerLevels {
         if (isInitialState) {
             return 0;
         } else {
-            return getEventsDefault().orElse(50L);
+            return getEventsDefault().orElse(0L);
         }
     }
 
