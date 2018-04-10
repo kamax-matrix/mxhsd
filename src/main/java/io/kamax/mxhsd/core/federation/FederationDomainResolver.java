@@ -23,8 +23,12 @@ package io.kamax.mxhsd.core.federation;
 import com.google.common.net.InetAddresses;
 import io.kamax.mxhsd.api.federation.IFederationDomainResolver;
 import io.kamax.mxhsd.api.federation.IRemoteAddress;
+import org.xbill.DNS.*;
 
 import java.net.URI;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class FederationDomainResolver implements IFederationDomainResolver {
 
@@ -58,6 +62,23 @@ public class FederationDomainResolver implements IFederationDomainResolver {
     private int port = 8448;
     private String prefix = "_matrix._tcp.";
 
+    private Optional<RemoteAddress> lookupSrv(String domain) {
+        try {
+            Record[] records = new Lookup(prefix + domain, Type.SRV).run();
+            if (records == null) {
+                return Optional.empty();
+            }
+
+            return Stream.of(records)
+                    .filter(record -> record.getType() == Type.SRV && record instanceof SRVRecord)
+                    .map(record -> (SRVRecord) record)
+                    .min(Comparator.comparingInt(SRVRecord::getPriority))
+                    .map(record -> new RemoteAddress(record.getTarget().toString(true), record.getPort()));
+        } catch (TextParseException e) {
+            return Optional.empty();
+        }
+    }
+
     @Override
     public IRemoteAddress resolve(String domain) {
         // This is a literal IP address without any port
@@ -79,7 +100,7 @@ public class FederationDomainResolver implements IFederationDomainResolver {
             return new RemoteAddress(v.getHost(), v.getPort());
         }
 
-        return new RemoteAddress(domain, port);
+        return lookupSrv(domain).orElseGet(() -> new RemoteAddress(domain, port));
     }
 
 }
