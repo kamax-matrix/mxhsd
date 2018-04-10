@@ -42,6 +42,7 @@ public class AccountController extends JsonController {
     @GetMapping("/account/3pid")
     public String getAccount3pids(HttpServletRequest req) {
         log(logger, req);
+        getAccessToken(req);
 
         // TODO implement
 

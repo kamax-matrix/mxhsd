@@ -43,6 +43,7 @@ public class TurnServersController extends JsonController {
     @RequestMapping(method = GET, path = "/turnServer")
     public String getTurnUri(HttpServletRequest req) {
         log(logger, req);
+        getAccessToken(req);
 
         return EmptyJsonResponse.stringify();
     }

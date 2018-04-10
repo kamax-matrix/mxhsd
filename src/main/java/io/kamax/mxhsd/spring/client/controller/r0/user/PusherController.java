@@ -42,6 +42,7 @@ public class PusherController extends JsonController {
     @GetMapping("/pushers")
     public String getPushers(HttpServletRequest req) {
         log(logger, req);
+        getAccessToken(req);
 
         // TODO implement
 

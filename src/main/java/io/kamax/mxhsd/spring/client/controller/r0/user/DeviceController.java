@@ -42,6 +42,7 @@ public class DeviceController extends JsonController {
     @GetMapping("/devices")
     public String getDevices(HttpServletRequest req) {
         log(logger, req);
+        getAccessToken(req);
 
         // TODO implement
 

@@ -53,11 +53,10 @@ public class RoomAliasController extends JsonController {
     @GetMapping(aliasVariable)
     public String resolveAlias(
             HttpServletRequest req,
-            @RequestParam("access_token") String token,
             @PathVariable String alias) {
         log(logger, req);
 
-        IFederatedRoomAliasLookup lookup = hs.getUserSession(token).getRoomDirectory().lookup(alias)
+        IFederatedRoomAliasLookup lookup = hs.getUserSession(getAccessToken(req)).getRoomDirectory().lookup(alias)
                 .orElseThrow(() -> new NotFoundException(alias));
 
         JsonObject o = new JsonObject();
@@ -70,23 +69,21 @@ public class RoomAliasController extends JsonController {
     @PutMapping(aliasVariable)
     public String addAlias(
             HttpServletRequest req,
-            @RequestParam("access_token") String token,
             @PathVariable String alias) {
         log(logger, req);
 
         String roomId = GsonUtil.getOrThrow(getJsonObject(req), "room_id");
-        hs.getUserSession(token).getRoomDirectory().add(alias, roomId);
+        hs.getUserSession(getAccessToken(req)).getRoomDirectory().add(alias, roomId);
         return EmptyJsonResponse.stringify();
     }
 
     @DeleteMapping(aliasVariable)
     public String removeAlias(
             HttpServletRequest req,
-            @RequestParam("access_token") String token,
             @PathVariable String alias) {
         log(logger, req);
 
-        hs.getUserSession(token).getRoomDirectory().remove(alias);
+        hs.getUserSession(getAccessToken(req)).getRoomDirectory().remove(alias);
         return EmptyJsonResponse.stringify();
     }
 

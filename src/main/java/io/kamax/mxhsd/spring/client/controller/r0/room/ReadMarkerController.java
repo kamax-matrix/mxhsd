@@ -33,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -56,7 +55,6 @@ public class ReadMarkerController extends JsonController {
     @RequestMapping(method = POST, path = "/read_markers")
     public String setReadMarkerForRoom(
             HttpServletRequest req,
-            @RequestParam("access_token") String token,
             @PathVariable String roomId
     ) {
         log(logger, req);
@@ -65,7 +63,7 @@ public class ReadMarkerController extends JsonController {
         json.keySet().forEach(key -> {
             JsonElement el = json.get(key);
             if (el.isJsonPrimitive()) {
-                hs.getUserSession(token).setReadMarker(roomId, key, el.getAsString());
+                hs.getUserSession(getAccessToken(req)).setReadMarker(roomId, key, el.getAsString());
             }
         });
 

@@ -22,6 +22,7 @@ package io.kamax.mxhsd.spring.client.controller.r0;
 
 import com.google.gson.JsonObject;
 import io.kamax.matrix.MatrixID;
+import io.kamax.matrix.json.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.user.IUserFilter;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
@@ -34,11 +35,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -56,11 +55,14 @@ public class UserController extends JsonController {
     }
 
     @RequestMapping(method = POST, path = "/filter")
-    public String createFilter(HttpServletRequest req, @PathVariable String userId, @RequestParam("access_token") String token) throws IOException {
+    public String createFilter(HttpServletRequest req, @PathVariable String userId) {
         log(logger, req);
 
         String body = getBody(req);
-        IUserFilter filter = hs.getUserSession(token).getForUser(new MatrixID(userId)).getUser().createFilter(body);
+        IUserFilter filter = hs.getUserSession(getAccessToken(req))
+                .getForUser(MatrixID.asAcceptable(userId))
+                .getUser()
+                .createFilter(body);
 
         JsonObject reply = new JsonObject();
         reply.addProperty("filter_id", filter.getId());
@@ -70,13 +72,12 @@ public class UserController extends JsonController {
     @RequestMapping(method = GET, path = "/filter/{filterId:.+}")
     public String getFilter(
             HttpServletRequest req,
-            @RequestParam("access_token") String token,
             @PathVariable String userId,
             @PathVariable String filterId
     ) {
         log(logger, req);
 
-        IUserFilter filter = hs.getUserSession(token).getForUser(new MatrixID(userId)).getUser()
+        IUserFilter filter = hs.getUserSession(getAccessToken(req)).getForUser(MatrixID.asAcceptable(userId)).getUser()
                 .findFilter(filterId).orElseThrow(() -> new InvalidRequestException("M_UNKNOWN", "Invalid filter ID"));
 
         return filter.getContent();
@@ -87,7 +88,6 @@ public class UserController extends JsonController {
     @RequestMapping(method = PUT, path = "/account_data/{type:.+}")
     public String setAccountData(
             HttpServletRequest req,
-            @RequestParam("access_token") String token,
             @PathVariable String userId,
             @PathVariable String type
     ) {
@@ -98,18 +98,13 @@ public class UserController extends JsonController {
 
     // Riot keeps requesting this, no idea what it is for
     @RequestMapping(method = POST, path = "/openid/request_token")
-    public String openIdRequestToken(
-            HttpServletRequest req
-    ) {
-        log(logger, req);
-
+    public String openIdRequestToken() {
         JsonObject json = new JsonObject();
         json.addProperty("access_token", "dummy");
         json.addProperty("token_type", "Bearer");
         json.addProperty("expires_in", Integer.MAX_VALUE); // a long time
-        json.addProperty("matrix_server_name", hs.getDomain());
-
-        return toJson(logger, json);
+        json.addProperty("matrix_server_name", "example.org");
+        return GsonUtil.get().toJson(json);
     }
 
 }

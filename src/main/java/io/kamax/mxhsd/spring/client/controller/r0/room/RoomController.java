@@ -35,7 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -56,7 +55,7 @@ public class RoomController extends JsonController {
     }
 
     @RequestMapping(method = POST, path = "/createRoom")
-    public String createRoom(HttpServletRequest req, @RequestParam("access_token") String token) {
+    public String createRoom(HttpServletRequest req) {
         log(logger, req);
 
         JsonObject o = getJsonObject(req);
@@ -69,7 +68,7 @@ public class RoomController extends JsonController {
         // FIXME no hardcoding!
         GsonUtil.findString(o, "preset").ifPresent(options::setPreset);
 
-        IUserRoom room = hs.getUserSession(token).createRoom(options);
+        IUserRoom room = hs.getUserSession(getAccessToken(req)).createRoom(options);
 
         JsonObject reply = new JsonObject();
         reply.addProperty("room_id", room.getId());

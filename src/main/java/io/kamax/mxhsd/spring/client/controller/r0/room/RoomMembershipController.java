@@ -35,7 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -56,8 +55,9 @@ public class RoomMembershipController extends JsonController {
     }
 
     @RequestMapping(method = POST, path = "/invite")
-    public String inviteToRoom(HttpServletRequest req, @PathVariable String roomId, @RequestParam("access_token") String token) {
+    public String inviteToRoom(HttpServletRequest req, @PathVariable String roomId) {
         log(logger, req);
+        String token = getAccessToken(req);
 
         JsonObject o = getJsonObject(req);
         String sender = hs.getUserSession(token).getUser().getId().getId();
@@ -69,10 +69,10 @@ public class RoomMembershipController extends JsonController {
     }
 
     @RequestMapping(method = POST, path = "/leave")
-    public String leaveRoom(HttpServletRequest req, @PathVariable String roomId, @RequestParam("access_token") String token) {
+    public String leaveRoom(HttpServletRequest req, @PathVariable String roomId) {
         log(logger, req);
 
-        hs.getUserSession(token).leaveRoom(roomId);
+        hs.getUserSession(getAccessToken(req)).leaveRoom(roomId);
 
         return EmptyJsonResponse.stringify();
     }

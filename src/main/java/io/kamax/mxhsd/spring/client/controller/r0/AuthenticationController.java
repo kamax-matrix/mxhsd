@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -91,10 +90,10 @@ public class AuthenticationController extends JsonController {
     }
 
     @RequestMapping(method = POST, path = "/logout")
-    public String logout(HttpServletRequest req, @RequestParam("access_token") String accessToken) {
+    public String logout(HttpServletRequest req) {
         log(logger, req);
 
-        hs.findUserSession(accessToken).ifPresent(IUserSession::logout);
+        hs.findUserSession(getAccessToken(req)).ifPresent(IUserSession::logout);
 
         return EmptyJsonResponse.stringify();
     }

@@ -43,6 +43,7 @@ public class KeysController extends JsonController {
             HttpServletRequest req
     ) {
         log(logger, req);
+        getAccessToken(req);
 
         return "{\"one_time_key_counts\":{\"signed_curve25519\":0}}";
     }

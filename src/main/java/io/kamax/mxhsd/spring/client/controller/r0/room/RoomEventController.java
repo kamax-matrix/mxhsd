@@ -61,12 +61,11 @@ public class RoomEventController extends JsonController {
             HttpServletRequest req,
             @PathVariable String roomId,
             @PathVariable String eventType,
-            @PathVariable String txnId, // FIXME use!
-            @RequestParam("access_token") String token
+            @PathVariable String txnId // FIXME use!
     ) {
         log(logger, req);
 
-        long before = System.currentTimeMillis();
+        String token = getAccessToken(req);
         JsonObject json = getJsonObject(req);
         NakedContentEvent ev = new NakedContentEvent(eventType, hs.getUserSession(token).getUser().getId().getId(), json);
         ev.getUnsigned().addProperty("transaction_id", txnId);
@@ -83,7 +82,6 @@ public class RoomEventController extends JsonController {
     public String paginateRoomEvents(
             HttpServletRequest req,
             @PathVariable String roomId,
-            @RequestParam("access_token") String token,
             @RequestParam("dir") String direction,
             @RequestParam String from,
             @RequestParam(value = "to", required = false) String to,
@@ -92,7 +90,7 @@ public class RoomEventController extends JsonController {
     ) {
         log(logger, req);
 
-        IRoomEventChunk page = hs.getUserSession(token).getRoom(roomId).getEventsChunk(from, limit);
+        IRoomEventChunk page = hs.getUserSession(getAccessToken(req)).getRoom(roomId).getEventsChunk(from, limit);
 
         JsonArray evs = new JsonArray();
         page.getEvents().forEach(evs::add);

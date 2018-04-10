@@ -41,6 +41,7 @@ public class ProfileController extends JsonController {
     @GetMapping("/profile/{id:.+}")
     public String getUserProfile(HttpServletRequest req) {
         log(logger, req);
+        getAccessToken(req);
 
         // TODO implement
 

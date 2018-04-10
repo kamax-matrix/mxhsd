@@ -47,6 +47,7 @@ public class PushRuleController extends JsonController {
     @RequestMapping(method = GET, path = "/")
     public String list(HttpServletRequest req) {
         log(logger, req);
+        getAccessToken(req);
 
         JsonObject global = new JsonObject();
         global.add("content", new JsonArray());
