@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,33 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.event;
+package io.kamax.mxhsd.spring.common.config;
 
-import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.IProcessedEvent;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-public class ProcessedEvent extends Event implements IProcessedEvent {
+@Configuration
+@ConfigurationProperties("storage")
+public class StorageConfig {
 
-    private String internalId;
+    private String type;
+    private String connection;
 
-    public ProcessedEvent(String internalId, String rawJson) {
-        super(rawJson);
-        this.internalId = internalId;
+    public String getType() {
+        return type;
     }
 
-    public ProcessedEvent(String internalId, IEvent ev) {
-        super(ev.getJson());
-        this.internalId = internalId;
+    public void setType(String type) {
+        this.type = type;
     }
 
-    @Override
-    public String getInternalId() {
-        return internalId;
+    public String getConnection() {
+        return connection;
     }
 
-    @Override
-    public boolean isValid() {
-        return true;
+    public void setConnection(String connection) {
+        this.connection = connection;
     }
 
 }

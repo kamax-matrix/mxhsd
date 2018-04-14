@@ -24,6 +24,7 @@ import io.kamax.matrix.crypto.KeyManager;
 import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.IHomeserverConfig;
+import io.kamax.mxhsd.api.store.IStore;
 import io.kamax.mxhsd.core.Homeserver;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.crypto.CryptoManager;
@@ -46,11 +47,12 @@ public class HomeserverService {
     private IHomeServer srv;
 
     @Autowired
-    public HomeserverService(InfoBuildConfig info, IHomeserverConfig cfg) {
+    public HomeserverService(InfoBuildConfig info, IHomeserverConfig cfg, IStore store) {
         state = new HomeserverState();
         state.setAppName(info.getName());
         state.setAppVersion(info.getVersion());
         state.setDomain(cfg.getDomain());
+        state.setStore(store);
         state.setKeyMgr(KeyManager.fromFile("data/sign.key"));
         state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));
         state.setCryptoMgr(new CryptoManager(state));

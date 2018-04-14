@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,33 +18,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.event;
+package io.kamax.mxhsd.core.store;
 
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.IProcessedEvent;
+import io.kamax.mxhsd.api.room.IRoomState;
+import io.kamax.mxhsd.api.store.IStore;
+import io.kamax.mxhsd.core.event.ProcessedEvent;
 
-public class ProcessedEvent extends Event implements IProcessedEvent {
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
-    private String internalId;
+public class InMemoryStore implements IStore {
 
-    public ProcessedEvent(String internalId, String rawJson) {
-        super(rawJson);
-        this.internalId = internalId;
-    }
+    private Map<String, IProcessedEvent> events = new HashMap<>();
 
-    public ProcessedEvent(String internalId, IEvent ev) {
-        super(ev.getJson());
-        this.internalId = internalId;
+    @Override
+    public Optional<IProcessedEvent> findEvent(String id) {
+        return Optional.ofNullable(events.get(id));
     }
 
     @Override
-    public String getInternalId() {
-        return internalId;
+    public synchronized IProcessedEvent putEvent(IEvent event) {
+        IProcessedEvent pEv = new ProcessedEvent(events.size() + "", event);
+        events.put(pEv.getId(), pEv);
+        return pEv;
     }
 
     @Override
-    public boolean isValid() {
-        return true;
+    public void findRoomState(String eventId) {
+
+    }
+
+    @Override
+    public void putRoomState(IRoomState state, IProcessedEvent event) {
+
     }
 
 }

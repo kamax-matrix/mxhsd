@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class EventManager implements IEventManager {
@@ -54,7 +53,6 @@ public class EventManager implements IEventManager {
     private MxSha256 sha256 = new MxSha256();
 
     private List<IProcessedEvent> eventsStream = Collections.synchronizedList(new ArrayList<>());
-    private Map<String, IProcessedEvent> events = new ConcurrentHashMap<>();
 
     private MBassador<IEvent> eventBusFilter = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
     private MBassador<IProcessedEvent> eventBusNotification = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
@@ -187,9 +185,8 @@ public class EventManager implements IEventManager {
     public synchronized IProcessedEvent store(IEvent ev) { // FIXME use RWLock
         eventBusFilter.publish(ev);
 
-        IProcessedEvent entry = new ProcessedEvent(getPosition(), ev);
+        IProcessedEvent entry = hsState.getStore().putEvent(ev);
         eventsStream.add(entry);
-        events.put(ev.getId(), entry);
         log.info("Event {} was stored in position {}", ev.getId(), entry.getInternalId());
 
         eventBusNotification.publish(entry); // TODO we might want to do this async?
@@ -199,12 +196,8 @@ public class EventManager implements IEventManager {
 
     @Override
     public IProcessedEvent get(String id) {
-        IProcessedEvent ev = events.get(id);
-        if (ev == null) {
-            throw new IllegalArgumentException("Event ID " + id + " does not exist"); // FIXME we should do optional or something?
-        }
-
-        return ev;
+        return hsState.getStore().findEvent(id).orElseThrow(() ->
+                new IllegalArgumentException("Event ID " + id + " does not exist"));
     }
 
     @Override

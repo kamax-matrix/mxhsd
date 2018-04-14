@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,33 +18,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.event;
+package io.kamax.mxhsd.api.store;
 
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.IProcessedEvent;
+import io.kamax.mxhsd.api.room.IRoomState;
 
-public class ProcessedEvent extends Event implements IProcessedEvent {
+import java.util.Optional;
 
-    private String internalId;
+public interface IStore {
 
-    public ProcessedEvent(String internalId, String rawJson) {
-        super(rawJson);
-        this.internalId = internalId;
-    }
+    Optional<IProcessedEvent> findEvent(String id);
 
-    public ProcessedEvent(String internalId, IEvent ev) {
-        super(ev.getJson());
-        this.internalId = internalId;
-    }
+    IProcessedEvent putEvent(IEvent event);
 
-    @Override
-    public String getInternalId() {
-        return internalId;
-    }
+    void findRoomState(String eventId);
 
-    @Override
-    public boolean isValid() {
-        return true;
-    }
+    void putRoomState(IRoomState state, IProcessedEvent event);
 
 }

@@ -24,6 +24,8 @@ import io.kamax.mxhsd.spring.client.MxhsdClientApp;
 import io.kamax.mxhsd.spring.common.controller.DefaultExceptionHandler;
 import io.kamax.mxhsd.spring.federation.MxhsdFederationApp;
 import io.kamax.mxhsd.spring.management.MxhsdManagementApp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
@@ -31,6 +33,8 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 public class MxhsdSpringBootApp {
 
     public static void main(String[] args) {
+        Logger log = LoggerFactory.getLogger(MxhsdSpringBootApp.class);
+
         try {
             SpringApplicationBuilder builder = new SpringApplicationBuilder(MxhsdSpringBootApp.class);
             builder.web(false);
@@ -38,6 +42,7 @@ public class MxhsdSpringBootApp {
             builder.child(MxhsdClientApp.class).sources(DefaultExceptionHandler.class).run(args);
             builder.child(MxhsdFederationApp.class).sources(DefaultExceptionHandler.class).run(args);
             builder.child(MxhsdManagementApp.class).sources(DefaultExceptionHandler.class).run(args);
+            log.info("---------------[ mxhsd is ready ]---------------");
         } catch (Throwable t) {
             System.exit(1);
         }

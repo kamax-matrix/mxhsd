@@ -32,12 +32,15 @@ import io.kamax.mxhsd.api.federation.IFederationNotifier;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServerManager;
 import io.kamax.mxhsd.api.room.IRoomManager;
 import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
+import io.kamax.mxhsd.api.store.IStore;
+import io.kamax.mxhsd.core.store.InMemoryStore;
 
 public class HomeserverState {
 
     private String appName;
     private String appVersion;
     private String domain;
+    private IStore store = new InMemoryStore();
     private IAuthProvider authMgr;
     private IDeviceManager devMgr;
     private KeyManager keyMgr;
@@ -73,6 +76,14 @@ public class HomeserverState {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    public IStore getStore() {
+        return store;
+    }
+
+    public void setStore(IStore store) {
+        this.store = store;
     }
 
     public IAuthProvider getAuthMgr() {

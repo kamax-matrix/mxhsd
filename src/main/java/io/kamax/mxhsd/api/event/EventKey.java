@@ -89,4 +89,9 @@ public enum EventKey {
         return GsonUtil.getString(o, key);
     }
 
+    @Override
+    public String toString() {
+        return key;
+    }
+
 }

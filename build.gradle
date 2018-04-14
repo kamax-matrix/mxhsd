@@ -88,6 +88,12 @@ dependencies {
     // HTTP Client
     compile 'org.apache.httpcomponents:httpclient:4.5.4'
 
+    // Connection Pool
+    compile 'com.mchange:c3p0:0.9.5.2'
+
+    // PostgreSQL
+    compile 'org.postgresql:postgresql:42.2.2'
+
     testCompile 'junit:junit:4.12'
 }
 

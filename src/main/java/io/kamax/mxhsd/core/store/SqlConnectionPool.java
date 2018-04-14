@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,33 +18,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.event;
+package io.kamax.mxhsd.core.store;
 
-import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.IProcessedEvent;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import io.kamax.mxhsd.spring.common.config.StorageConfig;
 
-public class ProcessedEvent extends Event implements IProcessedEvent {
+import java.sql.Connection;
+import java.sql.SQLException;
 
-    private String internalId;
+public class SqlConnectionPool {
 
-    public ProcessedEvent(String internalId, String rawJson) {
-        super(rawJson);
-        this.internalId = internalId;
+    private ComboPooledDataSource ds;
+
+    public SqlConnectionPool(StorageConfig cfg) {
+        ds = new ComboPooledDataSource();
+        ds.setJdbcUrl("jdbc:" + cfg.getType() + ":" + cfg.getConnection());
+        ds.setMinPoolSize(1);
+        ds.setMaxPoolSize(10);
+        ds.setAcquireIncrement(2);
     }
 
-    public ProcessedEvent(String internalId, IEvent ev) {
-        super(ev.getJson());
-        this.internalId = internalId;
-    }
-
-    @Override
-    public String getInternalId() {
-        return internalId;
-    }
-
-    @Override
-    public boolean isValid() {
-        return true;
+    public Connection get() throws SQLException {
+        return ds.getConnection();
     }
 
 }
