@@ -1,12 +1,12 @@
 package io.kamax.mxhsd.api.session.server;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 
 import java.util.Collection;
 import java.util.List;
 
 public interface IServerEventManager {
 
-    List<ISignedEvent> getEvents(Collection<String> ids);
+    List<? extends IEvent> getEvents(Collection<String> ids);
 
 }

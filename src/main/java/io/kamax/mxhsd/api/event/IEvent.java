@@ -20,23 +20,10 @@
 
 package io.kamax.mxhsd.api.event;
 
-import java.time.Instant;
-import java.util.List;
+import java.util.Map;
 
-public interface IEvent extends INakedEvent {
+public interface IEvent extends IHashedProtoEvent {
 
-    String getId();
-
-    Instant getTimestamp();
-
-    String getOrigin();
-
-    String getRoomId();
-
-    List<IEventReference> getAuthorization();
-
-    long getDepth();
-
-    List<IEventReference> getParents();
+    Map<String, Map<String, String>> getSignatures();
 
 }

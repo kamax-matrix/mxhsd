@@ -25,29 +25,44 @@ import io.kamax.mxhsd.api.room.IRoomState;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface IEventManager {
 
-    IEventBuilder populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents);
+    IProtoEventBuilder populate(INakedEvent ev, String roomId, IRoomState withState, List<? extends IEvent> parents);
 
-    ISignedEvent sign(IEvent ev);
+    IHashedProtoEvent hash(IProtoEvent ev);
 
-    ISignedEvent finalize(JsonObject ev);
+    IEvent sign(IHashedProtoEvent ev);
 
-    default ISignedEventStreamEntry store(IEvent ev) {
+    default IEvent sign(IProtoEvent ev) {
+        return sign(hash(ev));
+    }
+
+    IEvent finalize(JsonObject ev);
+
+    default IProcessedEvent store(IProtoEvent ev) {
         return store(sign(ev));
     }
 
-    ISignedEventStreamEntry store(ISignedEvent ev);
+    IProcessedEvent store(IEvent ev);
 
-    ISignedEventStreamEntry get(String id);
+    IProcessedEvent get(String id);
 
-    List<ISignedEvent> get(Collection<String> ids);
+    List<IProcessedEvent> get(Collection<String> ids);
+
+    default List<IProcessedEvent> getFull(Collection<? extends IProtoEvent> evs) {
+        return get(evs.stream().map(IProtoEvent::getId).collect(Collectors.toList()));
+    }
 
     // From newest to oldest in a linear graph
-    ISignedEventStream getBackwardStreamFrom(int id);
+    IProcessedEventStream getBackwardStreamFrom(String position);
 
-    int getStreamIndex();
+    IProcessedEventStream getForwardStreamFrom(String position);
+
+    String getPosition();
+
+    boolean isBefore(String toCheck, String reference);
 
     // MBassador bus
     // TODO consider refactoring this into accepting a consumer (functional interface) to abstract MBassador

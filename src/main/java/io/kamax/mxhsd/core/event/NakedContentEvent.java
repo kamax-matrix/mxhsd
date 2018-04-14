@@ -18,46 +18,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room.event;
+package io.kamax.mxhsd.core.event;
 
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.room.RoomEventType;
-import io.kamax.mxhsd.core.event.NakedContentEvent;
+import io.kamax.mxhsd.api.event.EventKey;
 
-public class RoomCreateEvent extends NakedContentEvent {
+public class NakedContentEvent extends NakedEvent {
 
-    public class Content {
+    protected JsonObject content;
 
-        private String creator;
-
-        Content(String creator) {
-            this.creator = creator;
-        }
-
-        public String getCreator() {
-            return creator;
-        }
-
+    protected NakedContentEvent() {
+        // for subclasses only
     }
 
-    private String stateKey = "";
-
-    public RoomCreateEvent(JsonObject o) {
+    public NakedContentEvent(JsonObject o) {
         super(o);
+        this.content = EventKey.Content.getObj(o);
     }
 
-    public RoomCreateEvent(String creator) {
-        this(creator, creator);
+    public NakedContentEvent(String type, String sender) {
+        this(type, sender, new JsonObject());
     }
 
-    public RoomCreateEvent(String sender, String creator) {
-        super(RoomEventType.Creation.get(), sender);
-        content = GsonUtil.makeObj(new Content(creator));
+    public NakedContentEvent(String type, String sender, JsonObject content) {
+        super(type, sender);
+        this.content = content;
     }
 
-    public String getCreator() {
-        return GsonUtil.getString(getContent(), "creator"); // FIXME enum
+    protected void setContent(Object o) {
+        content = GsonUtil.get().toJsonTree(o).getAsJsonObject();
+    }
+
+    public JsonObject getContent() {
+        return content;
     }
 
 }

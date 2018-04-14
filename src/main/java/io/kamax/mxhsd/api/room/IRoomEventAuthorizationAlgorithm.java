@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,12 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.api.room;
 
-import java.util.Map;
+import io.kamax.mxhsd.api.event.IHashedProtoEvent;
+import io.kamax.mxhsd.core.room.RoomEventAuthorization;
 
-public interface ISignedEvent extends IEvent {
+public interface IRoomEventAuthorizationAlgorithm {
 
-    Map<String, String> getHashes();
+    RoomEventAuthorization authorize(IRoomState state, IHashedProtoEvent ev);
 
 }

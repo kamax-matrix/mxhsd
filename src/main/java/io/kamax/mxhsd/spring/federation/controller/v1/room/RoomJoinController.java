@@ -26,10 +26,10 @@ import io.kamax.matrix.MatrixID;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.exception.InvalidRequestException;
 import io.kamax.mxhsd.api.room.RemoteJoinRoomState;
-import io.kamax.mxhsd.core.event.SignedEvent;
+import io.kamax.mxhsd.core.event.Event;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import io.kamax.mxhsd.spring.federation.controller.v1.FederationAPIv1;
@@ -76,7 +76,7 @@ public class RoomJoinController extends JsonController {
     ) {
         log(logger, req);
 
-        ISignedEvent ev = new SignedEvent(getBody(req));
+        IEvent ev = new Event(getBody(req));
         toJson(logger, ev);
         if (!StringUtils.equals(eventId, ev.getId())) {
             throw new InvalidRequestException("Event ID in the path request [" + eventId + "] and in the event [" + ev.getId() + "] do not match");

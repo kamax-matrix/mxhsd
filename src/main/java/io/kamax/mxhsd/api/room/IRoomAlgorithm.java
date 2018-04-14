@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,29 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.event;
+package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
-
-public class SignedEventStreamEntry implements ISignedEventStreamEntry {
-
-    private int index;
-    private ISignedEvent ev;
-
-    public SignedEventStreamEntry(int index, ISignedEvent ev) {
-        this.index = index;
-        this.ev = ev;
-    }
-
-    @Override
-    public int streamIndex() {
-        return index;
-    }
-
-    @Override
-    public ISignedEvent get() {
-        return ev;
-    }
+public interface IRoomAlgorithm extends IRoomStateResolutionAlgorithm, IRoomEventAuthorizationAlgorithm {
 
 }

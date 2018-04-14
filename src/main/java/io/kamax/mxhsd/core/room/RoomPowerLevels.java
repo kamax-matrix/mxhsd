@@ -23,7 +23,7 @@ package io.kamax.mxhsd.core.room;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
-import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.IProtoEvent;
 import io.kamax.mxhsd.api.exception.MalformedEventException;
 import io.kamax.mxhsd.api.room.PowerLevel;
 import io.kamax.mxhsd.api.room.RoomEventType;
@@ -152,7 +152,7 @@ public class RoomPowerLevels {
     }
 
     // FIXME this is wrong, state and user defaults can differ depending on their presence. Look at it.
-    public RoomPowerLevels(IEvent ev) {
+    public RoomPowerLevels(IProtoEvent ev) {
         if (!RoomEventType.PowerLevels.is(ev.getType())) {
             throw new IllegalArgumentException(ev.getId() + " is not a PL event type, but " + ev.getType());
         }

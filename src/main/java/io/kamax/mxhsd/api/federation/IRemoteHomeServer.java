@@ -23,7 +23,7 @@ package io.kamax.mxhsd.api.federation;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 
 import java.util.Map;
@@ -41,7 +41,7 @@ public interface IRemoteHomeServer {
 
     JsonObject makeJoin(String roomId, _MatrixID joiner);
 
-    JsonObject sendJoin(ISignedEvent ev);
+    JsonObject sendJoin(IEvent ev);
 
     void pushTransaction(ITransaction t);
 

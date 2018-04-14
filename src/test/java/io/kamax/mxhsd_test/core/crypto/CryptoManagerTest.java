@@ -20,8 +20,8 @@
 
 package io.kamax.mxhsd_test.core.crypto;
 
-import io.kamax.matrix.sign.KeyManager;
-import io.kamax.matrix.sign.SignatureManager;
+import io.kamax.matrix.crypto.KeyManager;
+import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.crypto.CryptoManager;
 import org.apache.commons.lang3.StringUtils;

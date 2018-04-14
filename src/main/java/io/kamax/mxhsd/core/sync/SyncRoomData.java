@@ -24,7 +24,7 @@ import com.google.gson.JsonObject;
 import io.kamax.mxhsd.ABuilder;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
-import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.IProtoEvent;
 import io.kamax.mxhsd.api.sync.ISyncRoomAccountData;
 import io.kamax.mxhsd.api.sync.ISyncRoomData;
 import io.kamax.mxhsd.api.sync.ISyncRoomTimeline;
@@ -75,7 +75,7 @@ public class SyncRoomData implements ISyncRoomData {
             GsonUtil.findElement(origin, key.get()).ifPresent(el -> destination.add(key.get(), el));
         }
 
-        private JsonObject getFormatedEvent(IEvent ev) {
+        private JsonObject getFormatedEvent(IProtoEvent ev) {
             JsonObject origin = ev.getJson();
             JsonObject formated = new JsonObject();
 
@@ -107,28 +107,34 @@ public class SyncRoomData implements ISyncRoomData {
             return this;
         }
 
-        public Builder setState(Collection<IEvent> state) {
+        public Builder setState(Collection<IProtoEvent> state) {
             obj.state = new ArrayList<>();
             return addState(state);
         }
 
-        public Builder addState(Collection<IEvent> state) {
+        public Builder addState(Collection<IProtoEvent> state) {
             state.forEach(this::addState);
             return this;
         }
 
-        public Builder addState(IEvent state) {
+        public Builder addEvent(IProtoEvent event, boolean isState) {
+            if (isState) addState(event);
+            else addTimeline(event);
+            return this;
+        }
+
+        public Builder addState(IProtoEvent state) {
             if (!timelineIds.contains(state.getId())) obj.state.add(getFormatedEvent(state));
             return this;
         }
 
-        public Builder setTimeline(Collection<? extends IEvent> timeline) {
+        public Builder setTimeline(Collection<? extends IProtoEvent> timeline) {
             obj.timeline.events = new ArrayList<>();
             timeline.forEach(this::addTimeline);
             return this;
         }
 
-        public Builder addTimeline(IEvent entry) {
+        public Builder addTimeline(IProtoEvent entry) {
             obj.timeline.events.add(getFormatedEvent(entry));
             timelineIds.add(entry.getId());
             return this;

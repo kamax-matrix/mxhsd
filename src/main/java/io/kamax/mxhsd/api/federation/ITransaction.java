@@ -20,7 +20,7 @@
 
 package io.kamax.mxhsd.api.federation;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -33,6 +33,6 @@ public interface ITransaction {
 
     Instant getOriginTimestamp();
 
-    Collection<ISignedEvent> getPdus();
+    Collection<IEvent> getPdus();
 
 }

@@ -21,8 +21,8 @@
 package io.kamax.mxhsd_test.core;
 
 import io.kamax.matrix.MatrixID;
-import io.kamax.matrix.sign.KeyManager;
-import io.kamax.matrix.sign.SignatureManager;
+import io.kamax.matrix.crypto.KeyManager;
+import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.mxhsd.api.room.IUserRoom;
 import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.core.Homeserver;

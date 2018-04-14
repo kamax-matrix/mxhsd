@@ -50,7 +50,7 @@ public class RoomGetStateController extends JsonController {
     }
 
     private IRoomStateSnapshot getSnapshot(String roomId, String eventId) {
-        return hs.getServerSession("").getRoom(roomId).getStateFor(eventId).getSnapshot();
+        return hs.getServerSession("").getRoom(roomId).getSnapshot(eventId);
     }
 
     @GetMapping("/state_ids/{roomId:.+}/")

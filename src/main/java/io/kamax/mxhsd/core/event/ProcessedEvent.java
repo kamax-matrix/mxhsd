@@ -18,15 +18,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.core.event;
 
-import java.util.List;
+import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.IProcessedEvent;
 
-// NO THREAD-SAFE GUARANTEES
-public interface ISignedEventStream {
+public class ProcessedEvent extends Event implements IProcessedEvent {
 
-    int getIndex();
+    private String internalId;
 
-    List<ISignedEventStreamEntry> getNext(int amount);
+    public ProcessedEvent(String internalId, IEvent ev) {
+        super(ev.getJson());
+        this.internalId = internalId;
+    }
+
+    @Override
+    public String getInternalId() {
+        return internalId;
+    }
+
+    @Override
+    public boolean isValid() {
+        return true;
+    }
 
 }

@@ -20,13 +20,15 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.NakedContentEvent;
+import io.kamax.mxhsd.api.event.IProcessedEvent;
+import io.kamax.mxhsd.core.event.NakedContentEvent;
 
 public interface IUserRoom extends ICoreRoom {
 
-    ISignedEvent inject(NakedContentEvent ev);
+    IProcessedEvent getLastEvent();
 
-    IRoomEventChunk getEventsChunk(String from, int amount);
+    IProcessedEvent inject(NakedContentEvent ev);
+
+    IRoomEventChunk getEventsChunk(String from, long amount);
 
 }

@@ -24,8 +24,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.INakedEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.exception.InvalidRequestException;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
@@ -77,7 +77,7 @@ public class RoomGetEventsController extends JsonController {
         // TODO check if this is mandatory
         long minDepth = GsonUtil.findLong(body, "min_depth").orElseThrow(() -> new InvalidRequestException("Missing key: min_depth"));
 
-        List<ISignedEvent> events = hs.getServerSession("").getRoom(roomId).getEventsRange(earliestEv, latestEv, limit, minDepth);
+        List<IEvent> events = hs.getServerSession("").getRoom(roomId).getEventsRange(earliestEv, latestEv, limit, minDepth);
         JsonArray evArray = GsonUtil.asArray(events.stream().map(INakedEvent::getJson).collect(Collectors.toList()));
         return toJson(logger, GsonUtil.makeObj("events", evArray));
     }

@@ -22,8 +22,8 @@ package io.kamax.mxhsd.api.room.event;
 
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
+import io.kamax.mxhsd.core.event.NakedContentEvent;
 import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
 public class RoomPowerLevelEvent extends NakedContentEvent {

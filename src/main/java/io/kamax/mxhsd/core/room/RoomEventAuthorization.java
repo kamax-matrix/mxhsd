@@ -21,9 +21,9 @@
 package io.kamax.mxhsd.core.room;
 
 import io.kamax.mxhsd.api.event.EventReference;
-import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.IEventReference;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IHashedProtoEvent;
+import io.kamax.mxhsd.api.event.IProtoEvent;
 import io.kamax.mxhsd.api.room.IRoomState;
 
 import java.util.ArrayList;
@@ -34,11 +34,9 @@ public class RoomEventAuthorization {
 
     public static class Builder {
 
-        private String roomId;
         private RoomEventAuthorization o;
 
-        public Builder(String roomId, IEvent ev) {
-            this.roomId = roomId;
+        public Builder(IProtoEvent ev) {
             o = new RoomEventAuthorization();
             o.ev = ev;
         }
@@ -50,13 +48,13 @@ public class RoomEventAuthorization {
             return o;
         }
 
-        public Builder basedOn(ISignedEvent ev) {
+        public Builder basedOn(IHashedProtoEvent ev) {
             o.basedOn.add(new EventReference(ev.getId(), ev.getHashes()));
             return this;
         }
 
         public RoomEventAuthorization allow(RoomState.Builder b) {
-            return allow(b.build());
+            return allow(b.get());
         }
 
         public RoomEventAuthorization allow(IRoomState newState) {
@@ -67,13 +65,13 @@ public class RoomEventAuthorization {
             return set(false, reason, null);
         }
 
-        public RoomEventAuthorization deny(IEvent ev, String reason) {
-            return deny("Reject event " + ev.getId() + " in room " + roomId + ": " + reason);
+        public RoomEventAuthorization deny(IProtoEvent ev, String reason) {
+            return deny("Reject event " + ev.getId() + ": " + reason);
         }
 
     }
 
-    private IEvent ev;
+    private IProtoEvent ev;
     private List<IEventReference> basedOn = new ArrayList<>();
     private boolean isAuthorized;
     private String reason;
@@ -88,7 +86,7 @@ public class RoomEventAuthorization {
         this.reason = reason;
     }
 
-    public IEvent getEvent() {
+    public IProtoEvent getEvent() {
         return ev;
     }
 

@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.core.room;
 
+import com.google.common.collect.Streams;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
@@ -27,12 +28,16 @@ import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.*;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
-import io.kamax.mxhsd.api.exception.InvalidRequestException;
 import io.kamax.mxhsd.api.room.*;
+import io.kamax.mxhsd.api.room.event.EventComparator;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.event.Event;
+import io.kamax.mxhsd.core.event.GetAuthChainTask;
+import io.kamax.mxhsd.core.event.NakedContentEvent;
+import io.kamax.mxhsd.core.room.algo.v1.RoomAlgorithm_v1;
 import net.engio.mbassy.bus.MBassador;
-import org.apache.commons.lang3.StringUtils;
+import net.engio.mbassy.bus.error.IPublicationErrorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +51,11 @@ public class Room implements IRoom {
     private Logger log = LoggerFactory.getLogger(Room.class);
 
     private HomeserverState global;
-    private IRoomStateResolutionAlgorithm roomStateAlgo;
+    private IRoomAlgorithm algo;
 
     private String id;
     private RoomState state;
-    private MBassador<ISignedEvent> eventBus;
+    private MBassador<IEvent> eventBus;
     private Map<String, RoomState> prevStates;
 
     private List<String> extremities = new ArrayList<>();
@@ -59,41 +64,50 @@ public class Room implements IRoom {
         this.global = global;
         this.id = id;
         this.prevStates = new ConcurrentHashMap<>();
-        this.eventBus = new MBassador<>();
-        this.roomStateAlgo = new RoomStateResolutionAlgorithmV1(global, id, evId -> this.global.getEvMgr().get(evId).get());
-        setCurrentState(new RoomState.Builder(global, id).build());
+        this.eventBus = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
+        this.algo = new RoomAlgorithm_v1(eventId -> this.global.getEvMgr().get(eventId));
+        setCurrentState(RoomState.build().get());
     }
 
-    private Comparator<ISignedEvent> getEventComparator() {
-        return Comparator.comparingLong(ISignedEvent::getDepth)
-                .thenComparing(ISignedEvent::getTimestamp);
+    private Comparator<IEvent> getEventComparator() {
+        return ((Comparator<IEvent>) (o1, o2) -> {
+            boolean isO1Parent = Streams.concat(o2.getAuthorization().stream(), o2.getParents().stream())
+                    .anyMatch(ref -> o1.getId().equals(ref.getEventId()));
+            if (isO1Parent) return -1;
+
+            boolean isO2Parent = Streams.concat(o1.getAuthorization().stream(), o1.getParents().stream())
+                    .anyMatch(ref -> o2.getId().equals(ref.getEventId()));
+            if (isO2Parent) return 1;
+
+            return 0;
+        }).thenComparingLong(IEvent::getDepth)
+                .thenComparing(IEvent::getTimestamp);
     }
 
-    public Room(HomeserverState global, String id, List<ISignedEvent> initialState, List<ISignedEvent> authChain, ISignedEvent seed) {
+    public Room(HomeserverState global, String id, List<IEvent> initialState, List<IEvent> authChain, IEvent seed) {
         this(global, id);
 
         // We order events so we can build a state properly
-        List<ISignedEvent> chain = authChain.stream().unordered()
+        List<IEvent> chain = authChain.stream().unordered()
                 .distinct()
                 // FIXME compute and use topological order
                 .sorted(getEventComparator())
                 .collect(Collectors.toList());
 
         // We order events so we can build a state properly
-        List<ISignedEvent> state = initialState.stream().unordered()
+        List<IEvent> state = initialState.stream().unordered()
                 .distinct()
                 // FIXME compute and use topological order
                 .sorted(getEventComparator())
                 .collect(Collectors.toList());
 
-        RoomState.Builder b = new RoomState.Builder(global, id);
-        state.forEach(b::addEvent);
-        b.withStreamIndex(seed.getId());
-        extremities.add(seed.getId());
-        setCurrentState(b.build());
-
         chain.forEach(e -> global.getEvMgr().store(e));
         state.forEach(e -> global.getEvMgr().store(e));
+
+        RoomState.Builder b = RoomState.build();
+        state.forEach(b::addEvent);
+        state.add(seed);
+        inject(seed, b.get());
     }
 
     @Override
@@ -102,13 +116,12 @@ public class Room implements IRoom {
     }
 
     @Override
-    public IEvent getCreation() {
-        return state.getCreation();
+    public IProcessedEvent getCreation() {
+        return global.getEvMgr().get(state.getCreation().getId());
     }
 
     // FIXME use RWLock
     private synchronized void setCurrentState(RoomState state) {
-        if (state.getEventId() != null) prevStates.put(state.getEventId(), state);
         this.state = state;
     }
 
@@ -118,14 +131,16 @@ public class Room implements IRoom {
         return state;
     }
 
-    private List<IRoomState> getStates(IEvent ev) {
+    private List<IRoomState> getStates(IProtoEvent ev) {
         return ev.getParents().stream()
-                .map(ref -> global.getEvMgr().get(ref.getEventId()).get())
+                .map(ref -> global.getEvMgr().get(ref.getEventId()))
                 .map(parentEv -> prevStates.get(parentEv.getId())).collect(Collectors.toList());
     }
 
     // FIXME use RWLock
-    private synchronized void addExtremity(ISignedEvent ev) {
+    private synchronized void addExtremity(IEvent ev) {
+        log.info("{}: Adding extremity {}", id, ev.getId());
+
         // We remove parents that were listed as extremities
         ev.getParents().forEach(ref -> extremities.remove(ref.getEventId()));
 
@@ -133,36 +148,48 @@ public class Room implements IRoom {
         extremities.add(ev.getId());
 
         // We calculate the new current state of the room
-        setCurrentState(new RoomState.Builder(global, id)
-                .from(roomStateAlgo.resolve(
+        setCurrentState(RoomState.build()
+                .from(algo.resolve(
                         global.getEvMgr().get(extremities).stream()
                                 .map(id -> prevStates.get(id.getId()))
                                 .collect(Collectors.toList()))
-                ).build()
+                ).get()
         );
     }
 
     // FIXME use RWLock
-    private synchronized void inject(ISignedEvent ev, RoomEventAuthorization eval) {
-        RoomState newState = new RoomState.Builder(global, id).from(eval.getNewState())
-                .withStreamIndex(ev.getId())
-                .build();
-        prevStates.put(ev.getId(), newState);
-        global.getEvMgr().store(ev);
+    private synchronized IProcessedEvent inject(IEvent ev, RoomState state) {
+        prevStates.put(ev.getId(), state);
+        IProcessedEvent evStored = global.getEvMgr().store(ev);
         addExtremity(ev);
-        eventBus.publish(ev);
+        return evStored;
+    }
+
+    // FIXME use RWLock
+    private synchronized IProcessedEvent inject(IEvent ev, RoomEventAuthorization eval) {
+        // FIXME hack?
+        try {
+            return inject(ev, RoomState.from(eval.getNewState()));
+        } finally {
+            eventBus.publish(ev);
+        }
+    }
+
+    @Override
+    public IProcessedEvent getLastEvent() {
+        return getExtremities().stream().max(EventComparator.forProcessed()).orElseThrow(RuntimeException::new);
     }
 
     // FIXME use RWLock
     @Override
-    public synchronized ISignedEvent inject(NakedContentEvent evNaked) {
-        List<ISignedEvent> parents = getExtremities();
+    public synchronized IProcessedEvent inject(NakedContentEvent evNaked) {
+        List<IProcessedEvent> parents = getExtremities();
         log.info("Room {}: Injecting new event of type {}", id, evNaked.getType());
-        IEventBuilder evTempBuilder = global.getEvMgr().populate(evNaked, getId(), state, parents);
-        IEvent evTemp = evTempBuilder.get();
+        IProtoEventBuilder evTempBuilder = global.getEvMgr().populate(evNaked, getId(), state, parents);
+        IHashedProtoEvent evTemp = global.getEvMgr().hash(evTempBuilder.get());
 
-        IRoomState parentState = roomStateAlgo.resolve(getStates(evTemp));
-        RoomEventAuthorization eval = parentState.isAuthorized(evTemp);
+        IRoomState parentState = algo.resolve(getStates(evTemp));
+        RoomEventAuthorization eval = algo.authorize(parentState, evTemp);
         if (!eval.isAuthorized()) {
             log.debug("Previous state: {}", GsonUtil.getPrettyForLog(parentState));
             log.error(eval.getReason());
@@ -170,75 +197,55 @@ public class Room implements IRoom {
         }
 
         eval.getBasedOn().forEach(evTempBuilder::addAuthorization);
-        ISignedEvent evSigned = global.getEvMgr().sign(evTempBuilder.get());
+        IEvent evSigned = global.getEvMgr().sign(evTempBuilder.get());
         log.debug("Signed event to inject: {}", GsonUtil.getPrettyForLog(evSigned.getJson()));
-        inject(evSigned, eval);
-        return evSigned;
+        return inject(evSigned, eval);
+    }
+
+    @Override
+    public IRoomEventChunk getEventsChunk(String from, long amount) {
+        IProcessedEventStream stream = global.getEvMgr().getBackwardStreamFrom(from);
+        List<IProcessedEvent> list = new ArrayList<>();
+
+        while (list.size() < amount && stream.hasNext()) {
+            IProcessedEvent ev = stream.getNext();
+            if (!id.equals(ev.getRoomId())) {
+                continue;
+            }
+
+            list.add(stream.getNext());
+
+            if (RoomEventType.Creation.is(ev.getType())) {
+                // This is the first event of the room, no need to go further
+                break;
+            }
+        }
+
+        RoomEventChunk.Builder builder = new RoomEventChunk.Builder();
+        builder.setStartToken(from);
+        builder.setEndToken(list.stream().map(IProcessedEvent::getInternalId).findFirst().orElse(from));
+        list.forEach(ev -> builder.addEvent(ev.getJson()));
+
+        return builder.get();
     }
 
     @Override
     public synchronized IRoomState getStateFor(String id) {
         // FIXME this is dumb, we need a way to calculate the state for an arbitrary event
         return Optional.ofNullable(prevStates.get(id)).orElseGet(() -> {
-            RoomState.Builder b = new RoomState.Builder(global, this.id);
+            RoomState.Builder b = RoomState.build();
             b.addEvent(getCurrentState().getCreation());
-            return b.build();
+            return b.get();
         });
     }
 
     @Override
-    public IRoomEventChunk getEventsChunk(String from, int amount) {
-        try {
-            return getEventsChunk(Integer.parseInt(from), amount);
-        } catch (NumberFormatException e) {
-            throw new InvalidRequestException("From token is not in a valid format");
-        }
-    }
-
-    private IRoomEventChunk getEventsChunk(int streamIndex, int amount) {
-        ISignedEventStream stream = global.getEvMgr().getBackwardStreamFrom(streamIndex);
-        List<ISignedEventStreamEntry> list = new ArrayList<>();
-        int toFetch = amount;
-
-        while (list.size() < amount) {
-            List<ISignedEventStreamEntry> rawList = stream.getNext(toFetch).stream()
-                    .filter(ev -> StringUtils.equals(id, ev.get().getRoomId())) // only events about this room.
-                    .collect(Collectors.toList());
-
-            if (rawList.isEmpty()) {
-                // No more events at all, we stop
-                break;
-            }
-
-            list.addAll(rawList);
-
-            if (RoomEventType.Creation.is(rawList.get(rawList.size() - 1).get().getType())) {
-                // This is the first event of the room, no need to go further
-                break;
-            }
-
-            toFetch = amount - list.size();
-        }
-
-        RoomEventChunk.Builder builder = new RoomEventChunk.Builder();
-        builder.setStartToken(Integer.toString(streamIndex));
-        builder.setEndToken(Integer.toString(list.stream()
-                .mapToInt(ISignedEventStreamEntry::streamIndex)
-                .min()
-                .orElse(streamIndex)));
-        list.forEach(ev -> builder.addEvent(ev.get().getJson()));
-
-        return builder.get();
-    }
-
-    @Override
     public JsonObject makeJoin(_MatrixID mxid) {
-        // FIXME check if a join would be allowed
-
         JsonArray prevEvents = new JsonArray();
-        global.getEvMgr().getBackwardStreamFrom(state.getStreamIndex())
-                .getNext(1)
-                .forEach(e -> prevEvents.add(e.get().getId()));
+        getExtremities().stream()
+                .map(ev -> new EventReference(ev.getId(), ev.getHashes()))
+                .map(GsonUtil.get()::toJson)
+                .forEach(prevEvents::add);
 
         JsonObject event = new JsonObject();
         event.addProperty(EventKey.Type.get(), RoomEventType.Membership.get());
@@ -252,30 +259,43 @@ public class Room implements IRoom {
         event.addProperty(EventKey.Sender.get(), mxid.getId());
         event.addProperty(EventKey.StateKey.get(), mxid.getId());
 
+        RoomEventAuthorization authEval = algo.authorize(getCurrentState(), new Event(event));
+        if (!authEval.isAuthorized()) {
+            throw new ForbiddenException(authEval.getReason());
+        }
+
         return event;
     }
 
     @Override
-    public synchronized RemoteJoinRoomState injectJoin(ISignedEvent ev) {
+    public synchronized RemoteJoinRoomState injectJoin(IEvent ev) {
         RoomState state = getCurrentState();
-        RoomEventAuthorization eval = state.isAuthorized(ev);
+        RoomEventAuthorization eval = algo.authorize(state, ev);
         if (!eval.isAuthorized()) {
             log.debug("Room current state: {}", GsonUtil.getPrettyForLog(state));
             log.error(eval.getReason());
-            throw new ForbiddenException("Unauthorized federated event");
+            throw new ForbiddenException("Unauthorized: " + eval.getReason());
         }
 
         inject(ev, eval);
-        Collection<String> eventIds = state.getEvents().values();
-        List<ISignedEvent> events = global.getEvMgr().get(eventIds);
-        return new RemoteJoinRoomState(events);
+        return new RemoteJoinRoomState(global.getEvMgr().getFull(state.getEvents().values()));
     }
 
     @Override
-    public List<ISignedEvent> getEventsRange(Collection<String> firstEvId, Collection<String> lastEvId, long limit, long minDepth) {
+    public IRoomStateSnapshot getSnapshot(String eventId) {
+        List<String> state = getStateFor(eventId).getEvents().values().stream()
+                .map(IHashedProtoEvent::getId)
+                .collect(Collectors.toList());
+
+        Set<String> authChain = ForkJoinPool.commonPool().invoke(new GetAuthChainTask(state, s -> global.getEvMgr().get(s)));
+        return new RoomStateSnapshot(state, authChain);
+    }
+
+    @Override
+    public List<IEvent> getEventsRange(Collection<String> firstEvId, Collection<String> lastEvId, long limit, long minDepth) {
         int realLimit = Math.min(50, (int) limit);
 
-        BlockingQueue<ISignedEvent> events = new ArrayBlockingQueue<>(realLimit);
+        BlockingQueue<IEvent> events = new ArrayBlockingQueue<>(realLimit);
         RecursiveAction getEvTask = new GetChildEventsRecursiveAction(lastEvId, firstEvId, minDepth, events);
         ForkJoinPool.commonPool().execute(getEvTask);
         try {
@@ -295,14 +315,14 @@ public class Room implements IRoom {
 
     // FIXME use RWLock
     @Override
-    public synchronized List<ISignedEvent> getExtremities() {
-        return extremities.stream().map(id -> global.getEvMgr().get(id).get()).collect(Collectors.toList());
+    public synchronized List<IProcessedEvent> getExtremities() {
+        return extremities.stream().map(id -> global.getEvMgr().get(id)).collect(Collectors.toList());
     }
 
     @Override
-    public synchronized void inject(ISignedEvent ev) { // FIXME use RWLock
-        IRoomState parentState = roomStateAlgo.resolve(getStates(ev));
-        RoomEventAuthorization eval = parentState.isAuthorized(ev);
+    public synchronized void inject(IEvent ev) { // FIXME use RWLock
+        IRoomState parentState = algo.resolve(getStates(ev));
+        RoomEventAuthorization eval = algo.authorize(parentState, ev);
         if (!eval.isAuthorized()) {
             log.debug("Previous state: {}", GsonUtil.getPrettyForLog(parentState));
             log.error(eval.getReason());
@@ -321,13 +341,13 @@ public class Room implements IRoom {
         private Collection<String> parents;
         private Collection<String> childLimit;
         private long minDepth;
-        private BlockingQueue<ISignedEvent> sink;
+        private BlockingQueue<IEvent> sink;
 
         GetChildEventsRecursiveAction(
                 Collection<String> parents,
                 Collection<String> childLimit,
                 long minDepth,
-                BlockingQueue<ISignedEvent> sink
+                BlockingQueue<IEvent> sink
         ) {
             this.parents = parents;
             this.childLimit = childLimit;
@@ -338,10 +358,14 @@ public class Room implements IRoom {
         @Override
         protected void compute() {
             parents.forEach(evId -> {
-                ISignedEvent ev = global.getEvMgr().get(evId).get();
-                if (ev.getDepth() >= minDepth && sink.offer(ev) && !childLimit.contains(ev.getId())) {
-                    List<String> parents = ev.getParents().stream().map(IEventIdReference::getEventId).collect(Collectors.toList());
-                    new GetChildEventsRecursiveAction(parents, childLimit, minDepth, sink).fork().join();
+                try {
+                    IEvent ev = global.getEvMgr().get(evId);
+                    if (ev.getDepth() >= minDepth && sink.offer(ev) && !childLimit.contains(ev.getId())) {
+                        List<String> parents = ev.getParents().stream().map(IEventIdReference::getEventId).collect(Collectors.toList());
+                        new GetChildEventsRecursiveAction(parents, childLimit, minDepth, sink).fork().join();
+                    }
+                } catch (IllegalArgumentException e) {
+                    log.debug("Event {} is not known to use, skipping", evId);
                 }
             });
         }

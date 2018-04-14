@@ -20,8 +20,8 @@
 
 package io.kamax.mxhsd.api.room.event;
 
-import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
+import io.kamax.mxhsd.core.event.NakedContentEvent;
 
 public class RoomMessageEvent extends NakedContentEvent {
 

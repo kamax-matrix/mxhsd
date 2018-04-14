@@ -21,7 +21,8 @@
 package io.kamax.mxhsd.core.room.directory;
 
 import io.kamax.matrix.room.RoomAlias;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.StateTuple;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
@@ -49,7 +50,7 @@ public class GlobalRoomDirectory implements ICoreRoomDirectory {
     }
 
     @Handler
-    public void handleEvents(ISignedEvent ev) {
+    public void handleEvents(IEvent ev) {
         log.debug("Received event {}", ev.getId());
         if (!RoomEventType.Aliases.is(ev.getType())) {
             return;
@@ -86,8 +87,7 @@ public class GlobalRoomDirectory implements ICoreRoomDirectory {
     public List<String> getAliases(String roomId) {
         return global.getRoomMgr().getRoom(roomId)
                 .getCurrentState()
-                .findEventFor(RoomEventType.Aliases, global.getDomain())
-                .map(evId -> global.getEvMgr().get(evId).get())
+                .findEventFor(StateTuple.of(RoomEventType.Aliases, global.getDomain()))
                 .map(RoomAliasEvent::new)
                 .map(RoomAliasEvent::getAliases)
                 .orElse(Collections.emptyList());

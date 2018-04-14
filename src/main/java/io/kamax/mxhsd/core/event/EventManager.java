@@ -32,6 +32,7 @@ import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.HomeserverState;
 import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.bus.error.IPublicationErrorHandler;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,11 +53,11 @@ public class EventManager implements IEventManager {
     private Gson gson = GsonUtil.build();
     private MxSha256 sha256 = new MxSha256();
 
-    private List<ISignedEventStreamEntry> eventsStream = Collections.synchronizedList(new ArrayList<>());
-    private Map<String, ISignedEventStreamEntry> events = new ConcurrentHashMap<>();
+    private List<IProcessedEvent> eventsStream = Collections.synchronizedList(new ArrayList<>());
+    private Map<String, IProcessedEvent> events = new ConcurrentHashMap<>();
 
-    private MBassador<ISignedEvent> eventBusFilter = new MBassador<>();
-    private MBassador<ISignedEventStreamEntry> eventBusNotification = new MBassador<>();
+    private MBassador<IEvent> eventBusFilter = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
+    private MBassador<IProcessedEvent> eventBusNotification = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
 
     // FIXME enums
     public EventManager(HomeserverState hsState) {
@@ -106,8 +107,8 @@ public class EventManager implements IEventManager {
     }
 
     @Override
-    public IEventBuilder populate(INakedEvent ev, String roomId, IRoomState withState, List<ISignedEvent> parents) {
-        return new EventBuilder(ev)
+    public IProtoEventBuilder populate(INakedEvent ev, String roomId, IRoomState withState, List<? extends IEvent> parents) {
+        return new ProtoEventBuilder(ev)
                 .setId(getNextId())
                 .setRoomId(roomId)
                 .setTimestamp(Instant.now())
@@ -115,11 +116,21 @@ public class EventManager implements IEventManager {
                 .addParents(parents);
     }
 
+    @Override
+    public IHashedProtoEvent hash(IProtoEvent ev) {
+        return new Event(setHash(ev.getJson()));
+    }
+
+    @Override
+    public IEvent sign(IHashedProtoEvent ev) {
+        return null;
+    }
+
     private JsonObject clone(JsonObject o) {
         return gson.fromJson(gson.toJson(o), JsonObject.class);
     }
 
-    private JsonObject addHash(JsonObject base) { // TODO refactor into SDK
+    private JsonObject setHash(JsonObject base) { // TODO refactor into SDK
         base.remove(EventKey.Hashes.get());
         base.remove(EventKey.Signatures.get());
         JsonElement unsigned = base.remove(EventKey.Unsigned.get());
@@ -149,34 +160,37 @@ public class EventManager implements IEventManager {
         return hsState.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(toSign));
     }
 
+    private JsonObject sign(JsonObject event) {
+        JsonObject signatures = getSignature(event);
+        event.add(EventKey.Signatures.get(), signatures);
+        return event;
+    }
+
     public JsonObject hashAndSign(JsonObject ev) { // TODO refactor into SDK
-        JsonObject evHashed = addHash(ev);
-        JsonObject signatures = getSignature(evHashed);
-        evHashed.add(EventKey.Signatures.get(), signatures);
-        return evHashed;
+        return sign(setHash(ev));
     }
 
     @Override
-    public ISignedEvent sign(IEvent ev) {
-        return new SignedEvent(hashAndSign(ev.getJson()));
+    public IEvent sign(IProtoEvent ev) {
+        return new Event(hashAndSign(ev.getJson()));
     }
 
     @Override
-    public ISignedEvent finalize(JsonObject ev) {
+    public IEvent finalize(JsonObject ev) {
         ev.addProperty(EventKey.Id.get(), getNextId());
         ev.addProperty(EventKey.Origin.get(), hsState.getDomain());
         ev.addProperty(EventKey.Timestamp.get(), System.currentTimeMillis());
-        return new SignedEvent(hashAndSign(ev));
+        return new Event(hashAndSign(ev));
     }
 
     @Override
-    public synchronized ISignedEventStreamEntry store(ISignedEvent ev) { // FIXME use RWLock
+    public synchronized IProcessedEvent store(IEvent ev) { // FIXME use RWLock
         eventBusFilter.publish(ev);
 
-        ISignedEventStreamEntry entry = new SignedEventStreamEntry(eventsStream.size(), ev);
+        IProcessedEvent entry = new ProcessedEvent(getPosition(), ev);
         eventsStream.add(entry);
         events.put(ev.getId(), entry);
-        log.info("Event {} was stored in position {}", ev.getId(), entry.streamIndex());
+        log.info("Event {} was stored in position {}", ev.getId(), entry.getInternalId());
 
         eventBusNotification.publish(entry); // TODO we might want to do this async?
 
@@ -184,8 +198,8 @@ public class EventManager implements IEventManager {
     }
 
     @Override
-    public ISignedEventStreamEntry get(String id) {
-        ISignedEventStreamEntry ev = events.get(id);
+    public IProcessedEvent get(String id) {
+        IProcessedEvent ev = events.get(id);
         if (ev == null) {
             throw new IllegalArgumentException("Event ID " + id + " does not exist"); // FIXME we should do optional or something?
         }
@@ -194,15 +208,16 @@ public class EventManager implements IEventManager {
     }
 
     @Override
-    public List<ISignedEvent> get(Collection<String> ids) {
+    public List<IProcessedEvent> get(Collection<String> ids) {
         return ids.stream()
                 .map(this::get)
-                .map(ISignedEventStreamEntry::get)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public ISignedEventStream getBackwardStreamFrom(int id) {
+    public IProcessedEventStream getBackwardStreamFrom(String position) {
+        int id = Integer.parseInt(position);
+
         if (id < 0) {
             throw new IllegalArgumentException("stream index must be greater or equal to 0");
         }
@@ -211,37 +226,88 @@ public class EventManager implements IEventManager {
             throw new IllegalArgumentException("index cannot be greater than current index");
         }
 
-        return new ISignedEventStream() {
+        return new IProcessedEventStream() {
 
             private int index = id - 1;
 
             @Override
-            public int getIndex() {
-                return index;
+            public String getPosition() {
+                return Long.toString(index);
             }
 
             @Override
-            public List<ISignedEventStreamEntry> getNext(int amount) {
-                if (amount <= 0) {
-                    throw new IllegalArgumentException("amount must be greater than 0");
-                }
+            public boolean hasNext() {
+                return index > 0;
+            }
 
+            @Override
+            public IProcessedEvent getNext() {
                 // TODO Streams could help if we provide a supplier with the values we want?
-                List<ISignedEventStreamEntry> events = new ArrayList<>();
-                int destination = Math.max(-1, index - amount);
-                log.info("Seek - Index: {} | Amount: {} | Destination: {}", index, amount, destination);
+                List<IProcessedEvent> events = new ArrayList<>();
+                int destination = Math.max(-1, index - 1);
+                log.info("Seek - Index: {} | Amount: {} | Destination: {}", index, 1, destination);
                 for (int i = index; i > destination; i--) {
                     events.add(EventManager.this.eventsStream.get(i)); // FIXME might change under concurrent access
                 }
                 index = destination;
-                return events;
+                return events.get(0);
             }
         };
     }
 
     @Override
-    public int getStreamIndex() {
-        return Math.max(eventsStream.size(), 0);
+    public IProcessedEventStream getForwardStreamFrom(String position) {
+        int id = Integer.parseInt(position);
+
+        if (id < 0) {
+            throw new IllegalArgumentException("stream index must be greater or equal to 0");
+        }
+
+        if (id > eventsStream.size()) {
+            throw new IllegalArgumentException("index cannot be greater than current index");
+        }
+
+        return new IProcessedEventStream() {
+
+            private int index = id;
+
+            private int getMax() {
+                return eventsStream.size() - 1;
+            }
+
+            @Override
+            public String getPosition() {
+                return Long.toString(index);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return index < getMax();
+            }
+
+            @Override
+            public IProcessedEvent getNext() {
+                // TODO Streams could help if we provide a supplier with the values we want?
+                List<IProcessedEvent> events = new ArrayList<>();
+                int destination = Math.max(getMax(), index + 1);
+                log.info("Seek - Index: {} | Amount: {} | Destination: {}", index, 1, destination);
+                for (int i = index; i <= destination; i++) {
+                    events.add(EventManager.this.eventsStream.get(i)); // FIXME might change under concurrent access
+                }
+                index = destination;
+                return events.get(0);
+            }
+        };
+    }
+
+    @Override
+    public String getPosition() {
+        return Integer.toString(eventsStream.size());
+    }
+
+    @Override
+    public boolean isBefore(String toCheck, String reference) {
+        return Long.compare(Long.parseLong(toCheck), Long.parseLong(reference)) < 0;
     }
 
     @Override

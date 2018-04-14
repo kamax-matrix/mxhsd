@@ -20,8 +20,8 @@
 
 package io.kamax.mxhsd.core.event;
 
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.IEventReference;
-import io.kamax.mxhsd.api.event.ISignedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,9 +37,9 @@ public class GetAuthChainTask extends RecursiveTask<Set<String>> {
     private final Logger logger = LoggerFactory.getLogger(GetAuthChainTask.class);
 
     private Set<String> toProcess;
-    private Function<String, ISignedEvent> fetcher;
+    private Function<String, IEvent> fetcher;
 
-    public GetAuthChainTask(Collection<String> toProcess, Function<String, ISignedEvent> fetcher) {
+    public GetAuthChainTask(Collection<String> toProcess, Function<String, IEvent> fetcher) {
         this.toProcess = new HashSet<>(toProcess);
         this.fetcher = fetcher;
     }
@@ -55,7 +55,7 @@ public class GetAuthChainTask extends RecursiveTask<Set<String>> {
         do {
             Set<String> toProcessNext = new HashSet<>();
             toProcess.forEach(id -> {
-                ISignedEvent ev = fetcher.apply(id);
+                IEvent ev = fetcher.apply(id);
                 toProcessNext.addAll(ev.getAuthorization().stream()
                         .map(IEventReference::getEventId)
                         // We only want unknown events

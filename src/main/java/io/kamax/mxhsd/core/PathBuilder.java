@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,12 +18,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.core;
 
-public interface ISignedEventStreamEntry {
+import org.apache.http.client.utils.URIBuilder;
 
-    int streamIndex();
+import java.net.URISyntaxException;
 
-    IEvent get();
+public class PathBuilder {
+
+    private URIBuilder b;
+
+    public PathBuilder() {
+        b = new URIBuilder();
+        b.setScheme("matrix");
+        b.setHost("dummy");
+    }
+
+    public PathBuilder setPath(String path) {
+        b.setPath(path);
+        return this;
+    }
+
+    public PathBuilder addParameter(String key, String value) {
+        b.addParameter(key, value);
+        return this;
+    }
+
+    public String build() {
+        try {
+            return b.build().getPath();
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
 }

@@ -24,14 +24,15 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.*;
 import io.kamax.mxhsd.core.HomeserverState;
-import io.kamax.mxhsd.core.event.SignedEvent;
+import io.kamax.mxhsd.core.event.Event;
 import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.bus.error.IPublicationErrorHandler;
 import net.engio.mbassy.listener.Handler;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -54,10 +55,10 @@ public class RoomManager implements IRoomManager {
         this.rooms = new HashMap<>();
         this.arHandler = new IAllRoomsHander() {
 
-            private MBassador<ISignedEvent> bus = new MBassador<>();
+            private MBassador<IEvent> bus = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
 
             @Handler
-            private void receiver(ISignedEvent ev) {
+            private void receiver(IEvent ev) {
                 bus.publish(ev);
             }
 
@@ -155,19 +156,26 @@ public class RoomManager implements IRoomManager {
         }
     }
 
+    @Override
+    public IRoom discoverRoom(String roomId, List<IEvent> initialState, List<IEvent> authChain, IEvent seed) {
+        synchronized (rooms) {
+            return registerRoom(new Room(state, roomId, initialState, authChain, seed));
+        }
+    }
+
     private Room joinRemoteRoom(String hs, String roomId, _MatrixID userId) {
         IRemoteHomeServer rHs = state.getHsMgr().get(hs);
         JsonObject protoEv = rHs.makeJoin(roomId, userId).getAsJsonObject("event");
         log.debug("Proto-event for remote join: {}", GsonUtil.getPrettyForLog(protoEv));
-        ISignedEvent joinEv = state.getEvMgr().finalize(protoEv);
+        IEvent joinEv = state.getEvMgr().finalize(protoEv);
         JsonObject data = rHs.sendJoin(joinEv);
         log.debug("Remote data before join: {}", GsonUtil.getPrettyForLog(data));
 
-        List<ISignedEvent> state = GsonUtil.asList(data, "state", JsonObject.class)
-                .stream().map(SignedEvent::new).collect(Collectors.toList());
+        List<IEvent> state = GsonUtil.asList(data, "state", JsonObject.class)
+                .stream().map(Event::new).collect(Collectors.toList());
         state.add(joinEv);
-        List<ISignedEvent> authChain = GsonUtil.asList(data, "auth_chain", JsonObject.class)
-                .stream().map(SignedEvent::new).collect(Collectors.toList());
+        List<IEvent> authChain = GsonUtil.asList(data, "auth_chain", JsonObject.class)
+                .stream().map(Event::new).collect(Collectors.toList());
 
         synchronized (rooms) {
             log.info("Processing state after join");

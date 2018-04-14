@@ -18,10 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.event;
+package io.kamax.mxhsd.core.event;
 
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.EventKey;
+import io.kamax.mxhsd.api.event.INakedEvent;
 
 public class NakedEvent implements INakedEvent {
 

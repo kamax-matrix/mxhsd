@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.api.room;
 
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.exception.NotFoundException;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 
@@ -29,6 +30,8 @@ import java.util.Optional;
 public interface IRoomManager {
 
     IRoom createRoom(IRoomCreateOptions options);
+
+    IRoom discoverRoom(String roomId, List<IEvent> initialState, List<IEvent> authChain, IEvent seed);
 
     default IRoom getRoom(String id) {
         return findRoom(id).orElseThrow(() -> new NotFoundException(id));

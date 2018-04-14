@@ -21,10 +21,10 @@
 package io.kamax.mxhsd_test.core.event;
 
 import com.google.gson.JsonObject;
+import io.kamax.matrix.crypto.KeyManager;
+import io.kamax.matrix.crypto.KeyMemoryStore;
+import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.matrix.json.MatrixJson;
-import io.kamax.matrix.sign.KeyManager;
-import io.kamax.matrix.sign.KeyMemoryStore;
-import io.kamax.matrix.sign.SignatureManager;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.event.EventManager;

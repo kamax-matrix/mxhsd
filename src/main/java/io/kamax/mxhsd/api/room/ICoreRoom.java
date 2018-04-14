@@ -20,13 +20,13 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.IProcessedEvent;
 
 public interface ICoreRoom {
 
     String getId();
 
-    IEvent getCreation();
+    IProcessedEvent getCreation();
 
     IRoomState getCurrentState();
 

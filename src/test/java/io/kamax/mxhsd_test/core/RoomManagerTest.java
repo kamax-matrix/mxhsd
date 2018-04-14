@@ -67,7 +67,7 @@ public class RoomManagerTest extends GenericHomeserverTest {
         room.inject(new RoomMembershipEvent(mxid, RoomMembership.Leave.get(), mxid));
         // FIXME check the returned event content
         IRoomState state = room.getCurrentState();
-        assertTrue(!state.getMembership(mxid).isPresent());
+        assertTrue(!state.findMembership(mxid).isPresent());
     }
 
 }

@@ -23,9 +23,9 @@ package io.kamax.mxhsd.spring.client.controller.r0.room;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.IHomeServer;
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.NakedContentEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.room.IRoomEventChunk;
+import io.kamax.mxhsd.core.event.NakedContentEvent;
 import io.kamax.mxhsd.spring.client.controller.r0.ClientAPIr0;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
@@ -69,7 +69,7 @@ public class RoomEventController extends JsonController {
         JsonObject json = getJsonObject(req);
         NakedContentEvent ev = new NakedContentEvent(eventType, hs.getUserSession(token).getUser().getId().getId(), json);
         ev.getUnsigned().addProperty("transaction_id", txnId);
-        ISignedEvent fullEv = hs.getUserSession(token).getRoom(roomId).inject(ev);
+        IEvent fullEv = hs.getUserSession(token).getRoom(roomId).inject(ev);
 
         JsonObject response = new JsonObject();
         response.addProperty("event_id", fullEv.getId()); // FIXME no hardcoding, use enum

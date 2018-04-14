@@ -22,12 +22,12 @@ package io.kamax.mxhsd_test.core.room;
 
 import io.kamax.matrix.MatrixID;
 import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.crypto.KeyManager;
+import io.kamax.matrix.crypto.KeyMemoryStore;
+import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.matrix.hs.RoomMembership;
-import io.kamax.matrix.sign.KeyManager;
-import io.kamax.matrix.sign.KeyMemoryStore;
-import io.kamax.matrix.sign.SignatureManager;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
@@ -37,7 +37,7 @@ import io.kamax.mxhsd.core.event.EventManager;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import io.kamax.mxhsd.core.room.RoomManager;
 import io.kamax.mxhsd.core.room.RoomPowerLevels;
-import io.kamax.mxhsd.core.room.RoomStateResolutionAlgorithmV1;
+import io.kamax.mxhsd.core.room.algo.v1.RoomAlgorithm_v1;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -115,12 +115,12 @@ public class RoomStateResolutionAlgoV1Test {
         IRoom room = internals.getRoomMgr().createRoom(opts);
 
         // we create a dedicated instance of the algorithm
-        RoomStateResolutionAlgorithmV1 algo = new RoomStateResolutionAlgorithmV1(internals, room.getId(), id -> internals.getEvMgr().get(id).get());
+        RoomAlgorithm_v1 algo = new RoomAlgorithm_v1(id -> internals.getEvMgr().get(id));
 
         // We invite User B
         room.inject(new RoomMembershipEvent(userA.getId(), RoomMembership.Invite.get(), userB.getId()));
         // User B joins
-        ISignedEvent eventA = room.inject(new RoomMembershipEvent(userB.getId(), RoomMembership.Join.get(), userB.getId()));
+        IEvent eventA = room.inject(new RoomMembershipEvent(userB.getId(), RoomMembership.Join.get(), userB.getId()));
 
         // Reference A
         IRoomState stateA = room.getStateFor(eventA.getId());
@@ -142,7 +142,7 @@ public class RoomStateResolutionAlgoV1Test {
                 .from(getPl(room))
                 .setInvite(10)
                 .get();
-        ISignedEvent eventB = room.inject(new RoomPowerLevelEvent(userB.getId(), changeInvitePl));
+        IEvent eventB = room.inject(new RoomPowerLevelEvent(userB.getId(), changeInvitePl));
 
         // Reference C
         IRoomState stateC = room.getStateFor(eventB.getId());

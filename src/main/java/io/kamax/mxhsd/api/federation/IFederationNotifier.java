@@ -20,10 +20,10 @@
 
 package io.kamax.mxhsd.api.federation;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 
 public interface IFederationNotifier {
 
-    void send(ISignedEvent ev, String destination);
+    void send(IEvent ev, String destination);
 
 }

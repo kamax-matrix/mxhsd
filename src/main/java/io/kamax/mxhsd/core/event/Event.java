@@ -20,87 +20,62 @@
 
 package io.kamax.mxhsd.core.event;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
+import io.kamax.mxhsd.api.event.EventReference;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.IEventReference;
 
-import java.time.Instant;
-import java.util.*;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-public class Event implements IEvent {
+public class Event extends ProtoEvent implements IEvent {
 
-    private String id;
-    private String type;
-    private String roomId;
-    private String sender;
-    private long timestamp;
-    private long depth;
-    private Set<IEventReference> parents;
-    private Set<IEventReference> authorization;
-    private String json;
+    private static final transient Type hashesType = new TypeToken<Map<String, String>>() {
+    }.getType();
+    private static final transient Type signType = new TypeToken<Map<String, Map<String, String>>>() {
+    }.getType();
+
+    private Event(String raw, JsonObject o) {
+        this(EventKey.Id.getStringOrThrow(o),
+                EventKey.Type.getStringOrThrow(o),
+                EventKey.Sender.getStringOrThrow(o),
+                EventKey.RoomId.getStringOrThrow(o),
+                EventKey.Timestamp.getElement(o).getAsLong(),
+                EventKey.Depth.getElement(o).getAsLong(),
+                GsonUtil.asList(EventKey.PreviousEvents.getElement(o).getAsJsonArray(), JsonArray.class).stream()
+                        .map(EventReference::new).collect(Collectors.toList()),
+                GsonUtil.asList(EventKey.AuthEvents.getElement(o).getAsJsonArray(), JsonArray.class).stream()
+                        .map(EventReference::new).collect(Collectors.toList()),
+                raw);
+    }
 
     public Event(String id, String type, String sender, String roomId, long timestamp, long depth, Collection<IEventReference> parents, Collection<IEventReference> auth, String json) {
-        this.id = id;
-        this.type = type;
-        this.sender = sender;
-        this.roomId = roomId;
-        this.timestamp = timestamp;
-        this.depth = depth;
-        this.parents = new HashSet<>(parents);
-        this.authorization = new HashSet<>(auth);
-        this.json = json;
+        super(id, type, sender, roomId, timestamp, depth, parents, auth, json);
+    }
+
+    public Event(String raw) {
+        this(raw, GsonUtil.parseObj(raw));
+    }
+
+    public Event(JsonObject obj) {
+        this(MatrixJson.encodeCanonical(obj), obj);
     }
 
     @Override
-    public String getId() {
-        return id;
+    public Map<String, String> getHashes() {
+        return GsonUtil.get().fromJson(EventKey.Hashes.getObj(getJson()), hashesType);
     }
 
     @Override
-    public Instant getTimestamp() {
-        return Instant.ofEpochMilli(timestamp);
-    }
-
-    @Override
-    public String getOrigin() {
-        return GsonUtil.getString(getJson(), EventKey.Origin.get());
-    }
-
-    @Override
-    public String getRoomId() {
-        return roomId;
-    }
-
-    @Override
-    public String getType() {
-        return type;
-    }
-
-    @Override
-    public String getSender() {
-        return sender;
-    }
-
-    @Override
-    public long getDepth() {
-        return depth;
-    }
-
-    @Override
-    public List<IEventReference> getParents() {
-        return Collections.unmodifiableList(new ArrayList<>(parents));
-    }
-
-    @Override
-    public List<IEventReference> getAuthorization() {
-        return Collections.unmodifiableList(new ArrayList<>(authorization));
-    }
-
-    @Override
-    public JsonObject getJson() {
-        return GsonUtil.parseObj(json);
+    public Map<String, Map<String, String>> getSignatures() {
+        return GsonUtil.get().fromJson(EventKey.Hashes.getObj(getJson()), signType);
     }
 
 }

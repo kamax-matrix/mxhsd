@@ -20,12 +20,14 @@
 
 package io.kamax.mxhsd.core;
 
-import io.kamax.matrix.sign.KeyManager;
-import io.kamax.matrix.sign.SignatureManager;
+import io.kamax.matrix.crypto.KeyManager;
+import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.mxhsd.api.auth.IAuthProvider;
 import io.kamax.mxhsd.api.crypto.ICryptoManager;
 import io.kamax.mxhsd.api.device.IDeviceManager;
 import io.kamax.mxhsd.api.event.IEventManager;
+import io.kamax.mxhsd.api.federation.IFederationClient;
+import io.kamax.mxhsd.api.federation.IFederationDomainResolver;
 import io.kamax.mxhsd.api.federation.IFederationNotifier;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServerManager;
 import io.kamax.mxhsd.api.room.IRoomManager;
@@ -43,6 +45,8 @@ public class HomeserverState {
     private ICryptoManager cryptoMgr;
     private IEventManager evMgr;
     private IRoomManager roomMgr;
+    private IFederationDomainResolver fedResolv;
+    private IFederationClient fedClient;
     private IFederationNotifier fedNotif;
     private IRemoteHomeServerManager hsMgr;
     private ICoreRoomDirectory roomDir;
@@ -101,6 +105,22 @@ public class HomeserverState {
 
     public void setSignMgr(SignatureManager signMgr) {
         this.signMgr = signMgr;
+    }
+
+    public IFederationDomainResolver getFedResolv() {
+        return fedResolv;
+    }
+
+    public void setFedResolv(IFederationDomainResolver fedResolv) {
+        this.fedResolv = fedResolv;
+    }
+
+    public IFederationClient getFedClient() {
+        return fedClient;
+    }
+
+    public void setFedClient(IFederationClient fedClient) {
+        this.fedClient = fedClient;
     }
 
     public IFederationNotifier getFedNotif() {

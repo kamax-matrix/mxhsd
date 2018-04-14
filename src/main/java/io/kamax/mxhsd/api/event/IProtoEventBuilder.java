@@ -20,10 +20,28 @@
 
 package io.kamax.mxhsd.api.event;
 
-public interface ISignedEventStreamEntry {
+import java.time.Instant;
+import java.util.Collection;
 
-    int streamIndex();
+public interface IProtoEventBuilder {
 
-    IEvent get();
+    IProtoEventBuilder setId(String id);
+
+    IProtoEventBuilder setTimestamp(Instant instant);
+
+    IProtoEventBuilder setOrigin(String origin);
+
+    IProtoEventBuilder setRoomId(String roomId);
+
+    IProtoEventBuilder addAuthorization(IEventReference evRef);
+
+    IProtoEventBuilder addParent(IEvent parent);
+
+    default IProtoEventBuilder addParents(Collection<? extends IEvent> parents) {
+        parents.forEach(this::addParent);
+        return this;
+    }
+
+    IProtoEvent get();
 
 }

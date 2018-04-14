@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -20,10 +20,10 @@
 
 package io.kamax.mxhsd.api.event;
 
-public interface ISignedEventStreamEntry {
+import java.util.Map;
 
-    int streamIndex();
+public interface IHashedProtoEvent extends IProtoEvent {
 
-    IEvent get();
+    Map<String, String> getHashes();
 
 }

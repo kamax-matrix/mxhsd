@@ -21,12 +21,12 @@
 package io.kamax.mxhsd_test.core.room;
 
 import io.kamax.matrix.MatrixID;
+import io.kamax.matrix.crypto.KeyManager;
+import io.kamax.matrix.crypto.KeyMemoryStore;
+import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.matrix.hs.RoomMembership;
-import io.kamax.matrix.sign.KeyManager;
-import io.kamax.matrix.sign.KeyMemoryStore;
-import io.kamax.matrix.sign.SignatureManager;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.IEventReference;
-import io.kamax.mxhsd.api.event.ISignedEvent;
 import io.kamax.mxhsd.api.room.PowerLevel;
 import io.kamax.mxhsd.api.room.event.RoomCreateEvent;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
@@ -80,20 +80,20 @@ public class RoomTest {
                 .addUser(user.getId(), PowerLevel.Admin)
                 .get();
 
-        ISignedEvent cEv = room.inject(new RoomCreateEvent(user.getId()));
+        IEvent cEv = room.inject(new RoomCreateEvent(user.getId()));
         assertTrue(cEv.getAuthorization().isEmpty());
         assertTrue(cEv.getParents().isEmpty());
 
-        ISignedEvent cJEv = room.inject(new RoomMembershipEvent(user.getId(), RoomMembership.Join.get(), user.getId()));
+        IEvent cJEv = room.inject(new RoomMembershipEvent(user.getId(), RoomMembership.Join.get(), user.getId()));
         assertTrue(cJEv.getAuthorization().size() == 1);
         assertTrue(containsAll(cJEv.getAuthorization(), cEv.getId()));
         assertTrue(containsAll(cJEv.getParents(), cEv.getId()));
 
-        ISignedEvent plEv = room.inject(new RoomPowerLevelEvent(user.getId(), pls));
+        IEvent plEv = room.inject(new RoomPowerLevelEvent(user.getId(), pls));
         assertTrue(containsAll(plEv.getAuthorization(), cEv.getId(), cJEv.getId()));
         assertTrue(containsAll(plEv.getParents(), cJEv.getId()));
 
-        ISignedEvent mEv = room.inject(new RoomMessageEvent(user.getId(), "a"));
+        IEvent mEv = room.inject(new RoomMessageEvent(user.getId(), "a"));
         assertTrue(containsAll(mEv.getAuthorization(), cEv.getId(), cJEv.getId(), plEv.getId()));
         assertTrue(containsAll(mEv.getParents(), plEv.getId()));
     }

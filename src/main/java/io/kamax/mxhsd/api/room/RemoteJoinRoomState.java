@@ -20,24 +20,24 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RemoteJoinRoomState {
 
-    private List<ISignedEvent> state;
+    private List<IEvent> state;
 
-    public RemoteJoinRoomState(List<ISignedEvent> state) {
+    public RemoteJoinRoomState(List<? extends IEvent> state) {
         this.state = new ArrayList<>(state);
     }
 
-    public List<ISignedEvent> getState() {
+    public List<IEvent> getState() {
         return state;
     }
 
-    public void setState(List<ISignedEvent> state) {
+    public void setState(List<IEvent> state) {
         this.state = state;
     }
 

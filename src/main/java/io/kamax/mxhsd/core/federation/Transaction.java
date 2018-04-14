@@ -20,7 +20,7 @@
 
 package io.kamax.mxhsd.core.federation;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.federation.ITransaction;
 
 import java.time.Instant;
@@ -34,9 +34,9 @@ public class Transaction implements ITransaction {
     private String id;
     private String origin;
     private Instant ts;
-    private List<ISignedEvent> pdus;
+    private List<IEvent> pdus;
 
-    public Transaction(String id, String origin, Instant ts, Collection<ISignedEvent> pdus) {
+    public Transaction(String id, String origin, Instant ts, Collection<IEvent> pdus) {
         this.id = id;
         this.origin = origin;
         this.ts = ts;
@@ -59,7 +59,7 @@ public class Transaction implements ITransaction {
     }
 
     @Override
-    public Collection<ISignedEvent> getPdus() {
+    public Collection<IEvent> getPdus() {
         return pdus;
     }
 

@@ -20,10 +20,9 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IHashedProtoEvent;
+import io.kamax.mxhsd.api.event.StateTuple;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
-import io.kamax.mxhsd.core.room.RoomEventAuthorization;
 import io.kamax.mxhsd.core.room.RoomPowerLevels;
 
 import java.util.Map;
@@ -32,42 +31,43 @@ import java.util.Set;
 
 public interface IRoomState {
 
-    ISignedEvent getCreation(); // FIXME this should be IRoomCreationContext, IEventReference or ISignedEvent
+    // Basic methods
+
+    Map<StateTuple, IHashedProtoEvent> getEvents();
+
+    Optional<IHashedProtoEvent> findEventFor(StateTuple tuple);
+
+    default IHashedProtoEvent getEventFor(StateTuple key) {
+        return findEventFor(key).orElseThrow(() -> new IllegalArgumentException("No event for state " + key.toString()));
+    }
+
+    // Creation methods
+
+    IHashedProtoEvent getCreation();
+
+    // Memberships methods
+
+    default IHashedProtoEvent getMembershipEvent(String userId) {
+        return findEventFor(StateTuple.of(RoomEventType.Membership, userId))
+                .orElseThrow(() -> new IllegalArgumentException("No membership event for " + userId));
+    }
 
     Set<IMembershipContext> getMemberships();
 
-    Optional<IMembershipContext> getMembership(String target);
+    Optional<IMembershipContext> findMembership(String target);
 
-    default Optional<String> getMembershipValue(String target) {
-        return getMembership(target).map(IMembershipContext::getMembership);
+    default Optional<String> findMembershipValue(String target) {
+        return findMembership(target).map(IMembershipContext::getMembership);
     }
 
-    boolean hasPowerLevels();
-
+    // Power Levels methods
     Optional<RoomPowerLevels> getPowerLevels();
 
     RoomPowerLevels getEffectivePowerLevels();
 
     String getPowerLevelsEventId();
 
-    String getEventId();
-
-    int getStreamIndex();
-
+    // FIXME refactor into own algo
     boolean isAccessibleAs(String user);
-
-    Optional<String> findEventFor(String combineKey);
-
-    Optional<String> findEventFor(String type, String key);
-
-    default Optional<String> findEventFor(RoomEventType type, String key) {
-        return findEventFor(type.get(), key);
-    }
-
-    Map<String, String> getEvents();
-
-    IRoomStateSnapshot getSnapshot();
-
-    RoomEventAuthorization isAuthorized(IEvent ev);
 
 }

@@ -30,7 +30,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
-public class EventBuilder implements IEventBuilder {
+public class ProtoEventBuilder implements IProtoEventBuilder {
 
     private JsonObject base;
     private String id;
@@ -41,49 +41,49 @@ public class EventBuilder implements IEventBuilder {
     private Set<IEventReference> authorization = new HashSet<>();
     private Set<IEventReference> parents = new HashSet<>();
 
-    public EventBuilder(INakedEvent base) {
+    public ProtoEventBuilder(INakedEvent base) {
         this.base = GsonUtil.parseObj(GsonUtil.get().toJson(base));
     }
 
     @Override
-    public IEventBuilder setId(String id) {
+    public IProtoEventBuilder setId(String id) {
         this.id = id;
         return this;
     }
 
     @Override
-    public IEventBuilder setTimestamp(Instant instant) {
+    public IProtoEventBuilder setTimestamp(Instant instant) {
         this.timestamp = instant;
         return this;
     }
 
     @Override
-    public IEventBuilder setOrigin(String origin) {
+    public IProtoEventBuilder setOrigin(String origin) {
         this.origin = origin;
         return this;
     }
 
     @Override
-    public IEventBuilder setRoomId(String roomId) {
+    public IProtoEventBuilder setRoomId(String roomId) {
         this.roomId = roomId;
         return this;
     }
 
     @Override
-    public IEventBuilder addAuthorization(IEventReference ref) {
+    public IProtoEventBuilder addAuthorization(IEventReference ref) {
         authorization.add(new EventReference(ref.getEventId(), ref.getHashes()));
         return this;
     }
 
     @Override
-    public IEventBuilder addParent(ISignedEvent ev) {
+    public IProtoEventBuilder addParent(IEvent ev) {
         parents.add(new EventReference(ev.getId(), ev.getHashes()));
         if (depth <= ev.getDepth()) depth = ev.getDepth() + 1;
         return this;
     }
 
     @Override
-    public Event get() {
+    public ProtoEvent get() {
         JsonArray aEv = new JsonArray();
         authorization.forEach(p -> {
             JsonArray v = new JsonArray();
@@ -115,7 +115,7 @@ public class EventBuilder implements IEventBuilder {
         }
 
         String json = MatrixJson.encodeCanonical(base);
-        return new Event(
+        return new ProtoEvent(
                 id,
                 GsonUtil.getOrThrow(base, EventKey.Type.get()),
                 GsonUtil.getOrThrow(base, EventKey.Sender.get()),

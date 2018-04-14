@@ -51,7 +51,7 @@ public class JsonController {
     private Gson gson = GsonUtil.buildPretty();
 
     public void log(Logger log, HttpServletRequest req) {
-        log.info("Request {} {} | {}", req.getMethod(), req.getRequestURL(), req.getQueryString());
+        log.debug("Request {} {} | {}", req.getMethod(), req.getRequestURL(), req.getQueryString());
         Optional.ofNullable(req.getHeader("Authorization")).ifPresent(h -> log.info("Authorization header: {}", h));
     }
 
@@ -78,10 +78,9 @@ public class JsonController {
 
     protected String toJson(Logger log, Object o) {
         String json = gson.toJson(o);
-        log.info("To json:\n{}", json);
+        log.debug("To json:\n{}", json);
         return json;
     }
-
 
     private <T> Optional<T> findFirst(Supplier<Optional<T>>... suppliers) {
         return Stream.of(suppliers).map(Supplier::get).filter(Optional::isPresent).map(Optional::get).findFirst();

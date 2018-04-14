@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -20,28 +20,10 @@
 
 package io.kamax.mxhsd.api.event;
 
-import java.time.Instant;
-import java.util.Collection;
+public interface IProcessedEvent extends IEvent {
 
-public interface IEventBuilder {
+    String getInternalId();
 
-    IEventBuilder setId(String id);
-
-    IEventBuilder setTimestamp(Instant instant);
-
-    IEventBuilder setOrigin(String origin);
-
-    IEventBuilder setRoomId(String roomId);
-
-    IEventBuilder addAuthorization(IEventReference evRef);
-
-    IEventBuilder addParent(ISignedEvent parent);
-
-    default IEventBuilder addParents(Collection<ISignedEvent> parents) {
-        parents.forEach(this::addParent);
-        return this;
-    }
-
-    IEvent get();
+    boolean isValid();
 
 }

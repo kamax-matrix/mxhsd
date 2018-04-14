@@ -21,7 +21,7 @@
 package io.kamax.mxhsd.core.federation;
 
 import io.kamax.matrix.MatrixID;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.federation.IFederationNotifier;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.core.HomeserverState;
@@ -50,7 +50,7 @@ public class FederationNotifier implements IFederationNotifier {
     }
 
     @Handler
-    private void eventHandler(ISignedEvent ev) {
+    private void eventHandler(IEvent ev) {
         if (!global.getDomain().equals(ev.getOrigin())) {
             return;
         }
@@ -66,7 +66,7 @@ public class FederationNotifier implements IFederationNotifier {
     }
 
     @Override
-    public void send(ISignedEvent ev, String destination) {
+    public void send(IEvent ev, String destination) {
         Transaction t = new Transaction(
                 Long.toString(ev.getTimestamp().toEpochMilli()),
                 global.getDomain(),

@@ -22,7 +22,7 @@ package io.kamax.mxhsd.api.room;
 
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,8 +31,10 @@ public interface IServerRoom extends ICoreRoom {
 
     JsonObject makeJoin(_MatrixID mxid);
 
-    RemoteJoinRoomState injectJoin(ISignedEvent ev);
+    RemoteJoinRoomState injectJoin(IEvent ev);
 
-    List<ISignedEvent> getEventsRange(Collection<String> earliestEv, Collection<String> latestEv, long limit, long minDepth);
+    IRoomStateSnapshot getSnapshot(String eventId);
+
+    List<IEvent> getEventsRange(Collection<String> earliestEv, Collection<String> latestEv, long limit, long minDepth);
 
 }

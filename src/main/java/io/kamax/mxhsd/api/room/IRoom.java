@@ -20,15 +20,16 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.IProcessedEvent;
 
 import java.util.List;
 
 public interface IRoom extends IServerRoom, IUserRoom, IAliasRoom {
 
-    List<ISignedEvent> getExtremities();
+    List<IProcessedEvent> getExtremities();
 
-    void inject(ISignedEvent ev);
+    void inject(IEvent ev);
 
     void addListener(Object o);
 

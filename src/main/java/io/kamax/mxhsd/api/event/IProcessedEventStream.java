@@ -20,37 +20,13 @@
 
 package io.kamax.mxhsd.api.event;
 
-import com.google.gson.JsonObject;
-import io.kamax.mxhsd.GsonUtil;
+// NO THREAD-SAFE GUARANTEES
+public interface IProcessedEventStream {
 
-public class NakedContentEvent extends NakedEvent {
+    String getPosition();
 
-    protected JsonObject content;
+    boolean hasNext();
 
-    protected NakedContentEvent() {
-        // for subclasses only
-    }
-
-    public NakedContentEvent(JsonObject o) {
-        super(o);
-        this.content = EventKey.Content.getObj(o);
-    }
-
-    public NakedContentEvent(String type, String sender) {
-        this(type, sender, new JsonObject());
-    }
-
-    public NakedContentEvent(String type, String sender, JsonObject content) {
-        super(type, sender);
-        this.content = content;
-    }
-
-    protected void setContent(Object o) {
-        content = GsonUtil.get().toJsonTree(o).getAsJsonObject();
-    }
-
-    public JsonObject getContent() {
-        return content;
-    }
+    IProcessedEvent getNext();
 
 }

@@ -25,10 +25,11 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.api.event.ISignedEvent;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.exception.InvalidJsonException;
 import io.kamax.mxhsd.api.federation.FederationException;
 import io.kamax.mxhsd.api.federation.IFederationClient;
+import io.kamax.mxhsd.api.federation.IFederationDomainResolver;
 import io.kamax.mxhsd.api.federation.IRemoteAddress;
 import io.kamax.mxhsd.core.HomeserverState;
 import org.apache.commons.io.IOUtils;
@@ -69,10 +70,10 @@ public class HttpFederationClient implements IFederationClient {
     private final Logger log = LoggerFactory.getLogger(HttpFederationClient.class);
 
     private HomeserverState global;
-    private FederationDomainResolver resolver;
+    private IFederationDomainResolver resolver;
     private CloseableHttpClient client;
 
-    public HttpFederationClient(HomeserverState global, FederationDomainResolver resolver) {
+    public HttpFederationClient(HomeserverState global, IFederationDomainResolver resolver) {
         this.global = global;
         this.resolver = resolver;
 
@@ -88,9 +89,12 @@ public class HttpFederationClient implements IFederationClient {
                     .disableRedirectHandling()
                     .setSSLSocketFactory(sslSocketFactory)
                     .setDefaultRequestConfig(RequestConfig.custom()
-                            .setConnectTimeout(10000) // FIXME make configurable
-                            .setConnectionRequestTimeout(60000) // FIXME make configurable
+                            .setConnectTimeout(30 * 1000) // FIXME make configurable
+                            .setConnectionRequestTimeout(5 * 60 * 1000) // FIXME make configurable
+                            .setSocketTimeout(5 * 60 * 1000) // FIXME make configurable
                             .build())
+                    .setMaxConnPerRoute(Integer.MAX_VALUE) // FIXME make configurable
+                    .setMaxConnTotal(Integer.MAX_VALUE) // FIXME make configurable
                     .setUserAgent(global.getAppName() + "/" + global.getAppVersion())
                     .build();
         } catch (KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
@@ -307,7 +311,7 @@ public class HttpFederationClient implements IFederationClient {
     }
 
     @Override
-    public JsonObject sendJoin(String residentHsDomain, ISignedEvent ev) {
+    public JsonObject sendJoin(String residentHsDomain, IEvent ev) {
         // FIXME refactor URL from Spring classes
         return sendPut(getUri(residentHsDomain, "/_matrix/federation/v1/send_join/" + ev.getRoomId() + "/" + ev.getId()), ev.getJson());
     }

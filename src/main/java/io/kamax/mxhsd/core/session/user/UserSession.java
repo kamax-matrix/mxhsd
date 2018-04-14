@@ -26,12 +26,13 @@ import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.matrix.room.RoomAlias;
 import io.kamax.mxhsd.ABuilder;
 import io.kamax.mxhsd.api.device.IDevice;
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.event.ISignedEventStream;
+import io.kamax.mxhsd.api.event.IProcessedEvent;
+import io.kamax.mxhsd.api.event.IProcessedEventStream;
 import io.kamax.mxhsd.api.event.ISignedEventStreamEntry;
 import io.kamax.mxhsd.api.exception.NotFoundException;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
+import io.kamax.mxhsd.api.room.event.EventComparator;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
 import io.kamax.mxhsd.api.session.user.IUserSession;
@@ -121,83 +122,74 @@ public class UserSession implements IUserSession {
                 .addState(state.getCreation())
                 .addState(state.getMemberships().stream() // we process every membership
                         .filter(e -> StringUtils.equals(user.getId().getId(), e.getStateKey())) // only our own join
-                        .map(e -> global.getEvMgr().get(e.getEventId()).get())
+                        .map(e -> global.getEvMgr().get(e.getEventId()))
                         .collect(Collectors.toList()));
     }
 
     // FIXME this doesn't filter on what the user can see. Need to do better
-    private SyncRoomData.Builder buildJoinState(IRoom room, IRoomState state) {
-        List<ISignedEventStreamEntry> entries = global.getEvMgr()
-                // latest 10 events - FIXME make it configurable / use client filters
-                .getBackwardStreamFrom(state.getStreamIndex()).getNext(10).stream()
-                // We sort by oldest to newest
-                .sorted(Comparator.comparing(ISignedEventStreamEntry::streamIndex))
-                // we collect them back into a list
-                .collect(Collectors.toList());
-
-        int timelineStart = entries.stream().mapToInt(ISignedEventStreamEntry::streamIndex).min().orElse(state.getStreamIndex());
+    private SyncRoomData.Builder buildJoinState(IRoom room, String position) {
+        IProcessedEvent head = room.getLastEvent();
 
         return SyncRoomData.build()
 
                 // we set the room ID
                 .setRoomId(room.getId())
 
-                // we create the timeline for the most recent events
-                // we do this first so state events can be excluded
-                .setTimeline(entries.stream().map(ISignedEventStreamEntry::get).collect(Collectors.toList()))
-
                 // we set the previous token
-                .setPreviousBatchToken(Integer.toString(timelineStart))
+                .setPreviousBatchToken(position)
 
-                // we process the room creation
-                .addState(state.getCreation())
+                // We set the last event for the room
+                .addTimeline(head)
 
-                // we process every membership
-                .addState(state.getMemberships().stream()
-                        // we fetch the event to include it
-                        .map(context -> global.getEvMgr().get(context.getEventId()).get())
-                        // we collect them back into a list
-                        .collect(Collectors.toList()))
+                // we process the room state and remove "leave" membership
+                .addState(room.getStateFor(head.getId()).getEvents().values().stream().filter(ev -> {
+                    if (RoomEventType.Membership.is(ev.getType())) {
+                        RoomMembershipEvent eventDetails = new RoomMembershipEvent(ev.getJson());
+                        return !RoomMembership.Leave.is(eventDetails.getMembership());
+                    }
 
-                // we process power levels
-                .addState(global.getEvMgr().get(state.getPowerLevelsEventId()).get());
+                    return true;
+                }).collect(Collectors.toList()));
     }
 
-    private SyncRoomData buildSingleTimeline(IRoom room, int timelineIndex, List<ISignedEventStreamEntry> entries) {
+    private SyncRoomData buildSingleTimeline(IRoom room, String fromPosition, List<IProcessedEvent> entries) {
         String mxid = user.getId().getId();
         SyncRoomData.Builder builder = new SyncRoomData.Builder().setRoomId(room.getId());
 
-        entries.stream().sorted(Comparator.comparing(ISignedEventStreamEntry::streamIndex)).forEach(ev -> {
-            String evId = ev.get().getId();
-            ISignedEvent evFull = ev.get();
-            RoomEventType evType = RoomEventType.from(evFull.getType());
+        entries.stream().sorted(EventComparator.forProcessed()).forEach(ev -> {
+            String evId = ev.getId();
+            RoomEventType evType = RoomEventType.from(ev.getType());
             IRoomState roomState = room.getStateFor(evId);
 
-            Optional<String> opt = roomState.getMembershipValue(mxid);
+            Optional<String> opt = roomState.findMembershipValue(mxid);
             opt.ifPresent(builder::setMembership);
 
             if (!roomState.isAccessibleAs(mxid)) {
-                log.info("Event {} at position {} is not accessible to {}, skipping", evId, ev.streamIndex(), mxid);
+                log.info("Event {} at position {} is not accessible to {}, skipping", evId, ev.getInternalId(), mxid);
             } else {
                 if (RoomEventType.Membership.equals(evType)) {
-                    RoomMembershipEvent eventDetails = new RoomMembershipEvent(evFull.getJson());
+                    RoomMembershipEvent eventDetails = new RoomMembershipEvent(ev.getJson());
                     boolean isAboutUs = StringUtils.equals(mxid, eventDetails.getStateKey());
                     if (isAboutUs) {
                         log.info("Found membership about ourself in room {}: {}", room.getId(), eventDetails.getMembership());
                         builder.setMembership(eventDetails.getMembership());
 
                         if (RoomMembership.Join.is(eventDetails.getMembership())) {
-                            ISignedEventStreamEntry rCreate = global.getEvMgr().get(roomState.getCreation().getId());
-                            if (evFull.getParents().contains(rCreate.get().getId())) {
-                                builder.addTimeline(rCreate.get());
+                            IProcessedEvent rCreate = global.getEvMgr().get(roomState.getCreation().getId());
+                            if (global.getEvMgr().isBefore(rCreate.getInternalId(), fromPosition)) {
+                                builder.addState(rCreate);
                             } else {
-                                if (rCreate.streamIndex() < timelineIndex) {
-                                    builder.addState(rCreate.get());
-                                }
+                                builder.addTimeline(rCreate);
                             }
 
-                            roomState.getMemberships().stream().map(ref -> global.getEvMgr().get(ref.getEventId()).get())
-                                    .forEach(builder::addState);
+                            roomState.getMemberships().stream().map(ref -> global.getEvMgr().get(ref.getEventId()))
+                                    .forEach(ev1 -> {
+                                        if (global.getEvMgr().isBefore(ev1.getInternalId(), fromPosition)) {
+                                            builder.addState(ev1);
+                                        } else {
+                                            builder.addTimeline(ev1);
+                                        }
+                                    });
                         }
 
                         // TODO if invite, we should include data about membership of the sender
@@ -209,24 +201,25 @@ public class UserSession implements IUserSession {
                     }
                 }
 
-                builder.addTimeline(evFull);
+                builder.addTimeline(ev);
             }
         });
 
         builder.setLimited(false);
-        builder.setPreviousBatchToken(Integer.toString(timelineIndex)); // TODO have a separate generator?
+        builder.setPreviousBatchToken(fromPosition); // TODO have a separate generator?
         Optional.ofNullable(readMarkers.get(room.getId())).ifPresent(builder::addAccountData); // ugly, but effective
 
         return builder.get();
     }
 
-    private void buildTimelines(SyncData.Builder b, int timelineIndex, List<ISignedEventStreamEntry> entries) {
-        Map<String, List<ISignedEventStreamEntry>> roomStreams = new HashMap<>();
-        entries.forEach(ev -> roomStreams.computeIfAbsent(ev.get().getRoomId(), rId -> new ArrayList<>()).add(ev));
+    private void buildTimelines(SyncData.Builder b, String fromPosition, List<IProcessedEvent> entries) {
+        Map<String, List<IProcessedEvent>> roomStreams = new HashMap<>();
+        entries.forEach(ev -> roomStreams.computeIfAbsent(ev.getRoomId(), rId -> new ArrayList<>()).add(ev));
+
         roomStreams.forEach((roomId, stream) -> {
             Optional<IRoom> opt = global.getRoomMgr().findRoom(roomId);
             if (opt.isPresent()) {
-                SyncRoomData data = buildSingleTimeline(opt.get(), timelineIndex, stream);
+                SyncRoomData data = buildSingleTimeline(opt.get(), fromPosition, stream);
                 Optional<String> rOpt = data.getMembership();
                 rOpt.ifPresent(membership -> {
                     // TODO use the membership as key to add rooms to the global sync data, as it matches json key
@@ -243,27 +236,27 @@ public class UserSession implements IUserSession {
                     }
                 });
             } else {
-                log.warn("We have an event for an unknown room: {}", roomId);
+                log.warn("We have event(s) for an unknown room: {}", roomId);
             }
         });
     }
 
     private ISyncData fetchInitial(ISyncOptions options) {
         String mxId = user.getId().getId();
-        int streamIndex = global.getEvMgr().getStreamIndex();
+        String currentPosition = global.getEvMgr().getPosition();
         State syncState = new State();
         SyncData.Builder b = SyncData.build();
 
         // We fetch room states
         global.getRoomMgr().listRooms().parallelStream().forEach(room -> {
             IRoomState state = room.getCurrentState();
-            state.getMembershipValue(mxId).ifPresent(m -> {
+            state.findMembershipValue(mxId).ifPresent(m -> {
                 if (RoomMembership.Invite.is(m)) {
                     syncState.invited.put(room.getId(), buildInviteState(room, state));
                 }
 
                 if (RoomMembership.Join.is(m)) {
-                    syncState.joined.put(room.getId(), buildJoinState(room, state));
+                    syncState.joined.put(room.getId(), buildJoinState(room, currentPosition));
                 }
             });
         });
@@ -271,21 +264,22 @@ public class UserSession implements IUserSession {
         b.setInvited(syncState.invited.values().stream().map(ABuilder::get).collect(Collectors.toList()))
                 .setJoined(syncState.joined.values().stream().map(ABuilder::get).collect(Collectors.toList()))
                 .setLeft(syncState.left.values().stream().map(ABuilder::get).collect(Collectors.toList()))
-                .setToken(Integer.toString(streamIndex));
+                .setToken(currentPosition);
 
         SyncData syncData = b.get();
         statesCache.put(getDevice().getId() + syncData.getNextBatchToken(), syncState);
-
         return syncData;
     }
 
-    private ISyncData fetchNext(ISyncOptions options, int fromIndex, int toIndex) {
-        SyncData.Builder syncData = SyncData.build().setToken(Integer.toString(toIndex));
-        int amount = toIndex - fromIndex;
+    private ISyncData fetchNext(ISyncOptions options, String fromPosition, String toPosition) {
+        SyncData.Builder syncData = SyncData.build().setToken(toPosition);
 
-        ISignedEventStream stream = global.getEvMgr().getBackwardStreamFrom(toIndex);
-        List<ISignedEventStreamEntry> entries = stream.getNext(amount);
-        buildTimelines(syncData, fromIndex, entries);
+        List<IProcessedEvent> events = new ArrayList<>();
+        IProcessedEventStream stream = global.getEvMgr().getBackwardStreamFrom(toPosition);
+        while (stream.hasNext() && events.size() < 10) {
+            events.add(stream.getNext());
+        }
+        buildTimelines(syncData, fromPosition, events);
 
         return syncData.get();
     }
@@ -293,20 +287,14 @@ public class UserSession implements IUserSession {
     private ISyncData fetchNextOrWait(ISyncOptions options, String since) {
         // FIXME catch exception and throw appropriate error in case of parse error
         // TODO SPEC - Possible errors
-        int sinceIndex = Integer.parseInt(since);
         Instant endTs = Instant.now().plus(options.getTimeout(), ChronoUnit.MILLIS);
         SyncData.Builder syncBuild = SyncData.build();
 
         do { // at least one time
-            int currentIndex = global.getEvMgr().getStreamIndex();
-            int amount = currentIndex - sinceIndex;
+            String currentPosition = global.getEvMgr().getPosition();
 
-            if (amount < 0) { // something went wrong, we send initial data instead
-                return fetchInitial(options);
-            }
-
-            if (amount > 0) { // we got new data
-                return fetchNext(options, sinceIndex, currentIndex);
+            if (!StringUtils.equals(since, currentPosition)) { // we got new data
+                return fetchNext(options, since, currentPosition);
             } else { // no new data, let's wait
                 synchronized (this) {
                     try {

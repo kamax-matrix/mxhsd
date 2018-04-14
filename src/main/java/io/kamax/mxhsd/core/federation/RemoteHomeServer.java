@@ -24,9 +24,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.INakedEvent;
-import io.kamax.mxhsd.api.event.ISignedEvent;
-import io.kamax.mxhsd.api.federation.IFederationClient;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.federation.ITransaction;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
@@ -47,12 +46,10 @@ public class RemoteHomeServer implements IRemoteHomeServer {
 
     private HomeserverState global;
     private String domain;
-    private IFederationClient client;
 
     public RemoteHomeServer(HomeserverState global, String domain) {
         this.global = global;
         this.domain = domain;
-        this.client = new HttpFederationClient(global, new FederationDomainResolver());
     }
 
     @Override
@@ -74,7 +71,7 @@ public class RemoteHomeServer implements IRemoteHomeServer {
     public Optional<IFederatedRoomAliasLookup> lookup(String roomAlias) {
         Map<String, String> parms = new HashMap<>();
         parms.put("room_alias", roomAlias);
-        JsonObject obj = client.query(domain, "directory", parms);
+        JsonObject obj = global.getFedClient().query(domain, "directory", parms);
         String roomId = GsonUtil.getOrThrow(obj, "room_id");
         List<String> servers = GsonUtil.asList(GsonUtil.getArrayOrThrow(obj, "servers"), String.class);
         return Optional.of(new FederatedRoomAliasLookup(domain, roomId, roomAlias, servers));
@@ -82,12 +79,12 @@ public class RemoteHomeServer implements IRemoteHomeServer {
 
     @Override
     public JsonObject makeJoin(String roomId, _MatrixID joiner) {
-        return client.makeJoin(domain, roomId, joiner);
+        return global.getFedClient().makeJoin(domain, roomId, joiner);
     }
 
     @Override
-    public JsonObject sendJoin(ISignedEvent ev) {
-        return client.sendJoin(domain, ev);
+    public JsonObject sendJoin(IEvent ev) {
+        return global.getFedClient().sendJoin(domain, ev);
     }
 
     @Override
@@ -97,7 +94,7 @@ public class RemoteHomeServer implements IRemoteHomeServer {
             json.setOrigin(t.getOrigin());
             json.setOriginServerTs(t.getOriginTimestamp().toEpochMilli());
             json.setPdus(t.getPdus().stream().map(INakedEvent::getJson).collect(Collectors.toList()));
-            JsonObject answer = client.sendTransaction(domain, t.getId(), GsonUtil.makeObj(json));
+            JsonObject answer = global.getFedClient().sendTransaction(domain, t.getId(), GsonUtil.makeObj(json));
             log.info("HS {} response:{}", domain, GsonUtil.getPrettyForLog(answer));
         } catch (RuntimeException e) {
             Throwable tr = e;
@@ -110,7 +107,7 @@ public class RemoteHomeServer implements IRemoteHomeServer {
 
     @Override
     public JsonObject send(String method, String path, Map<String, String> parameters, JsonElement payload) {
-        return client.send(domain, method, path, parameters, payload);
+        return global.getFedClient().send(domain, method, path, parameters, payload);
     }
 
 }

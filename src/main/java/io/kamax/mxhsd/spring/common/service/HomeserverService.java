@@ -20,8 +20,8 @@
 
 package io.kamax.mxhsd.spring.common.service;
 
-import io.kamax.matrix.sign.KeyManager;
-import io.kamax.matrix.sign.SignatureManager;
+import io.kamax.matrix.crypto.KeyManager;
+import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.IHomeserverConfig;
 import io.kamax.mxhsd.core.Homeserver;
@@ -29,7 +29,9 @@ import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.crypto.CryptoManager;
 import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
+import io.kamax.mxhsd.core.federation.FederationDomainResolver;
 import io.kamax.mxhsd.core.federation.FederationNotifier;
+import io.kamax.mxhsd.core.federation.HttpFederationClient;
 import io.kamax.mxhsd.core.federation.RemoteHomeServerManager;
 import io.kamax.mxhsd.core.room.RoomManager;
 import io.kamax.mxhsd.core.room.directory.GlobalRoomDirectory;
@@ -54,6 +56,8 @@ public class HomeserverService {
         state.setCryptoMgr(new CryptoManager(state));
         state.setEvMgr(new EventManager(state));
         state.setRoomMgr(new RoomManager(state));
+        state.setFedResolv(new FederationDomainResolver());
+        state.setFedClient(new HttpFederationClient(state, state.getFedResolv()));
         state.setFedNotif(new FederationNotifier(state));
         state.setAuthMgr(new DumbAuthProvider());
         state.setDevMgr(new DeviceManager());

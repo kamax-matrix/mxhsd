@@ -25,8 +25,8 @@ import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.EventKey;
 import io.kamax.mxhsd.api.event.INakedEvent;
-import io.kamax.mxhsd.api.event.NakedContentEvent;
 import io.kamax.mxhsd.api.room.RoomEventType;
+import io.kamax.mxhsd.core.event.NakedContentEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
