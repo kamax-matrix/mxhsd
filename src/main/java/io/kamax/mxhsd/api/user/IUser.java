@@ -20,15 +20,16 @@
 
 package io.kamax.mxhsd.api.user;
 
+import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 
 import java.util.Optional;
 
-public interface IHomeserverUser {
+public interface IUser {
 
     _MatrixID getId();
 
-    IUserFilter createFilter(String content);
+    IUserFilter createFilter(JsonObject content);
 
     Optional<IUserFilter> findFilter(String id);
 

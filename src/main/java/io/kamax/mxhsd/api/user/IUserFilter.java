@@ -20,10 +20,12 @@
 
 package io.kamax.mxhsd.api.user;
 
+import com.google.gson.JsonObject;
+
 public interface IUserFilter {
 
     String getId();
 
-    String getContent();
+    JsonObject getContent();
 
 }

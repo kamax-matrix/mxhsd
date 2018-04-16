@@ -29,7 +29,7 @@ import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.*;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.event.Event;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.bus.error.IPublicationErrorHandler;
@@ -46,11 +46,11 @@ public class RoomManager implements IRoomManager {
 
     private Logger log = LoggerFactory.getLogger(RoomManager.class);
 
-    private HomeserverState state;
+    private GlobalStateHolder state;
     private Map<String, Room> rooms;
     private IAllRoomsHander arHandler;
 
-    public RoomManager(HomeserverState state) {
+    public RoomManager(GlobalStateHolder state) {
         this.state = state;
         this.rooms = new HashMap<>();
         this.arHandler = new IAllRoomsHander() {

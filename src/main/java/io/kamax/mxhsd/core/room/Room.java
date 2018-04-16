@@ -31,7 +31,7 @@ import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.event.EventComparator;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.event.Event;
 import io.kamax.mxhsd.core.event.GetAuthChainTask;
 import io.kamax.mxhsd.core.event.NakedContentEvent;
@@ -50,7 +50,7 @@ public class Room implements IRoom {
 
     private Logger log = LoggerFactory.getLogger(Room.class);
 
-    private HomeserverState global;
+    private GlobalStateHolder global;
     private IRoomAlgorithm algo;
 
     private String id;
@@ -60,7 +60,7 @@ public class Room implements IRoom {
 
     private List<String> extremities = new ArrayList<>();
 
-    public Room(HomeserverState global, String id) {
+    public Room(GlobalStateHolder global, String id) {
         this.global = global;
         this.id = id;
         this.prevStates = new ConcurrentHashMap<>();
@@ -84,7 +84,7 @@ public class Room implements IRoom {
                 .thenComparing(IEvent::getTimestamp);
     }
 
-    public Room(HomeserverState global, String id, List<IEvent> initialState, List<IEvent> authChain, IEvent seed) {
+    public Room(GlobalStateHolder global, String id, List<IEvent> initialState, List<IEvent> authChain, IEvent seed) {
         this(global, id);
 
         // We order events so we can build a state properly

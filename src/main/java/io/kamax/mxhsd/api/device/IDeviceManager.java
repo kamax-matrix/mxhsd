@@ -26,4 +26,6 @@ public interface IDeviceManager {
 
     IDevice create(_MatrixID user, String name);
 
+    IDevice get(String token);
+
 }

@@ -31,7 +31,7 @@ import io.kamax.mxhsd.api.federation.FederationException;
 import io.kamax.mxhsd.api.federation.IFederationClient;
 import io.kamax.mxhsd.api.federation.IFederationDomainResolver;
 import io.kamax.mxhsd.api.federation.IRemoteAddress;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
@@ -69,11 +69,11 @@ public class HttpFederationClient implements IFederationClient {
 
     private final Logger log = LoggerFactory.getLogger(HttpFederationClient.class);
 
-    private HomeserverState global;
+    private GlobalStateHolder global;
     private IFederationDomainResolver resolver;
     private CloseableHttpClient client;
 
-    public HttpFederationClient(HomeserverState global, IFederationDomainResolver resolver) {
+    public HttpFederationClient(GlobalStateHolder global, IFederationDomainResolver resolver) {
         this.global = global;
         this.resolver = resolver;
 

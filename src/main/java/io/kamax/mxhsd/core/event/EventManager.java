@@ -30,7 +30,7 @@ import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.*;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventType;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.bus.error.IPublicationErrorHandler;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -48,7 +48,7 @@ public class EventManager implements IEventManager {
     private final List<String> essentialTopKeys;
     private final Map<String, List<String>> essentialContentKeys = new HashMap<>();
 
-    private HomeserverState hsState;
+    private GlobalStateHolder hsState;
     private Gson gson = GsonUtil.build();
     private MxSha256 sha256 = new MxSha256();
 
@@ -58,7 +58,7 @@ public class EventManager implements IEventManager {
     private MBassador<IProcessedEvent> eventBusNotification = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
 
     // FIXME enums
-    public EventManager(HomeserverState hsState) {
+    public EventManager(GlobalStateHolder hsState) {
         this.hsState = hsState;
 
         essentialTopKeys = Arrays.asList(

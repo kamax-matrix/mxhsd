@@ -20,20 +20,21 @@
 
 package io.kamax.mxhsd.core.user;
 
+import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
-import io.kamax.mxhsd.api.user.IHomeserverUser;
+import io.kamax.mxhsd.api.user.IUser;
 import io.kamax.mxhsd.api.user.IUserFilter;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class HomeserverUser implements IHomeserverUser {
+public class User implements IUser {
 
     private _MatrixID id;
     private Map<String, IUserFilter> filters;
 
-    public HomeserverUser(_MatrixID id) {
+    public User(_MatrixID id) {
         this.id = id;
         filters = new HashMap<>();
     }
@@ -44,7 +45,7 @@ public class HomeserverUser implements IHomeserverUser {
     }
 
     @Override
-    public synchronized IUserFilter createFilter(String content) { // FIXME use RWLock
+    public synchronized IUserFilter createFilter(JsonObject content) { // FIXME use RWLock
         return filters.computeIfAbsent(Long.toString(System.currentTimeMillis()), s -> new UserFilter(s, content));
     }
 

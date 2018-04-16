@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,31 +18,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.session.server;
+package io.kamax.mxhsd.spring.common.config;
 
-import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
-import io.kamax.mxhsd.api.session.server.IServerRoomDirectory;
-import io.kamax.mxhsd.core.GlobalStateHolder;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
-public class ServerRoomDirectory implements IServerRoomDirectory {
+@Configuration
+@ConfigurationProperties("crypto")
+public class CryptoConfig {
 
-    private GlobalStateHolder global;
+    private Map<String, String> seed = new HashMap<>();
 
-    public ServerRoomDirectory(GlobalStateHolder global) {
-        this.global = global;
+    public Map<String, String> getSeed() {
+        return seed;
     }
 
-    @Override
-    public List<String> getAliases(String roomId) {
-        return global.getRoomDir().getAliases(roomId);
-    }
-
-    @Override
-    public Optional<IFederatedRoomAliasLookup> lookup(String alias) {
-        return global.getRoomDir().lookup(alias);
+    public void setSeed(Map<String, String> seed) {
+        this.seed = seed;
     }
 
 }

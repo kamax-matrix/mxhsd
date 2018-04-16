@@ -25,7 +25,7 @@ import io.kamax.mxhsd.api.crypto.ICryptoManager;
 import io.kamax.mxhsd.api.crypto.IOldSigningKey;
 import io.kamax.mxhsd.api.crypto.ISigningKey;
 import io.kamax.mxhsd.api.crypto.ITlsKey;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +43,12 @@ public class CryptoManager implements ICryptoManager {
 
     private final Logger log = LoggerFactory.getLogger(CryptoManager.class);
 
-    private HomeserverState global;
+    private GlobalStateHolder global;
     private MxSha256 sha256 = new MxSha256();
 
     private List<ITlsKey> tlsFingerprints;
 
-    public CryptoManager(HomeserverState global) {
+    public CryptoManager(GlobalStateHolder global) {
         this.global = global;
         this.tlsFingerprints = new ArrayList<>();
     }

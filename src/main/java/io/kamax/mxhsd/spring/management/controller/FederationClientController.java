@@ -23,7 +23,7 @@ package io.kamax.mxhsd.spring.management.controller;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ public class FederationClientController extends JsonController {
 
     private final Logger logger = LoggerFactory.getLogger(FederationClientController.class);
 
-    private HomeserverState state;
+    private GlobalStateHolder state;
 
     @Autowired
     public FederationClientController(HomeserverService svc) {

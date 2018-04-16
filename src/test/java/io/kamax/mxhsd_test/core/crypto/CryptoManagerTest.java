@@ -22,7 +22,7 @@ package io.kamax.mxhsd_test.core.crypto;
 
 import io.kamax.matrix.crypto.KeyManager;
 import io.kamax.matrix.crypto.SignatureManager;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.crypto.CryptoManager;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
@@ -38,7 +38,7 @@ public class CryptoManagerTest {
 
     @Before
     public void before() {
-        HomeserverState state = new HomeserverState();
+        GlobalStateHolder state = new GlobalStateHolder();
         state.setDomain("localhost");
         state.setKeyMgr(KeyManager.fromMemory());
         state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));

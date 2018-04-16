@@ -94,6 +94,9 @@ dependencies {
     // PostgreSQL
     compile 'org.postgresql:postgresql:42.2.2'
 
+    // JWT for access tokens
+    compile 'com.auth0:java-jwt:3.3.0'
+
     testCompile 'junit:junit:4.12'
 }
 

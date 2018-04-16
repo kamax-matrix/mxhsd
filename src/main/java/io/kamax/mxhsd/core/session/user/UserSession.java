@@ -38,8 +38,8 @@ import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
 import io.kamax.mxhsd.api.session.user.IUserSession;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncOptions;
-import io.kamax.mxhsd.api.user.IHomeserverUser;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.api.user.IUser;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import io.kamax.mxhsd.core.sync.SyncData;
 import io.kamax.mxhsd.core.sync.SyncRoomData;
@@ -66,16 +66,16 @@ public class UserSession implements IUserSession {
 
     private final Logger log = LoggerFactory.getLogger(UserSession.class);
 
-    private HomeserverState global;
+    private GlobalStateHolder global;
     private IDevice device;
-    private IHomeserverUser user;
+    private IUser user;
 
     // FIXME This is such a big hack! but it's ok until we implement cache management
     private Map<String, State> statesCache = new WeakHashMap<>();
 
     private Map<String, JsonObject> readMarkers = new HashMap<>();
 
-    public UserSession(HomeserverState global, IHomeserverUser user, IDevice dev) {
+    public UserSession(GlobalStateHolder global, IUser user, IDevice dev) {
         this.global = global;
         this.user = user;
         this.device = dev;
@@ -102,7 +102,7 @@ public class UserSession implements IUserSession {
     }
 
     @Override
-    public IHomeserverUser getUser() {
+    public IUser getUser() {
         return user;
     }
 

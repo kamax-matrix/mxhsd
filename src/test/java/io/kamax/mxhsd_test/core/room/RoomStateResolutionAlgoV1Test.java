@@ -32,7 +32,7 @@ import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
 import io.kamax.mxhsd.api.room.event.RoomPowerLevelEvent;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.event.EventManager;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
 import io.kamax.mxhsd.core.room.RoomManager;
@@ -55,11 +55,11 @@ import static junit.framework.TestCase.assertTrue;
  */
 public class RoomStateResolutionAlgoV1Test {
 
-    private static HomeserverState internals;
+    private static GlobalStateHolder internals;
 
     @BeforeClass
     public static void beforeClass() {
-        internals = new HomeserverState();
+        internals = new GlobalStateHolder();
         internals.setDomain("localhost");
         internals.setKeyMgr(new KeyManager(new KeyMemoryStore("")));
         internals.setSignMgr(new SignatureManager(internals.getKeyMgr(), internals.getDomain()));

@@ -29,7 +29,7 @@ import io.kamax.mxhsd.api.event.INakedEvent;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.federation.ITransaction;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.room.directory.FederatedRoomAliasLookup;
 import io.kamax.mxhsd.spring.federation.controller.v1.transaction.TransactionJson;
 import org.apache.commons.lang3.NotImplementedException;
@@ -44,10 +44,10 @@ public class RemoteHomeServer implements IRemoteHomeServer {
 
     private final Logger log = LoggerFactory.getLogger(RemoteHomeServer.class);
 
-    private HomeserverState global;
+    private GlobalStateHolder global;
     private String domain;
 
-    public RemoteHomeServer(HomeserverState global, String domain) {
+    public RemoteHomeServer(GlobalStateHolder global, String domain) {
         this.global = global;
         this.domain = domain;
     }

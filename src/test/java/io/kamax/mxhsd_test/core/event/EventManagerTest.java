@@ -26,7 +26,7 @@ import io.kamax.matrix.crypto.KeyMemoryStore;
 import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.event.EventManager;
 import io.kamax.mxhsd_test.TestData;
 import org.apache.commons.io.IOUtils;
@@ -55,7 +55,7 @@ public class EventManagerTest {
 
     @BeforeClass
     public static void beforeClass() {
-        HomeserverState s = new HomeserverState();
+        GlobalStateHolder s = new GlobalStateHolder();
         s.setDomain("synapse.local.kamax.io");
         s.setKeyMgr(new KeyManager(new KeyMemoryStore(TestData.SIGN_KEY_SEED)));
         s.setSignMgr(new SignatureManager(s.getKeyMgr(), s.getDomain()));

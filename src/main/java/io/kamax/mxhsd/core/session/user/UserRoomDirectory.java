@@ -26,7 +26,7 @@ import io.kamax.mxhsd.api.room.RoomID;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.RoomAliasEvent;
 import io.kamax.mxhsd.api.session.user.IUserRoomDirectory;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +34,10 @@ import java.util.Optional;
 
 public class UserRoomDirectory implements IUserRoomDirectory {
 
-    private HomeserverState global;
+    private GlobalStateHolder global;
     private _MatrixID mxId;
 
-    public UserRoomDirectory(HomeserverState global, _MatrixID mxId) {
+    public UserRoomDirectory(GlobalStateHolder global, _MatrixID mxId) {
         this.global = global;
         this.mxId = mxId;
     }

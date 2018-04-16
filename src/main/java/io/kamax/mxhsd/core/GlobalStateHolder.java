@@ -35,7 +35,7 @@ import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
 import io.kamax.mxhsd.api.store.IStore;
 import io.kamax.mxhsd.core.store.InMemoryStore;
 
-public class HomeserverState {
+public class GlobalStateHolder {
 
     private String appName;
     private String appVersion;

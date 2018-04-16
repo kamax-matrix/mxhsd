@@ -25,16 +25,16 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServerManager;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 
 import java.util.concurrent.TimeUnit;
 
 public class RemoteHomeServerManager implements IRemoteHomeServerManager {
 
-    private HomeserverState global;
+    private GlobalStateHolder global;
     private LoadingCache<String, RemoteHomeServer> cache;
 
-    public RemoteHomeServerManager(HomeserverState global) {
+    public RemoteHomeServerManager(GlobalStateHolder global) {
         this.global = global;
         this.cache = CacheBuilder.newBuilder()
                 .maximumSize(1000) // FIXME make it configurable

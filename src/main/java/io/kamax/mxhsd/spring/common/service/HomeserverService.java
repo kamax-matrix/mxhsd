@@ -25,8 +25,8 @@ import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.IHomeserverConfig;
 import io.kamax.mxhsd.api.store.IStore;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.Homeserver;
-import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.crypto.CryptoManager;
 import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
@@ -36,24 +36,39 @@ import io.kamax.mxhsd.core.federation.HttpFederationClient;
 import io.kamax.mxhsd.core.federation.RemoteHomeServerManager;
 import io.kamax.mxhsd.core.room.RoomManager;
 import io.kamax.mxhsd.core.room.directory.GlobalRoomDirectory;
+import io.kamax.mxhsd.spring.common.config.CryptoConfig;
 import io.kamax.mxhsd.spring.common.config.InfoBuildConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+
 @Service
 public class HomeserverService {
 
-    private HomeserverState state;
-    private IHomeServer srv;
+    @Autowired
+    private InfoBuildConfig info;
 
     @Autowired
-    public HomeserverService(InfoBuildConfig info, IHomeserverConfig cfg, IStore store) {
-        state = new HomeserverState();
+    private IHomeserverConfig cfg;
+
+    @Autowired
+    private CryptoConfig cryptCfg;
+
+    @Autowired
+    private IStore store;
+
+    private GlobalStateHolder state;
+    private IHomeServer srv;
+
+    @PostConstruct
+    public void init() {
+        state = new GlobalStateHolder();
         state.setAppName(info.getName());
         state.setAppVersion(info.getVersion());
         state.setDomain(cfg.getDomain());
         state.setStore(store);
-        state.setKeyMgr(KeyManager.fromFile("data/sign.key"));
+        state.setKeyMgr(KeyManager.fromFile(cryptCfg.getSeed().get("ed25519")));
         state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));
         state.setCryptoMgr(new CryptoManager(state));
         state.setEvMgr(new EventManager(state));
@@ -62,7 +77,7 @@ public class HomeserverService {
         state.setFedClient(new HttpFederationClient(state, state.getFedResolv()));
         state.setFedNotif(new FederationNotifier(state));
         state.setAuthMgr(new DumbAuthProvider());
-        state.setDevMgr(new DeviceManager());
+        state.setDevMgr(new DeviceManager(state, cryptCfg.getSeed().get("jwt")));
         state.setHsMgr(new RemoteHomeServerManager(state));
         state.setRoomDir(new GlobalRoomDirectory(state));
         srv = new Homeserver(state);
@@ -72,7 +87,7 @@ public class HomeserverService {
         return srv;
     }
 
-    public HomeserverState getState() {
+    public GlobalStateHolder getState() {
         return state;
     }
 

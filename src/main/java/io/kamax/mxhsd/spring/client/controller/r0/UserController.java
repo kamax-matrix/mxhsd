@@ -58,7 +58,7 @@ public class UserController extends JsonController {
     public String createFilter(HttpServletRequest req, @PathVariable String userId) {
         log(logger, req);
 
-        String body = getBody(req);
+        JsonObject body = GsonUtil.parseObj(getBody(req));
         IUserFilter filter = hs.getUserSession(getAccessToken(req))
                 .getForUser(MatrixID.asAcceptable(userId))
                 .getUser()
@@ -80,7 +80,7 @@ public class UserController extends JsonController {
         IUserFilter filter = hs.getUserSession(getAccessToken(req)).getForUser(MatrixID.asAcceptable(userId)).getUser()
                 .findFilter(filterId).orElseThrow(() -> new InvalidRequestException("M_UNKNOWN", "Invalid filter ID"));
 
-        return filter.getContent();
+        return GsonUtil.get().toJson(filter.getContent());
     }
 
     // Required so Riot can create 1:1 room

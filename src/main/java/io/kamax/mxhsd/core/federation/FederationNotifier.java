@@ -24,7 +24,7 @@ import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.federation.IFederationNotifier;
 import io.kamax.mxhsd.api.room.IRoomState;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import net.engio.mbassy.listener.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,10 +36,10 @@ public class FederationNotifier implements IFederationNotifier {
 
     private final Logger log = LoggerFactory.getLogger(FederationNotifier.class);
 
-    private final HomeserverState global;
+    private final GlobalStateHolder global;
     private final ForkJoinPool pool; // FIXME this should be a scheduled executor?
 
-    public FederationNotifier(HomeserverState global) {
+    public FederationNotifier(GlobalStateHolder global) {
         this.global = global;
         this.pool = new ForkJoinPool(50);
         init();

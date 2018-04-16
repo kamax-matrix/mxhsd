@@ -28,13 +28,11 @@ import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.device.IDevice;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
-import io.kamax.mxhsd.api.exception.InvalidTokenException;
 import io.kamax.mxhsd.api.session.server.IServerSession;
 import io.kamax.mxhsd.api.session.user.IUserSession;
-import io.kamax.mxhsd.api.user.IHomeserverUser;
 import io.kamax.mxhsd.core.session.server.ServerSession;
 import io.kamax.mxhsd.core.session.user.UserSession;
-import io.kamax.mxhsd.core.user.HomeserverUser;
+import io.kamax.mxhsd.core.user.User;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +46,11 @@ public class Homeserver implements IHomeServer {
 
     private final Logger log = LoggerFactory.getLogger(Homeserver.class);
 
-    private HomeserverState state;
+    private GlobalStateHolder state;
 
     private Map<String, IUserSession> sessions = new ConcurrentHashMap<>(); // FIXME need session manager
 
-    public Homeserver(HomeserverState state) {
+    public Homeserver(GlobalStateHolder state) {
         if (StringUtils.isAnyBlank(state.getAppName(), state.getAppVersion())) {
             throw new IllegalArgumentException("Application name and version must be set");
         }
@@ -70,23 +68,29 @@ public class Homeserver implements IHomeServer {
     @Override
     public IUserSession login(String username, char[] password) {
         log.info("Performing user authentication of {}", username);
-        _MatrixID mxid = new MatrixID(state.getAuthMgr().login(getDomain(), username, password).getId());
-        if (!mxid.isValid()) {
-            log.warn("Invalid Matrix ID from auth backend: {}", mxid);
-            throw new ForbiddenException("authentication returned invalid Matrix ID");
+        String rawUserId = state.getAuthMgr().login(getDomain(), username, password).getId();
+        try {
+            _MatrixID userId = MatrixID.from(rawUserId).valid();
+            IDevice dev = state.getDevMgr().create(userId, Long.toString(System.currentTimeMillis())); // FIXME createOrFind() ?
+            IUserSession session = new UserSession(state, new User(userId), dev);
+
+            sessions.put(dev.getToken(), session);
+            return session;
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid Matrix ID from auth backend: {}", rawUserId, e);
+            throw new ForbiddenException(username + " is not a valid username");
         }
-
-        IDevice dev = state.getDevMgr().create(mxid, Long.toString(System.currentTimeMillis())); // FIXME createOrFind() ?
-        IHomeserverUser user = new HomeserverUser(mxid);
-        IUserSession session = new UserSession(state, user, dev);
-
-        sessions.put(dev.getToken(), session);
-        return session;
     }
 
     @Override
     public IUserSession getUserSession(String token) {
-        return findUserSession(token).orElseThrow(InvalidTokenException::new);
+        return findUserSession(token).orElseGet(() -> {
+            IDevice device = state.getDevMgr().get(token);
+            IUserSession session = new UserSession(state, new User(device.getUser()), device);
+
+            sessions.put(device.getToken(), session);
+            return session;
+        });
     }
 
     @Override

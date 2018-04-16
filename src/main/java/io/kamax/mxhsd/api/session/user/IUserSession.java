@@ -26,13 +26,13 @@ import io.kamax.mxhsd.api.room.IRoomCreateOptions;
 import io.kamax.mxhsd.api.room.IUserRoom;
 import io.kamax.mxhsd.api.sync.ISyncData;
 import io.kamax.mxhsd.api.sync.ISyncOptions;
-import io.kamax.mxhsd.api.user.IHomeserverUser;
+import io.kamax.mxhsd.api.user.IUser;
 
 public interface IUserSession {
 
     IUserSession getForUser(_MatrixID mxId);
 
-    IHomeserverUser getUser();
+    IUser getUser();
 
     IDevice getDevice();
 

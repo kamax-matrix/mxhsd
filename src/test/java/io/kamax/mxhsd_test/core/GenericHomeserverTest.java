@@ -25,8 +25,8 @@ import io.kamax.matrix.crypto.KeyManager;
 import io.kamax.matrix.crypto.SignatureManager;
 import io.kamax.mxhsd.api.room.IUserRoom;
 import io.kamax.mxhsd.api.session.user.IUserSession;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.Homeserver;
-import io.kamax.mxhsd.core.HomeserverState;
 import io.kamax.mxhsd.core.device.DeviceManager;
 import io.kamax.mxhsd.core.event.EventManager;
 import io.kamax.mxhsd.core.room.RoomCreateOptions;
@@ -38,7 +38,7 @@ import static junit.framework.TestCase.assertTrue;
 
 public class GenericHomeserverTest {
 
-    protected HomeserverState state;
+    protected GlobalStateHolder state;
     protected Homeserver hs;
     protected final String username = "test";
     protected final String password = username;
@@ -53,11 +53,11 @@ public class GenericHomeserverTest {
 
     @Before
     public void beforeClass() {
-        state = new HomeserverState();
+        state = new GlobalStateHolder();
         state.setAppName("mxhsd");
         state.setAppVersion("0-Testing");
         state.setDomain("localhost:8779");
-        state.setDevMgr(new DeviceManager());
+        state.setDevMgr(new DeviceManager(state, "mxhsd"));
         state.setAuthMgr((domain, user, password) -> MatrixID.from(user, domain).valid());
         state.setKeyMgr(KeyManager.fromMemory());
         state.setSignMgr(new SignatureManager(state.getKeyMgr(), state.getDomain()));

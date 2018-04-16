@@ -20,14 +20,15 @@
 
 package io.kamax.mxhsd.core.user;
 
+import com.google.gson.JsonObject;
 import io.kamax.mxhsd.api.user.IUserFilter;
 
 public class UserFilter implements IUserFilter {
 
     private String id;
-    private String content;
+    private JsonObject content;
 
-    public UserFilter(String id, String content) {
+    public UserFilter(String id, JsonObject content) {
         this.id = id;
         this.content = content;
     }
@@ -38,7 +39,7 @@ public class UserFilter implements IUserFilter {
     }
 
     @Override
-    public String getContent() {
+    public JsonObject getContent() {
         return content;
     }
 

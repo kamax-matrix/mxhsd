@@ -27,7 +27,7 @@ import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.directory.ICoreRoomDirectory;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.RoomAliasEvent;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import net.engio.mbassy.listener.Handler;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -40,12 +40,12 @@ public class GlobalRoomDirectory implements ICoreRoomDirectory {
 
     private final Logger log = LoggerFactory.getLogger(GlobalRoomDirectory.class);
 
-    private HomeserverState global;
+    private GlobalStateHolder global;
 
     private Map<String, String> mappings = new ConcurrentHashMap<>();
     private Map<String, List<String>> idToAliases = new ConcurrentHashMap<>();
 
-    public GlobalRoomDirectory(HomeserverState global) {
+    public GlobalRoomDirectory(GlobalStateHolder global) {
         (this.global = global).getRoomMgr().forAllRooms().addListener(this);
     }
 

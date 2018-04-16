@@ -28,7 +28,7 @@ import io.kamax.mxhsd.api.room.IRoom;
 import io.kamax.mxhsd.api.session.server.IServerEventManager;
 import io.kamax.mxhsd.api.session.server.IServerRoomDirectory;
 import io.kamax.mxhsd.api.session.server.IServerSession;
-import io.kamax.mxhsd.core.HomeserverState;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.event.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +42,9 @@ public class ServerSession implements IServerSession {
 
     private final Logger log = LoggerFactory.getLogger(ServerSession.class);
 
-    private HomeserverState global;
+    private GlobalStateHolder global;
 
-    public ServerSession(HomeserverState global) {
+    public ServerSession(GlobalStateHolder global) {
         this.global = global;
     }
 
