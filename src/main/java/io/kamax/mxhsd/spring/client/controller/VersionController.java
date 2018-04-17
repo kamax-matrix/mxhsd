@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static io.kamax.matrix.json.GsonUtil.*;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @RestController
@@ -37,11 +38,17 @@ public class VersionController extends JsonController {
 
     private final Logger logger = LoggerFactory.getLogger(VersionController.class);
 
+    private final String versions;
+
+    public VersionController() {
+        this.versions = get().toJson(makeObj("versions", asArray("r0.3.0")));
+    }
+
     @RequestMapping(method = GET, path = "/versions")
     public String getVersions(HttpServletRequest req) {
         log(logger, req);
 
-        return "{\"versions\":[\"r0.2.0\"]}";
+        return versions;
     }
 
 }
