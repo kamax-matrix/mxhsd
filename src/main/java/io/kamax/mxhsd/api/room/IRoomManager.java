@@ -33,16 +33,20 @@ public interface IRoomManager {
 
     IRoom discoverRoom(String roomId, List<IEvent> initialState, List<IEvent> authChain, IEvent seed);
 
-    default IRoom getRoom(String id) {
-        return findRoom(id).orElseThrow(() -> new NotFoundException(id));
-    }
+    IRoom getRoom(String id);
 
     IAliasRoom getRoom(IFederatedRoomAliasLookup lookup);
 
-    Optional<IRoom> findRoom(String id);
+    default Optional<IRoom> findRoom(String id) {
+        try {
+            return Optional.ofNullable(getRoom(id));
+        } catch (NotFoundException e) {
+            return Optional.empty();
+        }
+    }
 
-    List<IRoom> listRooms();
+    List<String> listRooms();
 
-    IAllRoomsHander forAllRooms();
+    IAllRoomsHandler forAllRooms();
 
 }

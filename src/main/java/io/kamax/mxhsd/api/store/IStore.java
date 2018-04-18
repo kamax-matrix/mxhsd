@@ -23,7 +23,9 @@ package io.kamax.mxhsd.api.store;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.IProcessedEvent;
 import io.kamax.mxhsd.api.room.IRoomState;
+import io.kamax.mxhsd.core.store.dao.RoomDao;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface IStore {
@@ -32,7 +34,21 @@ public interface IStore {
 
     IProcessedEvent putEvent(IEvent event);
 
-    void findRoomState(String eventId);
+    List<RoomDao> listRooms();
+
+    Optional<RoomDao> findRoom(String roomId);
+
+    void putRoom(RoomDao room);
+
+    void addExtremityOfRoom(String roomId, List<String> eventIds);
+
+    void removeExtremityOfRoom(String roomId, List<String> eventIds);
+
+    default Optional<IRoomState> findRoomState(IProcessedEvent ev) {
+        return findRoomState(ev.getRoomId(), ev.getId());
+    }
+
+    Optional<IRoomState> findRoomState(String roomId, String eventId);
 
     void putRoomState(IRoomState state, IProcessedEvent event);
 

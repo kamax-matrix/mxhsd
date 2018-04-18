@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,33 +18,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.core.event;
+package io.kamax.mxhsd.core.store.dao;
 
-import io.kamax.mxhsd.api.event.IEvent;
-import io.kamax.mxhsd.api.event.IProcessedEvent;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ProcessedEvent extends Event implements IProcessedEvent {
+public class RoomDao {
 
-    private Long streamId;
+    private String id;
+    private List<String> extremities;
 
-    public ProcessedEvent(Long streamId, String rawJson) {
-        super(rawJson);
-        this.streamId = streamId;
+    public RoomDao() {
+        this.extremities = new ArrayList<>();
     }
 
-    public ProcessedEvent(Long streamId, IEvent ev) {
-        super(ev.getJson());
-        this.streamId = streamId;
+    public RoomDao(String id) {
+        this();
+        setId(id);
     }
 
-    @Override
-    public Long getSid() {
-        return streamId;
+    public String getId() {
+        return id;
     }
 
-    @Override
-    public boolean isValid() {
-        return true;
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public List<String> getExtremities() {
+        return extremities;
+    }
+
+    public void setExtremities(List<String> extremities) {
+        this.extremities = extremities;
     }
 
 }

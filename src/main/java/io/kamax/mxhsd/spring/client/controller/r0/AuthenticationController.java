@@ -20,7 +20,6 @@
 
 package io.kamax.mxhsd.spring.client.controller.r0;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
@@ -47,8 +46,6 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 public class AuthenticationController extends JsonController {
 
     private final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
-
-    private Gson gson = GsonUtil.build();
 
     private IHomeServer hs;
 

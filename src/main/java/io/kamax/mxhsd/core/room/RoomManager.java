@@ -20,17 +20,25 @@
 
 package io.kamax.mxhsd.core.room;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
+import io.kamax.mxhsd.Caches;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.Lists;
 import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.event.IProtoEvent;
+import io.kamax.mxhsd.api.exception.NotFoundException;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.api.room.event.*;
 import io.kamax.mxhsd.core.GlobalStateHolder;
 import io.kamax.mxhsd.core.event.Event;
+import io.kamax.mxhsd.core.store.dao.RoomDao;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.bus.error.IPublicationErrorHandler;
 import net.engio.mbassy.listener.Handler;
@@ -39,7 +47,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class RoomManager implements IRoomManager {
@@ -47,13 +57,24 @@ public class RoomManager implements IRoomManager {
     private Logger log = LoggerFactory.getLogger(RoomManager.class);
 
     private GlobalStateHolder state;
-    private Map<String, Room> rooms;
-    private IAllRoomsHander arHandler;
+    private LoadingCache<String, Room> rooms;
+    private IAllRoomsHandler arHandler;
 
     public RoomManager(GlobalStateHolder state) {
         this.state = state;
-        this.rooms = new HashMap<>();
-        this.arHandler = new IAllRoomsHander() {
+        this.rooms = CacheBuilder.newBuilder()
+                .expireAfterAccess(1, TimeUnit.MINUTES)
+                .build(new CacheLoader<String, Room>() {
+                    @Override
+                    public Room load(String key) {
+                        RoomDao dao = state.getStore().findRoom(key).orElseThrow(() -> new NotFoundException(key));
+                        Room r = new Room(state, dao.getId(), dao.getExtremities());
+                        r.addListener(arHandler);
+                        log.info("Loaded room {}", r.getId());
+                        return r;
+                    }
+                });
+        this.arHandler = new IAllRoomsHandler() {
 
             private MBassador<IEvent> bus = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
 
@@ -68,19 +89,13 @@ public class RoomManager implements IRoomManager {
             }
 
         };
+
+        log.info("Loading rooms from store");
+        state.getStore().listRooms().forEach(r -> hasRoom(r.getId()));
     }
 
     private boolean hasRoom(String id) {
-        synchronized (rooms) {
-            return rooms.containsKey(id);
-        }
-    }
-
-    private Room registerRoom(Room r) {
-        rooms.put(r.getId(), r);
-        r.addListener(arHandler);
-        log.info("Registered room {}", r.getId());
-        return r;
+        return rooms.asMap().containsKey(id);
     }
 
     private String getId() {
@@ -98,6 +113,14 @@ public class RoomManager implements IRoomManager {
         return RoomPowerLevels.build().defaults()
                 .addUser(options.getCreator().getId(), PowerLevel.Admin) // Adding creator
                 .get();
+    }
+
+    private Room saveAndLoad(Room r) {
+        RoomDao dao = new RoomDao();
+        dao.setId(r.getId());
+        dao.setExtremities(Lists.map(r.getExtremities(), IProtoEvent::getId));
+        state.getStore().putRoom(dao);
+        return Caches.get(rooms, r.getId());
     }
 
     @Override
@@ -149,18 +172,15 @@ public class RoomManager implements IRoomManager {
 
             // TODO handle invite_3pid
 
-            registerRoom(room);
-
+            Room roomProcessed = saveAndLoad(room);
             log.info("Room {} created", id);
-            return room;
+            return roomProcessed;
         }
     }
 
     @Override
     public IRoom discoverRoom(String roomId, List<IEvent> initialState, List<IEvent> authChain, IEvent seed) {
-        synchronized (rooms) {
-            return registerRoom(new Room(state, roomId, initialState, authChain, seed));
-        }
+        return saveAndLoad(new Room(state, roomId, initialState, authChain, seed));
     }
 
     private Room joinRemoteRoom(String hs, String roomId, _MatrixID userId) {
@@ -179,7 +199,7 @@ public class RoomManager implements IRoomManager {
 
         synchronized (rooms) {
             log.info("Processing state after join");
-            return registerRoom(new Room(RoomManager.this.state, roomId, state, authChain, joinEv));
+            return saveAndLoad(new Room(RoomManager.this.state, roomId, state, authChain, joinEv));
         }
     }
 
@@ -201,7 +221,7 @@ public class RoomManager implements IRoomManager {
             }
 
             return userId -> {
-                for (String server : lookup.getServers()) {
+                for (String server : servers) {
                     try {
                         return joinRemoteRoom(lookup.getSource(), lookup.getId(), userId);
                     } catch (RuntimeException e) {
@@ -215,21 +235,17 @@ public class RoomManager implements IRoomManager {
     }
 
     @Override
-    public synchronized Optional<IRoom> findRoom(String id) { // FIXME use RWLock
-        synchronized (rooms) {
-            return Optional.ofNullable(rooms.get(id));
-        }
+    public IRoom getRoom(String id) {
+        return Caches.get(rooms, id);
     }
 
     @Override
-    public synchronized List<IRoom> listRooms() { // FIXME use RWLock
-        synchronized (rooms) {
-            return new ArrayList<>(rooms.values());
-        }
+    public List<String> listRooms() {
+        return new ArrayList<>(Lists.map(state.getStore().listRooms(), RoomDao::getId));
     }
 
     @Override
-    public IAllRoomsHander forAllRooms() {
+    public IAllRoomsHandler forAllRooms() {
         return arHandler;
     }
 

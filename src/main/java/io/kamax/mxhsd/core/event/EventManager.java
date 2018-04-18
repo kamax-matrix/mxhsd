@@ -187,7 +187,6 @@ public class EventManager implements IEventManager {
 
         IProcessedEvent entry = hsState.getStore().putEvent(ev);
         eventsStream.add(entry);
-        log.info("Event {} was stored in position {}", ev.getId(), entry.getInternalId());
 
         eventBusNotification.publish(entry); // TODO we might want to do this async?
 

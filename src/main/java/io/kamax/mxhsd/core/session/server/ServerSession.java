@@ -65,7 +65,7 @@ public class ServerSession implements IServerSession {
 
     @Override
     public void push(ITransaction transaction) {
-        log.info("Inbound transaction {} from {} @ {}", transaction.getId(), transaction.getOrigin(), transaction.getOriginTimestamp());
+        log.debug("Inbound transaction {} from {} @ {}", transaction.getId(), transaction.getOrigin(), transaction.getOriginTimestamp());
 
         try {
             transaction.getPdus().forEach(sEv -> {

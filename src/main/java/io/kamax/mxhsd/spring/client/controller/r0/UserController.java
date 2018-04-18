@@ -22,7 +22,7 @@ package io.kamax.mxhsd.spring.client.controller.r0;
 
 import com.google.gson.JsonObject;
 import io.kamax.matrix.MatrixID;
-import io.kamax.matrix.json.GsonUtil;
+import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.user.IUserFilter;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;

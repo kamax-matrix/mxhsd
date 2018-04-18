@@ -28,7 +28,7 @@ import java.util.Comparator;
 
 public class EventComparator {
 
-    private final static Comparator<IProcessedEvent> byPreviousEvents = (o1, o2) -> {
+    private final static Comparator<? extends IEvent> byPreviousEvents = (o1, o2) -> {
         boolean isO1Parent = Streams.concat(o2.getAuthorization().stream(), o2.getParents().stream())
                 .anyMatch(ref -> o1.getId().equals(ref.getEventId()));
         if (isO1Parent) return -1;
@@ -41,7 +41,12 @@ public class EventComparator {
     };
 
     public static Comparator<IProcessedEvent> forProcessed() {
-        return byPreviousEvents.thenComparingLong(IEvent::getDepth)
+        return (Comparator<IProcessedEvent>) byPreviousEvents.thenComparingLong(IEvent::getDepth)
+                .thenComparing(IEvent::getTimestamp);
+    }
+
+    public static Comparator<IEvent> forEvent() {
+        return (Comparator<IEvent>) byPreviousEvents.thenComparingLong(IEvent::getDepth)
                 .thenComparing(IEvent::getTimestamp);
     }
 

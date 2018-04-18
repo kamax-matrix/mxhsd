@@ -165,7 +165,7 @@ public class UserSession implements IUserSession {
             opt.ifPresent(builder::setMembership);
 
             if (!roomState.isAccessibleAs(mxid)) {
-                log.info("Event {} at position {} is not accessible to {}, skipping", evId, ev.getInternalId(), mxid);
+                log.info("Event {} at position {} is not accessible to {}, skipping", evId, ev.getSid(), mxid);
             } else {
                 if (RoomEventType.Membership.equals(evType)) {
                     RoomMembershipEvent eventDetails = new RoomMembershipEvent(ev.getJson());
@@ -176,7 +176,7 @@ public class UserSession implements IUserSession {
 
                         if (RoomMembership.Join.is(eventDetails.getMembership())) {
                             IProcessedEvent rCreate = global.getEvMgr().get(roomState.getCreation().getId());
-                            if (global.getEvMgr().isBefore(rCreate.getInternalId(), fromPosition)) {
+                            if (global.getEvMgr().isBefore(Long.toString(rCreate.getSid()), fromPosition)) {
                                 builder.addState(rCreate);
                             } else {
                                 builder.addTimeline(rCreate);
@@ -184,7 +184,7 @@ public class UserSession implements IUserSession {
 
                             roomState.getMemberships().stream().map(ref -> global.getEvMgr().get(ref.getEventId()))
                                     .forEach(ev1 -> {
-                                        if (global.getEvMgr().isBefore(ev1.getInternalId(), fromPosition)) {
+                                        if (global.getEvMgr().isBefore(Long.toString(ev1.getSid()), fromPosition)) {
                                             builder.addState(ev1);
                                         } else {
                                             builder.addTimeline(ev1);
@@ -248,7 +248,7 @@ public class UserSession implements IUserSession {
         SyncData.Builder b = SyncData.build();
 
         // We fetch room states
-        global.getRoomMgr().listRooms().parallelStream().forEach(room -> {
+        global.getRoomMgr().listRooms().parallelStream().map(id -> global.getRoomMgr().getRoom(id)).forEach(room -> {
             IRoomState state = room.getCurrentState();
             state.findMembershipValue(mxId).ifPresent(m -> {
                 if (RoomMembership.Invite.is(m)) {

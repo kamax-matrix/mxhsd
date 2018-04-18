@@ -22,7 +22,7 @@ package io.kamax.mxhsd.api.event;
 
 public interface IProcessedEvent extends IEvent {
 
-    String getInternalId();
+    Long getSid();
 
     boolean isValid();
 

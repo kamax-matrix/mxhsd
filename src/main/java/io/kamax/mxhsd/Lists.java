@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2018 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -18,10 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd;
 
-public interface IAllRoomsHander {
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-    void addListener(Object o);
+public class Lists {
+
+    public static <T, V> List<V> map(List<T> values, Function<T, V> function) {
+        return collect(values.stream().map(function));
+    }
+
+    public static <V> List<V> collect(Stream<V> stream) {
+        return stream.collect(Collectors.toList());
+    }
 
 }

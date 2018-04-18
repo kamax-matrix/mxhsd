@@ -20,14 +20,19 @@
 
 package io.kamax.mxhsd.core.room;
 
-import com.google.common.collect.Streams;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
+import io.kamax.mxhsd.Caches;
 import io.kamax.mxhsd.GsonUtil;
+import io.kamax.mxhsd.Lists;
 import io.kamax.mxhsd.api.event.*;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
+import io.kamax.mxhsd.api.exception.NotFoundException;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.event.EventComparator;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
@@ -53,35 +58,35 @@ public class Room implements IRoom {
     private GlobalStateHolder global;
     private IRoomAlgorithm algo;
 
+    private MBassador<IEvent> eventBus;
+
     private String id;
     private RoomState state;
-    private MBassador<IEvent> eventBus;
-    private Map<String, RoomState> prevStates;
-
     private List<String> extremities = new ArrayList<>();
+
+    private LoadingCache<String, IRoomState> states;
 
     public Room(GlobalStateHolder global, String id) {
         this.global = global;
         this.id = id;
-        this.prevStates = new ConcurrentHashMap<>();
         this.eventBus = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
         this.algo = new RoomAlgorithm_v1(eventId -> this.global.getEvMgr().get(eventId));
+        this.states = CacheBuilder.newBuilder().initialCapacity(20).maximumSize(100)
+                .build(new CacheLoader<String, IRoomState>() {
+                    @Override
+                    public IRoomState load(String key) {
+                        return global.getStore().findRoomState(id, key)
+                                .orElseThrow(() -> new NotFoundException("Room state for " + key));
+                    }
+                });
+
         setCurrentState(RoomState.build().get());
     }
 
-    private Comparator<IEvent> getEventComparator() {
-        return ((Comparator<IEvent>) (o1, o2) -> {
-            boolean isO1Parent = Streams.concat(o2.getAuthorization().stream(), o2.getParents().stream())
-                    .anyMatch(ref -> o1.getId().equals(ref.getEventId()));
-            if (isO1Parent) return -1;
-
-            boolean isO2Parent = Streams.concat(o1.getAuthorization().stream(), o1.getParents().stream())
-                    .anyMatch(ref -> o2.getId().equals(ref.getEventId()));
-            if (isO2Parent) return 1;
-
-            return 0;
-        }).thenComparingLong(IEvent::getDepth)
-                .thenComparing(IEvent::getTimestamp);
+    public Room(GlobalStateHolder global, String id, List<String> extremities) {
+        this(global, id);
+        setCurrentState(RoomState.from(algo.resolve(Lists.map(extremities, states))));
+        this.extremities = new ArrayList<>(extremities);
     }
 
     public Room(GlobalStateHolder global, String id, List<IEvent> initialState, List<IEvent> authChain, IEvent seed) {
@@ -91,14 +96,14 @@ public class Room implements IRoom {
         List<IEvent> chain = authChain.stream().unordered()
                 .distinct()
                 // FIXME compute and use topological order
-                .sorted(getEventComparator())
+                .sorted(EventComparator.forEvent())
                 .collect(Collectors.toList());
 
         // We order events so we can build a state properly
         List<IEvent> state = initialState.stream().unordered()
                 .distinct()
                 // FIXME compute and use topological order
-                .sorted(getEventComparator())
+                .sorted(EventComparator.forEvent())
                 .collect(Collectors.toList());
 
         chain.forEach(e -> global.getEvMgr().store(e));
@@ -132,9 +137,7 @@ public class Room implements IRoom {
     }
 
     private List<IRoomState> getStates(IProtoEvent ev) {
-        return ev.getParents().stream()
-                .map(ref -> global.getEvMgr().get(ref.getEventId()))
-                .map(parentEv -> prevStates.get(parentEv.getId())).collect(Collectors.toList());
+        return Lists.collect(ev.getParents().stream().map(IEventIdReference::getEventId).map(states));
     }
 
     // FIXME use RWLock
@@ -148,19 +151,13 @@ public class Room implements IRoom {
         extremities.add(ev.getId());
 
         // We calculate the new current state of the room
-        setCurrentState(RoomState.build()
-                .from(algo.resolve(
-                        global.getEvMgr().get(extremities).stream()
-                                .map(id -> prevStates.get(id.getId()))
-                                .collect(Collectors.toList()))
-                ).get()
-        );
+        setCurrentState(RoomState.build().from(algo.resolve(Lists.map(extremities, states))).get());
     }
 
     // FIXME use RWLock
     private synchronized IProcessedEvent inject(IEvent ev, RoomState state) {
-        prevStates.put(ev.getId(), state);
         IProcessedEvent evStored = global.getEvMgr().store(ev);
+        global.getStore().putRoomState(state, evStored);
         addExtremity(ev);
         return evStored;
     }
@@ -223,7 +220,7 @@ public class Room implements IRoom {
 
         RoomEventChunk.Builder builder = new RoomEventChunk.Builder();
         builder.setStartToken(from);
-        builder.setEndToken(list.stream().map(IProcessedEvent::getInternalId).findFirst().orElse(from));
+        builder.setEndToken(list.stream().map(ev -> ev.getSid().toString()).findFirst().orElse(from));
         list.forEach(ev -> builder.addEvent(ev.getJson()));
 
         return builder.get();
@@ -232,7 +229,7 @@ public class Room implements IRoom {
     @Override
     public synchronized IRoomState getStateFor(String id) {
         // FIXME this is dumb, we need a way to calculate the state for an arbitrary event
-        return Optional.ofNullable(prevStates.get(id)).orElseGet(() -> {
+        return Optional.ofNullable(Caches.get(states, id)).orElseGet(() -> {
             RoomState.Builder b = RoomState.build();
             b.addEvent(getCurrentState().getCreation());
             return b.get();

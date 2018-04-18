@@ -21,7 +21,7 @@
 package io.kamax.mxhsd.spring.common.controller;
 
 import com.google.gson.JsonObject;
-import io.kamax.matrix.json.GsonUtil;
+import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.exception.*;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
