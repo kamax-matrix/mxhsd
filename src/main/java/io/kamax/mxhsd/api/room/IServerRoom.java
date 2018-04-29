@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -33,7 +33,7 @@ public interface IServerRoom extends ICoreRoom {
 
     RemoteJoinRoomState injectJoin(IEvent ev);
 
-    IRoomStateSnapshot getSnapshot(String eventId);
+    IRoomStateSnapshotIds getSnapshot(String eventId);
 
     List<IEvent> getEventsRange(Collection<String> earliestEv, Collection<String> latestEv, long limit, long minDepth);
 

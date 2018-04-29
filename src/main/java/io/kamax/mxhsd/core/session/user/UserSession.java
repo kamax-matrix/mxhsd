@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -217,33 +217,37 @@ public class UserSession implements IUserSession {
         entries.forEach(ev -> roomStreams.computeIfAbsent(ev.getRoomId(), rId -> new ArrayList<>()).add(ev));
 
         roomStreams.forEach((roomId, stream) -> {
-            Optional<IRoom> opt = global.getRoomMgr().findRoom(roomId);
-            if (opt.isPresent()) {
-                SyncRoomData data = buildSingleTimeline(opt.get(), fromPosition, stream);
-                Optional<String> rOpt = data.getMembership();
-                rOpt.ifPresent(membership -> {
-                    // TODO use the membership as key to add rooms to the global sync data, as it matches json key
-                    if (RoomMembership.Invite.is(membership)) {
-                        b.addInvited(data);
-                    }
+            try {
+                Optional<IRoom> opt = global.getRoomMgr().findRoom(roomId);
+                if (opt.isPresent()) {
+                    SyncRoomData data = buildSingleTimeline(opt.get(), fromPosition, stream);
+                    Optional<String> rOpt = data.getMembership();
+                    rOpt.ifPresent(membership -> {
+                        // TODO use the membership as key to add rooms to the global sync data, as it matches json key
+                        if (RoomMembership.Invite.is(membership)) {
+                            b.addInvited(data);
+                        }
 
-                    if (RoomMembership.Join.is(membership)) {
-                        b.addJoined(data);
-                    }
+                        if (RoomMembership.Join.is(membership)) {
+                            b.addJoined(data);
+                        }
 
-                    if (RoomMembership.Leave.is(membership)) {
-                        b.addLeft(data);
-                    }
-                });
-            } else {
-                log.warn("We have event(s) for an unknown room: {}", roomId);
+                        if (RoomMembership.Leave.is(membership)) {
+                            b.addLeft(data);
+                        }
+                    });
+                } else {
+                    log.warn("We have event(s) for an unknown room: {}", roomId);
+                }
+            } catch (RuntimeException e) {
+                log.warn("Unable to load data for room {}", roomId, e);
             }
         });
     }
 
     private ISyncData fetchInitial(ISyncOptions options) {
         String mxId = user.getId().getId();
-        String currentPosition = global.getEvMgr().getPosition();
+        String currentPosition = Long.toString(global.getStore().getCurrentStreamId());
         State syncState = new State();
         SyncData.Builder b = SyncData.build();
 
@@ -284,17 +288,17 @@ public class UserSession implements IUserSession {
         return syncData.get();
     }
 
-    private ISyncData fetchNextOrWait(ISyncOptions options, String since) {
+    private ISyncData fetchNextOrWait(ISyncOptions options, String from) {
         // FIXME catch exception and throw appropriate error in case of parse error
         // TODO SPEC - Possible errors
         Instant endTs = Instant.now().plus(options.getTimeout(), ChronoUnit.MILLIS);
         SyncData.Builder syncBuild = SyncData.build();
 
         do { // at least one time
-            String currentPosition = global.getEvMgr().getPosition();
+            String to = Long.toString(global.getStore().getCurrentStreamId());
 
-            if (!StringUtils.equals(since, currentPosition)) { // we got new data
-                return fetchNext(options, since, currentPosition);
+            if (!StringUtils.equals(from, to)) { // we got new data
+                return fetchNext(options, from, to);
             } else { // no new data, let's wait
                 synchronized (this) {
                     try {
@@ -308,7 +312,7 @@ public class UserSession implements IUserSession {
             }
         } while (!Thread.interrupted() && Instant.now().isBefore(endTs));
 
-        return syncBuild.setToken(since).get(); // no new data, we just send the same token
+        return syncBuild.setToken(from).get(); // no new data, we just send the same token
     }
 
     // FIXME refactor into some kind of per-user stream handler using the provided filter

@@ -20,14 +20,12 @@
 
 package io.kamax.mxhsd.api.room;
 
-import io.kamax.mxhsd.api.event.IEvent;
-
 import java.util.Set;
 
-public interface IRoomStateSnapshot {
+public interface IRoomStateSnapshotIds {
 
-    Set<IEvent> getAuthChain();
+    Set<String> getStateEventIds();
 
-    Set<IEvent> getState();
+    Set<String> getAuthChainIds();
 
 }

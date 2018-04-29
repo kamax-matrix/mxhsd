@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 public class Caches {
 
@@ -50,6 +51,10 @@ public class Caches {
         } catch (UncheckedExecutionException | ExecutionException e) {
             throw extractCause(e);
         }
+    }
+
+    public static <K, V> Function<K, V> getFunction(LoadingCache<K, V> cache) {
+        return k -> get(cache, k);
     }
 
 }

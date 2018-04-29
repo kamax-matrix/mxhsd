@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -20,10 +20,12 @@
 
 package io.kamax.mxhsd.core.room;
 
+import io.kamax.matrix.MatrixID;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.mxhsd.api.event.IHashedProtoEvent;
 import io.kamax.mxhsd.api.event.StateTuple;
 import io.kamax.mxhsd.api.room.IRoomState;
+import io.kamax.mxhsd.api.room.IRoomStateSnapshot;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.api.room.event.IMembershipContext;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
@@ -74,6 +76,7 @@ public class RoomState implements IRoomState {
                 RoomState other = (RoomState) state;
                 r.events = new HashMap<>(other.events);
                 r.members = new HashMap<>(other.members);
+                r.servers = new HashSet<>(other.servers);
                 r.pls = other.pls;
                 r.plsId = other.plsId;
             } else { // we need to rebuild the cache ourselves: we process them one by one
@@ -89,6 +92,12 @@ public class RoomState implements IRoomState {
             return this;
         }
 
+        public Builder from(IRoomStateSnapshot snapshot) {
+            snapshot.getState().forEach(this::addEvent);
+
+            return this;
+        }
+
         public boolean addEvent(IHashedProtoEvent ev) {
             ev.getStateKey().ifPresent(stateKey -> {
                 r.events.put(StateTuple.of(ev.getType(), stateKey), ev);
@@ -98,6 +107,7 @@ public class RoomState implements IRoomState {
                 if (RoomEventType.Membership.is(ev.getType())) {
                     RoomMembershipEvent mEv = new RoomMembershipEvent(ev.getJson());
                     setMember(new MembershipContext(ev.getId(), stateKey, mEv.getMembership()));
+                    r.servers.add(MatrixID.asAcceptable(mEv.getStateKey()).getDomain());
                 }
 
                 if (RoomEventType.PowerLevels.is(ev.getType())) {
@@ -133,8 +143,13 @@ public class RoomState implements IRoomState {
         return build().from(state).get();
     }
 
+    public static RoomState empty() {
+        return build().get();
+    }
+
     private Map<StateTuple, IHashedProtoEvent> events = new HashMap<>();
     private Map<String, IMembershipContext> members = new HashMap<>();
+    private Set<String> servers = new HashSet<>();
     private RoomPowerLevels pls;
     private String plsId;
 
@@ -171,6 +186,11 @@ public class RoomState implements IRoomState {
     @Override
     public boolean isAccessibleAs(String user) {
         return true;
+    }
+
+    @Override
+    public Set<String> getServers() {
+        return new HashSet<>(servers);
     }
 
     @Override

@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -59,8 +59,6 @@ public interface IEventManager {
     IProcessedEventStream getBackwardStreamFrom(String position);
 
     IProcessedEventStream getForwardStreamFrom(String position);
-
-    String getPosition();
 
     boolean isBefore(String toCheck, String reference);
 

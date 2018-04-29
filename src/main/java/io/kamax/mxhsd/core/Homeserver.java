@@ -72,7 +72,7 @@ public class Homeserver implements IHomeServer {
         try {
             _MatrixID userId = MatrixID.from(rawUserId).valid();
             IDevice dev = state.getDevMgr().create(userId, Long.toString(System.currentTimeMillis())); // FIXME createOrFind() ?
-            IUserSession session = new UserSession(state, new User(userId), dev);
+            IUserSession session = new UserSession(state, new User(state, userId), dev);
 
             sessions.put(dev.getToken(), session);
             return session;
@@ -86,7 +86,7 @@ public class Homeserver implements IHomeServer {
     public IUserSession getUserSession(String token) {
         return findUserSession(token).orElseGet(() -> {
             IDevice device = state.getDevMgr().get(token);
-            IUserSession session = new UserSession(state, new User(device.getUser()), device);
+            IUserSession session = new UserSession(state, new User(state, device.getUser()), device);
 
             sessions.put(device.getToken(), session);
             return session;

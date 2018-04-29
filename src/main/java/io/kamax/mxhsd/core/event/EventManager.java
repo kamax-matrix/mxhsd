@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -28,6 +28,7 @@ import io.kamax.matrix.codec.MxSha256;
 import io.kamax.matrix.json.MatrixJson;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.*;
+import io.kamax.mxhsd.api.exception.NotFoundException;
 import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.room.RoomEventType;
 import io.kamax.mxhsd.core.GlobalStateHolder;
@@ -48,18 +49,16 @@ public class EventManager implements IEventManager {
     private final List<String> essentialTopKeys;
     private final Map<String, List<String>> essentialContentKeys = new HashMap<>();
 
-    private GlobalStateHolder hsState;
+    private GlobalStateHolder global;
     private Gson gson = GsonUtil.build();
     private MxSha256 sha256 = new MxSha256();
-
-    private List<IProcessedEvent> eventsStream = Collections.synchronizedList(new ArrayList<>());
 
     private MBassador<IEvent> eventBusFilter = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
     private MBassador<IProcessedEvent> eventBusNotification = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
 
     // FIXME enums
     public EventManager(GlobalStateHolder hsState) {
-        this.hsState = hsState;
+        this.global = hsState;
 
         essentialTopKeys = Arrays.asList(
                 EventKey.AuthEvents.get(),
@@ -101,7 +100,7 @@ public class EventManager implements IEventManager {
     private synchronized String getNextId() {
         String local = MxBase64.encode(Long.toString(System.currentTimeMillis()) +
                 RandomStringUtils.randomAlphabetic(4));
-        return "$" + local + ":" + hsState.getDomain();
+        return "$" + local + ":" + global.getDomain();
     }
 
     @Override
@@ -110,7 +109,7 @@ public class EventManager implements IEventManager {
                 .setId(getNextId())
                 .setRoomId(roomId)
                 .setTimestamp(Instant.now())
-                .setOrigin(hsState.getDomain())
+                .setOrigin(global.getDomain())
                 .addParents(parents);
     }
 
@@ -155,7 +154,7 @@ public class EventManager implements IEventManager {
         });
         toSign.add(EventKey.Content.get(), content);
 
-        return hsState.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(toSign));
+        return global.getSignMgr().signMessageGson(MatrixJson.encodeCanonical(toSign));
     }
 
     private JsonObject sign(JsonObject event) {
@@ -176,7 +175,7 @@ public class EventManager implements IEventManager {
     @Override
     public IEvent finalize(JsonObject ev) {
         ev.addProperty(EventKey.Id.get(), getNextId());
-        ev.addProperty(EventKey.Origin.get(), hsState.getDomain());
+        ev.addProperty(EventKey.Origin.get(), global.getDomain());
         ev.addProperty(EventKey.Timestamp.get(), System.currentTimeMillis());
         return new Event(hashAndSign(ev));
     }
@@ -185,8 +184,7 @@ public class EventManager implements IEventManager {
     public synchronized IProcessedEvent store(IEvent ev) { // FIXME use RWLock
         eventBusFilter.publish(ev);
 
-        IProcessedEvent entry = hsState.getStore().putEvent(ev);
-        eventsStream.add(entry);
+        IProcessedEvent entry = global.getStore().putEvent(ev);
 
         eventBusNotification.publish(entry); // TODO we might want to do this async?
 
@@ -195,7 +193,7 @@ public class EventManager implements IEventManager {
 
     @Override
     public IProcessedEvent get(String id) {
-        return hsState.getStore().findEvent(id).orElseThrow(() ->
+        return global.getStore().findEvent(id).orElseThrow(() ->
                 new IllegalArgumentException("Event ID " + id + " does not exist"));
     }
 
@@ -208,19 +206,19 @@ public class EventManager implements IEventManager {
 
     @Override
     public IProcessedEventStream getBackwardStreamFrom(String position) {
-        int id = Integer.parseInt(position);
+        long id = Long.parseLong(position);
 
         if (id < 0) {
-            throw new IllegalArgumentException("stream index must be greater or equal to 0");
+            throw new IllegalArgumentException("Invalid stream ID: " + id);
         }
 
-        if (id > eventsStream.size()) {
-            throw new IllegalArgumentException("index cannot be greater than current index");
+        if (id > global.getStore().getCurrentStreamId()) {
+            throw new IllegalArgumentException("position is not wihtin valid stream stream IDs");
         }
 
         return new IProcessedEventStream() {
 
-            private int index = id - 1;
+            private long index = id - 1;
 
             @Override
             public String getPosition() {
@@ -229,43 +227,49 @@ public class EventManager implements IEventManager {
 
             @Override
             public boolean hasNext() {
-                return index > 0;
+                return index >= 0;
             }
 
             @Override
             public IProcessedEvent getNext() {
                 // TODO Streams could help if we provide a supplier with the values we want?
                 List<IProcessedEvent> events = new ArrayList<>();
-                int destination = Math.max(-1, index - 1);
-                log.info("Seek - Index: {} | Amount: {} | Destination: {}", index, 1, destination);
-                for (int i = index; i > destination; i--) {
-                    events.add(EventManager.this.eventsStream.get(i)); // FIXME might change under concurrent access
+                while (hasNext()) {
+                    long destination = Math.max(-1, index - 1);
+                    for (long i = index; i > destination; i--) {
+                        try {
+                            events.add(global.getStore().getEventAtStreamId(i)); // FIXME might change under concurrent access
+                        } catch (NotFoundException e) {
+                            log.debug("Stream ID {} does not exist", i);
+                        }
+                    }
+                    index = destination;
+                    if (!events.isEmpty()) {
+                        return events.get(0);
+                    }
                 }
-                index = destination;
-                return events.get(0);
+
+                throw new IllegalStateException();
             }
         };
     }
 
     @Override
     public IProcessedEventStream getForwardStreamFrom(String position) {
-        int id = Integer.parseInt(position);
+        long id = Long.parseLong(position);
+        long max = global.getStore().getCurrentStreamId();
 
         if (id < 0) {
-            throw new IllegalArgumentException("stream index must be greater or equal to 0");
+            throw new IllegalArgumentException("Invalid stream ID: " + id);
         }
 
-        if (id > eventsStream.size()) {
-            throw new IllegalArgumentException("index cannot be greater than current index");
+        if (id > max) {
+            throw new IllegalArgumentException("position is not wihtin valid stream stream IDs");
         }
 
         return new IProcessedEventStream() {
 
-            private int index = id;
-
-            private int getMax() {
-                return eventsStream.size() - 1;
-            }
+            private long index = id - 1;
 
             @Override
             public String getPosition() {
@@ -274,27 +278,31 @@ public class EventManager implements IEventManager {
 
             @Override
             public boolean hasNext() {
-                return index < getMax();
+                return index <= max;
             }
 
             @Override
             public IProcessedEvent getNext() {
                 // TODO Streams could help if we provide a supplier with the values we want?
                 List<IProcessedEvent> events = new ArrayList<>();
-                int destination = Math.max(getMax(), index + 1);
-                log.info("Seek - Index: {} | Amount: {} | Destination: {}", index, 1, destination);
-                for (int i = index; i <= destination; i++) {
-                    events.add(EventManager.this.eventsStream.get(i)); // FIXME might change under concurrent access
+                while (hasNext()) {
+                    long destination = Math.max(max + 1, index + 1);
+                    for (long i = index; i <= max; i++) {
+                        try {
+                            events.add(global.getStore().getEventAtStreamId(i)); // FIXME might change under concurrent access
+                        } catch (NotFoundException e) {
+                            log.debug("Stream ID {} does not exist", i);
+                        }
+                    }
+                    index = destination;
+                    if (!events.isEmpty()) {
+                        return events.get(0);
+                    }
                 }
-                index = destination;
-                return events.get(0);
+
+                throw new IllegalStateException();
             }
         };
-    }
-
-    @Override
-    public String getPosition() {
-        return Integer.toString(eventsStream.size());
     }
 
     @Override

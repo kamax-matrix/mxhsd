@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -62,6 +62,7 @@ import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -282,6 +283,12 @@ public class HttpFederationClient implements IFederationClient {
         return new URIBuilder(URI.create("matrix://" + domain + path));
     }
 
+    private URIBuilder getUri(String domain, String path, Map<String, String> parameters) {
+        URIBuilder b = new URIBuilder(URI.create("matrix://" + domain + path));
+        parameters.forEach(b::addParameter);
+        return b;
+    }
+
     @Override
     public JsonObject send(String domain, String method, String url, Map<String, String> parameters, JsonElement body) {
         URIBuilder b = getUri(domain, url);
@@ -322,22 +329,27 @@ public class HttpFederationClient implements IFederationClient {
     }
 
     @Override
-    public JsonObject getRoomState(String roomId) {
+    public JsonObject getRoomState(String domain, String roomId, String eventId) {
+        return sendGet(getUri(domain, "/_matrix/federation/v1/state/" + roomId + "/", Collections.singletonMap("event_id", eventId)));
+    }
+
+    @Override
+    public JsonObject getRoomStateIds(String domain, String roomId, String eventId) {
+        return sendGet(getUri(domain, "/_matrix/federation/v1/state_ids/" + roomId + "/", Collections.singletonMap("event_id", eventId)));
+    }
+
+    @Override
+    public JsonObject getEvent(String domain, String id) {
         throw new NotImplementedException("");
     }
 
     @Override
-    public JsonObject getEvent(String id) {
+    public JsonObject backfill(String domain, String fromEventId, long limit) {
         throw new NotImplementedException("");
     }
 
     @Override
-    public JsonObject backfill(String fromEventId, long limit) {
-        throw new NotImplementedException("");
-    }
-
-    @Override
-    public JsonObject frontfill(String fromEventId, long limit) {
+    public JsonObject frontfill(String domain, String fromEventId, long limit) {
         throw new NotImplementedException("");
     }
 

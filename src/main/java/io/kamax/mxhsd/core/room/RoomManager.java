@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -56,24 +56,27 @@ public class RoomManager implements IRoomManager {
 
     private Logger log = LoggerFactory.getLogger(RoomManager.class);
 
-    private GlobalStateHolder state;
+    private GlobalStateHolder global;
     private LoadingCache<String, Room> rooms;
     private IAllRoomsHandler arHandler;
 
-    public RoomManager(GlobalStateHolder state) {
-        this.state = state;
+    public RoomManager(GlobalStateHolder global) {
+        this.global = global;
         this.rooms = CacheBuilder.newBuilder()
-                .expireAfterAccess(1, TimeUnit.MINUTES)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build(new CacheLoader<String, Room>() {
                     @Override
                     public Room load(String key) {
-                        RoomDao dao = state.getStore().findRoom(key).orElseThrow(() -> new NotFoundException(key));
-                        Room r = new Room(state, dao.getId(), dao.getExtremities());
+                        log.info("Loading room {} in cache", key);
+                        RoomDao dao = global.getStore().findRoom(key).orElseThrow(() -> new NotFoundException(key));
+                        log.info("Found room {} in store with extremities {}", key, dao.getExtremities());
+                        Room r = new Room(global, dao.getId(), dao.getExtremities());
                         r.addListener(arHandler);
-                        log.info("Loaded room {}", r.getId());
+                        log.info("Loaded room {}", key);
                         return r;
                     }
                 });
+
         this.arHandler = new IAllRoomsHandler() {
 
             private MBassador<IEvent> bus = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
@@ -89,9 +92,6 @@ public class RoomManager implements IRoomManager {
             }
 
         };
-
-        log.info("Loading rooms from store");
-        state.getStore().listRooms().forEach(r -> hasRoom(r.getId()));
     }
 
     private boolean hasRoom(String id) {
@@ -101,7 +101,7 @@ public class RoomManager implements IRoomManager {
     private String getId() {
         String id;
         do {
-            id = "!" + RandomStringUtils.randomAlphanumeric(16) + ":" + state.getDomain();
+            id = "!" + RandomStringUtils.randomAlphanumeric(16) + ":" + global.getDomain();
         } while (hasRoom(id));
 
         log.info("Generated Room ID {}", id);
@@ -119,7 +119,7 @@ public class RoomManager implements IRoomManager {
         RoomDao dao = new RoomDao();
         dao.setId(r.getId());
         dao.setExtremities(Lists.map(r.getExtremities(), IProtoEvent::getId));
-        state.getStore().putRoom(dao);
+        global.getStore().putRoom(dao);
         return Caches.get(rooms, r.getId());
     }
 
@@ -127,7 +127,7 @@ public class RoomManager implements IRoomManager {
     public Room createRoom(IRoomCreateOptions options) { // FIXME use RWLock
         String creator = options.getCreator().getId();
         String id = getId();
-        Room room = new Room(state, id);
+        Room room = new Room(global, id);
 
         synchronized (rooms) {
             room.inject(new RoomCreateEvent(creator));
@@ -180,14 +180,14 @@ public class RoomManager implements IRoomManager {
 
     @Override
     public IRoom discoverRoom(String roomId, List<IEvent> initialState, List<IEvent> authChain, IEvent seed) {
-        return saveAndLoad(new Room(state, roomId, initialState, authChain, seed));
+        return saveAndLoad(new Room(global, roomId, initialState, authChain, seed));
     }
 
     private Room joinRemoteRoom(String hs, String roomId, _MatrixID userId) {
-        IRemoteHomeServer rHs = state.getHsMgr().get(hs);
+        IRemoteHomeServer rHs = global.getHsMgr().get(hs);
         JsonObject protoEv = rHs.makeJoin(roomId, userId).getAsJsonObject("event");
         log.debug("Proto-event for remote join: {}", GsonUtil.getPrettyForLog(protoEv));
-        IEvent joinEv = state.getEvMgr().finalize(protoEv);
+        IEvent joinEv = global.getEvMgr().finalize(protoEv);
         JsonObject data = rHs.sendJoin(joinEv);
         log.debug("Remote data before join: {}", GsonUtil.getPrettyForLog(data));
 
@@ -199,7 +199,7 @@ public class RoomManager implements IRoomManager {
 
         synchronized (rooms) {
             log.info("Processing state after join");
-            return saveAndLoad(new Room(RoomManager.this.state, roomId, state, authChain, joinEv));
+            return saveAndLoad(new Room(RoomManager.this.global, roomId, state, authChain, joinEv));
         }
     }
 
@@ -209,7 +209,7 @@ public class RoomManager implements IRoomManager {
             List<String> servers = new ArrayList<>(lookup.getServers());
 
             // We remove ourselves in case the remote server thinks we are already in the room
-            servers.remove(state.getDomain());
+            servers.remove(global.getDomain());
             if (lookup.getServers().isEmpty()) {
                 throw new IllegalArgumentException("Cannot join a room without resident homeservers");
             }
@@ -225,7 +225,7 @@ public class RoomManager implements IRoomManager {
                     try {
                         return joinRemoteRoom(lookup.getSource(), lookup.getId(), userId);
                     } catch (RuntimeException e) {
-                        log.warn("Unable to join {} using {}: {}", lookup.getAlias(), server, e.getMessage());
+                        log.warn("Unable to join {} using {}: {}", lookup.getAlias(), server, e.getMessage(), e);
                     }
                 }
 
@@ -241,7 +241,7 @@ public class RoomManager implements IRoomManager {
 
     @Override
     public List<String> listRooms() {
-        return new ArrayList<>(Lists.map(state.getStore().listRooms(), RoomDao::getId));
+        return new ArrayList<>(Lists.map(global.getStore().listRooms(), RoomDao::getId));
     }
 
     @Override

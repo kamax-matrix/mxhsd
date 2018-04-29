@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.core.federation;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
@@ -28,8 +29,12 @@ import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.event.INakedEvent;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.federation.ITransaction;
+import io.kamax.mxhsd.api.room.IRoomStateSnapshot;
+import io.kamax.mxhsd.api.room.IRoomStateSnapshotIds;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 import io.kamax.mxhsd.core.GlobalStateHolder;
+import io.kamax.mxhsd.core.event.Event;
+import io.kamax.mxhsd.core.room.RoomStateSnapshot;
 import io.kamax.mxhsd.core.room.directory.FederatedRoomAliasLookup;
 import io.kamax.mxhsd.spring.federation.controller.v1.transaction.TransactionJson;
 import org.apache.commons.lang3.NotImplementedException;
@@ -108,6 +113,23 @@ public class RemoteHomeServer implements IRemoteHomeServer {
     @Override
     public JsonObject send(String method, String path, Map<String, String> parameters, JsonElement payload) {
         return global.getFedClient().send(domain, method, path, parameters, payload);
+    }
+
+    @Override
+    public IRoomStateSnapshot getState(String roomId, String eventId) {
+        JsonObject obj = global.getFedClient().getRoomState(domain, roomId, eventId);
+
+        List<IEvent> authChain = new ArrayList<>();
+        List<IEvent> pdus = new ArrayList<>();
+        GsonUtil.findArray(obj, "auth_chain").orElseGet(JsonArray::new).forEach(el -> authChain.add(new Event(el.getAsJsonObject())));
+        GsonUtil.getArrayOrThrow(obj, "pdus").forEach(el -> pdus.add(new Event(el.getAsJsonObject())));
+
+        return new RoomStateSnapshot(authChain, pdus);
+    }
+
+    @Override
+    public IRoomStateSnapshotIds getStateIds(String roomId, String eventId) {
+        return null;
     }
 
 }

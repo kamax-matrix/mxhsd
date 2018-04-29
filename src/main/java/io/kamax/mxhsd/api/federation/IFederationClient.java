@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -37,13 +37,15 @@ public interface IFederationClient {
 
     JsonObject sendTransaction(String domain, String id, JsonObject o);
 
-    JsonObject getRoomState(String roomId);
+    JsonObject getRoomState(String domain, String roomId, String eventId);
 
-    JsonObject getEvent(String id);
+    JsonObject getRoomStateIds(String domain, String roomId, String eventId);
 
-    JsonObject backfill(String fromEventId, long limit);
+    JsonObject getEvent(String domain, String id);
 
-    JsonObject frontfill(String fromEventId, long limit);
+    JsonObject backfill(String domain, String fromEventId, long limit);
+
+    JsonObject frontfill(String domain, String fromEventId, long limit);
 
     JsonObject query(String domain, String type, Map<String, String> parameters);
 

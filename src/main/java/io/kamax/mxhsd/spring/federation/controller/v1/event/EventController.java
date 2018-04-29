@@ -17,17 +17,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.kamax.mxhsd.spring.federation.controller.v1.event;
 
-package io.kamax.mxhsd.api.room;
+import io.kamax.mxhsd.spring.federation.controller.v1.FederationAPIv1;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import io.kamax.mxhsd.api.event.IEvent;
+@RestController
+@RequestMapping(path = FederationAPIv1.Base, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+public class EventController {
 
-import java.util.Set;
-
-public interface IRoomStateSnapshot {
-
-    Set<IEvent> getAuthChain();
-
-    Set<IEvent> getState();
+    //FIXME handle /event/{eventId}/
 
 }

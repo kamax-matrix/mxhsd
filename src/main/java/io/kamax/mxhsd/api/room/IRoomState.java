@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -38,7 +38,7 @@ public interface IRoomState {
     Optional<IHashedProtoEvent> findEventFor(StateTuple tuple);
 
     default IHashedProtoEvent getEventFor(StateTuple key) {
-        return findEventFor(key).orElseThrow(() -> new IllegalArgumentException("No event for state " + key.toString()));
+        return findEventFor(key).orElseThrow(() -> new IllegalArgumentException("No event for tuple " + key.toString()));
     }
 
     // Creation methods
@@ -69,5 +69,7 @@ public interface IRoomState {
 
     // FIXME refactor into own algo
     boolean isAccessibleAs(String user);
+
+    Set<String> getServers();
 
 }

@@ -111,10 +111,10 @@ public class RoomEventAuthorizationAlgorithm_v1 implements IRoomEventAuthorizati
                 String rule = state.findEventFor(StateTuple.of(RoomEventType.JoinRules))
                         .map(jrEv -> RoomJoinRulesEvent.get(jrEv.getJson()).getRule())
                         .orElse(RoomJoinRule.Private);
-                if (!StringUtils.equals(rule, RoomJoinRule.Public)) {
-                    return auth.deny(ev, "room is not public and sender was never invited");
+                if (StringUtils.equals(rule, RoomJoinRule.Public)) {
+                    auth.basedOn(state.getEventFor(StateTuple.of(RoomEventType.JoinRules)));
+                    return auth.allow(stateBuilder);
                 }
-                auth.basedOn(state.getEventFor(StateTuple.of(RoomEventType.JoinRules)));
 
                 return auth.deny(ev, "Not allowed to join");
             } else if (Invite.is(membership)) {

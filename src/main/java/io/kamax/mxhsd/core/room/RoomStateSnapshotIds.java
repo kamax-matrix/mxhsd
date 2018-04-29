@@ -18,16 +18,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mxhsd.api.room;
+package io.kamax.mxhsd.core.room;
 
-import io.kamax.mxhsd.api.event.IEvent;
+import io.kamax.mxhsd.api.room.IRoomStateSnapshotIds;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public interface IRoomStateSnapshot {
+public class RoomStateSnapshotIds implements IRoomStateSnapshotIds {
 
-    Set<IEvent> getAuthChain();
+    private Set<String> stateEvents;
+    private Set<String> authChain;
 
-    Set<IEvent> getState();
+    public RoomStateSnapshotIds(Collection<String> stateEvents, Collection<String> authChain) {
+        this.stateEvents = Collections.unmodifiableSet(new HashSet<>(stateEvents));
+        this.authChain = Collections.unmodifiableSet(new HashSet<>(authChain));
+    }
+
+    @Override
+    public Set<String> getStateEventIds() {
+        return stateEvents;
+    }
+
+    @Override
+    public Set<String> getAuthChainIds() {
+        return authChain;
+    }
 
 }

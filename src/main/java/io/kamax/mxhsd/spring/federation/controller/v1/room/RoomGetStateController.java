@@ -25,7 +25,7 @@ import com.google.gson.JsonObject;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
 import io.kamax.mxhsd.api.event.INakedEvent;
-import io.kamax.mxhsd.api.room.IRoomStateSnapshot;
+import io.kamax.mxhsd.api.room.IRoomStateSnapshotIds;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import io.kamax.mxhsd.spring.federation.controller.v1.FederationAPIv1;
@@ -49,7 +49,7 @@ public class RoomGetStateController extends JsonController {
         this.hs = svc.get();
     }
 
-    private IRoomStateSnapshot getSnapshot(String roomId, String eventId) {
+    private IRoomStateSnapshotIds getSnapshot(String roomId, String eventId) {
         return hs.getServerSession("").getRoom(roomId).getSnapshot(eventId);
     }
 
@@ -61,9 +61,9 @@ public class RoomGetStateController extends JsonController {
     ) {
         log(logger, req);
 
-        IRoomStateSnapshot snap = getSnapshot(roomId, eventId);
+        IRoomStateSnapshotIds snap = getSnapshot(roomId, eventId);
         JsonArray states = GsonUtil.asArray(snap.getStateEventIds());
-        JsonArray chain = GsonUtil.asArray(snap.getAuthChain());
+        JsonArray chain = GsonUtil.asArray(snap.getAuthChainIds());
 
         JsonObject obj = new JsonObject();
         obj.add("pdu_ids", states);
@@ -80,7 +80,7 @@ public class RoomGetStateController extends JsonController {
     ) {
         log(logger, req);
 
-        IRoomStateSnapshot snap = getSnapshot(roomId, eventId);
+        IRoomStateSnapshotIds snap = getSnapshot(roomId, eventId);
         JsonArray states = GsonUtil.asArray(
                 hs.getServerSession("").getEventMgr().getEvents(snap.getStateEventIds()).stream()
                         .map(INakedEvent::getJson)

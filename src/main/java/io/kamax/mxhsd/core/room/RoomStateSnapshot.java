@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2018 Maxime Dor
+ * Copyright (C) 2018 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -20,6 +20,7 @@
 
 package io.kamax.mxhsd.core.room;
 
+import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.room.IRoomStateSnapshot;
 
 import java.util.Collection;
@@ -29,22 +30,22 @@ import java.util.Set;
 
 public class RoomStateSnapshot implements IRoomStateSnapshot {
 
-    private Set<String> stateEvents;
-    private Set<String> authChain;
+    private Set<IEvent> stateEvents;
+    private Set<IEvent> authChain;
 
-    public RoomStateSnapshot(Collection<String> stateEvents, Collection<String> authChain) {
+    public RoomStateSnapshot(Collection<IEvent> authChain, Collection<IEvent> stateEvents) {
         this.stateEvents = Collections.unmodifiableSet(new HashSet<>(stateEvents));
         this.authChain = Collections.unmodifiableSet(new HashSet<>(authChain));
     }
 
     @Override
-    public Set<String> getStateEventIds() {
-        return stateEvents;
+    public Set<IEvent> getAuthChain() {
+        return authChain;
     }
 
     @Override
-    public Set<String> getAuthChain() {
-        return authChain;
+    public Set<IEvent> getState() {
+        return stateEvents;
     }
 
 }

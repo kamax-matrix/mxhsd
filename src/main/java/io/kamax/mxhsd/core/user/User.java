@@ -22,21 +22,21 @@ package io.kamax.mxhsd.core.user;
 
 import com.google.gson.JsonObject;
 import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.json.GsonUtil;
 import io.kamax.mxhsd.api.user.IUser;
 import io.kamax.mxhsd.api.user.IUserFilter;
+import io.kamax.mxhsd.core.GlobalStateHolder;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 public class User implements IUser {
 
+    private GlobalStateHolder global;
     private _MatrixID id;
-    private Map<String, IUserFilter> filters;
 
-    public User(_MatrixID id) {
+    public User(GlobalStateHolder global, _MatrixID id) {
+        this.global = global;
         this.id = id;
-        filters = new HashMap<>();
     }
 
     @Override
@@ -46,12 +46,14 @@ public class User implements IUser {
 
     @Override
     public synchronized IUserFilter createFilter(JsonObject content) { // FIXME use RWLock
-        return filters.computeIfAbsent(Long.toString(System.currentTimeMillis()), s -> new UserFilter(s, content));
+        String filterId = global.getStore().putFilter(id.getId(), GsonUtil.get().toJson(content));
+        return new UserFilter(filterId, content);
     }
 
     @Override
-    public synchronized Optional<IUserFilter> findFilter(String id) { // FIXME use RWLock
-        return Optional.ofNullable(filters.get(id));
+    public synchronized Optional<IUserFilter> findFilter(String filterId) { // FIXME use RWLock
+        return global.getStore().findFilter(id.getId(), filterId)
+                .map(raw -> new UserFilter(filterId, GsonUtil.parseObj(raw)));
     }
 
 }

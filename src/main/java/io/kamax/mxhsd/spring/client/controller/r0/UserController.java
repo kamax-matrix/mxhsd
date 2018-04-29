@@ -24,9 +24,9 @@ import com.google.gson.JsonObject;
 import io.kamax.matrix.MatrixID;
 import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.IHomeServer;
+import io.kamax.mxhsd.api.exception.NotFoundException;
 import io.kamax.mxhsd.api.user.IUserFilter;
 import io.kamax.mxhsd.spring.common.controller.EmptyJsonResponse;
-import io.kamax.mxhsd.spring.common.controller.InvalidRequestException;
 import io.kamax.mxhsd.spring.common.controller.JsonController;
 import io.kamax.mxhsd.spring.common.service.HomeserverService;
 import org.slf4j.Logger;
@@ -78,7 +78,7 @@ public class UserController extends JsonController {
         log(logger, req);
 
         IUserFilter filter = hs.getUserSession(getAccessToken(req)).getForUser(MatrixID.asAcceptable(userId)).getUser()
-                .findFilter(filterId).orElseThrow(() -> new InvalidRequestException("M_UNKNOWN", "Invalid filter ID"));
+                .findFilter(filterId).orElseThrow(() -> new NotFoundException(filterId));
 
         return GsonUtil.get().toJson(filter.getContent());
     }

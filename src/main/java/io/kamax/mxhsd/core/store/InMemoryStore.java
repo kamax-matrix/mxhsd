@@ -26,7 +26,6 @@ import io.kamax.mxhsd.api.room.IRoomState;
 import io.kamax.mxhsd.api.store.IStore;
 import io.kamax.mxhsd.core.event.ProcessedEvent;
 import io.kamax.mxhsd.core.store.dao.RoomDao;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,12 +34,24 @@ import java.util.stream.Collectors;
 public class InMemoryStore implements IStore {
 
     private Map<String, String> rooms = new ConcurrentHashMap<>();
-    private Map<String, IProcessedEvent> events = new ConcurrentHashMap<>();
+    private Map<String, IProcessedEvent> events = new HashMap<>();
     private Map<String, List<String>> extremities = new ConcurrentHashMap<>();
     private Map<String, IRoomState> states = new ConcurrentHashMap<>();
+    private List<IProcessedEvent> stream = new ArrayList<>();
+    private Map<String, Map<String, String>> filters = new ConcurrentHashMap<>();
 
     @Override
-    public Optional<IProcessedEvent> findEvent(String id) {
+    public synchronized Long getCurrentStreamId() {
+        return (long) stream.size();
+    }
+
+    @Override
+    public synchronized IProcessedEvent getEventAtStreamId(long streamId) {
+        return stream.get((int) streamId);
+    }
+
+    @Override
+    public synchronized Optional<IProcessedEvent> findEvent(String id) {
         return Optional.ofNullable(events.get(id));
     }
 
@@ -48,6 +59,7 @@ public class InMemoryStore implements IStore {
     public synchronized IProcessedEvent putEvent(IEvent event) {
         IProcessedEvent pEv = new ProcessedEvent((long) events.size(), event);
         events.put(pEv.getId(), pEv);
+        stream.add(pEv);
         return pEv;
     }
 
@@ -79,23 +91,30 @@ public class InMemoryStore implements IStore {
     }
 
     @Override
-    public void addExtremityOfRoom(String roomId, List<String> eventIds) {
-        throw new NotImplementedException(InMemoryStore.class.getName());
-    }
-
-    @Override
-    public void removeExtremityOfRoom(String roomId, List<String> eventIds) {
-        throw new NotImplementedException(InMemoryStore.class.getName());
-    }
-
-    @Override
     public Optional<IRoomState> findRoomState(String roomId, String eventId) {
         return Optional.ofNullable(states.get(roomId + eventId));
     }
 
     @Override
-    public void putRoomState(IRoomState state, IProcessedEvent event) {
-        states.put(event.getRoomId() + event.getId(), state);
+    public void putRoomState(String roomId, String eventId, IRoomState state) {
+        states.put(roomId + eventId, state);
+    }
+
+    private Map<String, String> getFilters(String userId) {
+        return filters.computeIfAbsent(userId, s -> new HashMap<>());
+    }
+
+    @Override
+    public String putFilter(String userId, String filter) {
+        Map<String, String> userFilters = getFilters(userId);
+        String filterId = UUID.randomUUID().toString().replace("-", "");
+        userFilters.put(filter, filter);
+        return filterId;
+    }
+
+    @Override
+    public Optional<String> findFilter(String userId, String filterId) {
+        return Optional.ofNullable(getFilters(userId).get(filterId));
     }
 
 }

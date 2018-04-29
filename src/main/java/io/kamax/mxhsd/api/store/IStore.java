@@ -30,6 +30,10 @@ import java.util.Optional;
 
 public interface IStore {
 
+    Long getCurrentStreamId();
+
+    IProcessedEvent getEventAtStreamId(long streamId);
+
     Optional<IProcessedEvent> findEvent(String id);
 
     IProcessedEvent putEvent(IEvent event);
@@ -40,16 +44,16 @@ public interface IStore {
 
     void putRoom(RoomDao room);
 
-    void addExtremityOfRoom(String roomId, List<String> eventIds);
-
-    void removeExtremityOfRoom(String roomId, List<String> eventIds);
-
     default Optional<IRoomState> findRoomState(IProcessedEvent ev) {
         return findRoomState(ev.getRoomId(), ev.getId());
     }
 
     Optional<IRoomState> findRoomState(String roomId, String eventId);
 
-    void putRoomState(IRoomState state, IProcessedEvent event);
+    void putRoomState(String roomId, String eventId, IRoomState state);
+
+    String putFilter(String user, String filter);
+
+    Optional<String> findFilter(String user, String filterId);
 
 }

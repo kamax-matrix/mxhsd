@@ -1,6 +1,6 @@
 /*
  * mxhsd - Corporate Matrix Homeserver
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2017 Kamax Sarl
  *
  * https://www.kamax.io/
  *
@@ -20,23 +20,21 @@
 
 package io.kamax.mxhsd.core.session.server;
 
-import com.google.gson.JsonObject;
-import io.kamax.mxhsd.GsonUtil;
 import io.kamax.mxhsd.api.event.IEvent;
 import io.kamax.mxhsd.api.federation.ITransaction;
 import io.kamax.mxhsd.api.room.IRoom;
+import io.kamax.mxhsd.api.room.IRoomStateSnapshot;
 import io.kamax.mxhsd.api.session.server.IServerEventManager;
 import io.kamax.mxhsd.api.session.server.IServerRoomDirectory;
 import io.kamax.mxhsd.api.session.server.IServerSession;
 import io.kamax.mxhsd.core.GlobalStateHolder;
-import io.kamax.mxhsd.core.event.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.concurrent.ForkJoinPool;
 
 public class ServerSession implements IServerSession {
 
@@ -67,29 +65,31 @@ public class ServerSession implements IServerSession {
     public void push(ITransaction transaction) {
         log.debug("Inbound transaction {} from {} @ {}", transaction.getId(), transaction.getOrigin(), transaction.getOriginTimestamp());
 
-        try {
-            transaction.getPdus().forEach(sEv -> {
+        transaction.getPdus().forEach(sEv -> ForkJoinPool.commonPool().execute(() -> {
+            try {
+                String evId = sEv.getId();
+                String roomId = sEv.getRoomId();
                 log.info("Transaction {}: Processing event {} for room {}", transaction.getId(), sEv.getId(), sEv.getRoomId());
+
                 synchronized (global.getRoomMgr()) { // FIXME have a lock per Room ID
                     Optional<IRoom> rOpt = global.getRoomMgr().findRoom(sEv.getRoomId());
                     if (!rOpt.isPresent()) {
                         log.warn("Got event about unknown room {} from {}", sEv.getRoomId(), transaction.getOrigin());
 
                         log.info("Trying to fetch seed state from {}", transaction.getOrigin());
-                        JsonObject body = global.getHsMgr().get(transaction.getOrigin()).send("GET", "/_matrix/federation/v1/state/" + sEv.getRoomId() + "/", Collections.singletonMap("event_id", sEv.getId()), null);
-                        List<IEvent> authChain = GsonUtil.asList(body, "auth_chain", JsonObject.class).stream().map(Event::new).collect(Collectors.toList());
-                        List<IEvent> state = GsonUtil.asList(body, "pdus", JsonObject.class).stream().map(Event::new).collect(Collectors.toList());
-                        global.getRoomMgr().discoverRoom(sEv.getRoomId(), state, authChain, sEv);
+                        IRoomStateSnapshot snapshot = global.getHsMgr().get(transaction.getOrigin()).getState(roomId, evId);
+                        List<IEvent> authChain = new ArrayList<>(snapshot.getAuthChain());
+                        List<IEvent> state = new ArrayList<>(snapshot.getState());
+                        global.getRoomMgr().discoverRoom(roomId, state, authChain, sEv);
                         log.info("Room was discovered successfully");
                     } else {
                         rOpt.get().inject(sEv);
                     }
                 }
-            });
-        } catch (RuntimeException e) {
-            log.warn("Inbound transaction {} from {}: Failure during processing: {}", transaction.getId(), transaction.getOrigin(), e.getMessage());
-            throw e;
-        }
+            } catch (RuntimeException e) {
+                log.warn("Inbound transaction {} from {}: Failure during processing of event {}: {}", transaction.getId(), transaction.getOrigin(), sEv.getId(), e.getMessage());
+            }
+        }));
     }
 
 }
