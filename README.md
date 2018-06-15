@@ -1,6 +1,17 @@
 # mxhsd
 [![Build Status](https://travis-ci.org/kamax-io/mxhsd.svg?branch=master)](https://travis-ci.org/kamax-io/mxhsd)  
 
+----
+
+## CURRENT STATUS
+Given the inability to implement and document a functional Matrix protocol by New Vector and resolve security vulnerabilities  that are public for years, mxhsd will no longer try to implement the Matrix protocol. Instead it will implement what we (Kamax) think makes sense and document as we go.
+
+This will be a gradual change while we reverse engineer the remaining of the protocol and improve it as we go. We might also support the Matrix protocol with a configuration option but on a best effort basis, if ever.
+
+Thank you everyone for your interest until now. We hope to see you again as users of the new mxhsd (new name to come)
+
+----
+
 [Purpose](#purpose) | [Goals](#goals) | [Features](#features) | [Support](#support)
 
 ## Purpose
