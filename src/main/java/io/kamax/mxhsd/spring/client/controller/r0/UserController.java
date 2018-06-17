@@ -96,14 +96,14 @@ public class UserController extends JsonController {
         return EmptyJsonResponse.stringify();
     }
 
-    // Riot keeps requesting this, no idea what it is for
+    // Used by Riot for Scalar
     @RequestMapping(method = POST, path = "/openid/request_token")
     public String openIdRequestToken() {
         JsonObject json = new JsonObject();
         json.addProperty("access_token", "dummy");
         json.addProperty("token_type", "Bearer");
         json.addProperty("expires_in", Integer.MAX_VALUE); // a long time
-        json.addProperty("matrix_server_name", "example.org");
+        json.addProperty("matrix_server_name", hs.getDomain());
         return GsonUtil.get().toJson(json);
     }
 

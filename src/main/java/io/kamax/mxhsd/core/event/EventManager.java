@@ -198,6 +198,45 @@ public class EventManager implements IEventManager {
     }
 
     @Override
+    public boolean has(String id) {
+        return global.getStore().findEvent(id).isPresent();
+    }
+
+    @Override
+    public EventLookup lookup(Collection<String> events) {
+        List<IProcessedEvent> found = new ArrayList<>();
+        List<String> missing = new ArrayList<>();
+
+        events.forEach(id -> {
+            Optional<IProcessedEvent> ev = global.getStore().findEvent(id);
+            if (ev.isPresent()) {
+                found.add(ev.get());
+            } else {
+                missing.add(id);
+            }
+        });
+
+        return new EventLookup() {
+
+            @Override
+            public boolean hasAll() {
+                return missing.isEmpty();
+            }
+
+            @Override
+            public List<IProcessedEvent> getFound() {
+                return found;
+            }
+
+            @Override
+            public List<String> getMissing() {
+                return missing;
+            }
+
+        };
+    }
+
+    @Override
     public List<IProcessedEvent> get(Collection<String> ids) {
         return ids.stream()
                 .map(this::get)

@@ -49,6 +49,10 @@ public interface IEventManager {
 
     IProcessedEvent get(String id);
 
+    boolean has(String id);
+
+    EventLookup lookup(Collection<String> events);
+
     List<IProcessedEvent> get(Collection<String> ids);
 
     default List<IProcessedEvent> getFull(Collection<? extends IProtoEvent> evs) {

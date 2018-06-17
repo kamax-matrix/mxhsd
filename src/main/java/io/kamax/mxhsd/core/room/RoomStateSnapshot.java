@@ -33,7 +33,7 @@ public class RoomStateSnapshot implements IRoomStateSnapshot {
     private Set<IEvent> stateEvents;
     private Set<IEvent> authChain;
 
-    public RoomStateSnapshot(Collection<IEvent> authChain, Collection<IEvent> stateEvents) {
+    public RoomStateSnapshot(Collection<? extends IEvent> authChain, Collection<? extends IEvent> stateEvents) {
         this.stateEvents = Collections.unmodifiableSet(new HashSet<>(stateEvents));
         this.authChain = Collections.unmodifiableSet(new HashSet<>(authChain));
     }

@@ -28,12 +28,17 @@ import io.kamax.mxhsd.api.room.IRoomStateSnapshot;
 import io.kamax.mxhsd.api.room.IRoomStateSnapshotIds;
 import io.kamax.mxhsd.api.room.directory.IFederatedRoomAliasLookup;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 
 public interface IRemoteHomeServer {
 
     String getDomain();
+
+    Instant lastAvailable();
+
+    void setAvailable();
 
     String getImplementationName();
 

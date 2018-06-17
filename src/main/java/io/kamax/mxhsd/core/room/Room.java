@@ -33,6 +33,7 @@ import io.kamax.mxhsd.Lists;
 import io.kamax.mxhsd.api.event.*;
 import io.kamax.mxhsd.api.exception.ForbiddenException;
 import io.kamax.mxhsd.api.exception.MatrixException;
+import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.room.*;
 import io.kamax.mxhsd.api.room.event.EventComparator;
 import io.kamax.mxhsd.api.room.event.RoomMembershipEvent;
@@ -54,7 +55,7 @@ import java.util.stream.Collectors;
 
 public class Room implements IRoom {
 
-    private Logger log = LoggerFactory.getLogger(Room.class);
+    private final Logger log = LoggerFactory.getLogger(Room.class);
 
     private GlobalStateHolder global;
     private IRoomAlgorithm algo;
@@ -67,18 +68,22 @@ public class Room implements IRoom {
 
     private LoadingCache<String, IRoomState> states;
 
+    private void info(String message, Object... parms) {
+        log.info(String.format("%s : %s", id, message), parms);
+    }
+
     public Room(GlobalStateHolder global, String id) {
         this.global = global;
         this.id = id;
         this.eventBus = new MBassador<>(new IPublicationErrorHandler.ConsoleLogger(true));
         this.algo = new RoomAlgorithm_v1(eventId -> this.global.getEvMgr().get(eventId));
-        this.states = CacheBuilder.newBuilder().initialCapacity(20).maximumSize(100)
+        this.states = CacheBuilder.newBuilder().initialCapacity(1000).maximumSize(30000)
                 .build(new CacheLoader<String, IRoomState>() {
                     @Override
                     public IRoomState load(String eventId) {
                         return global.getStore().findRoomState(id, eventId)
                                 .orElseGet(() -> {
-                                    log.info("State for event {} was not found, trying to fetch remotely", eventId);
+                                    info("State for event {} was not found, trying to fetch remotely", eventId);
 
                                     // We compute all servers that could have the event
                                     Set<String> targets = new HashSet<>();
@@ -89,48 +94,64 @@ public class Room implements IRoom {
 
                                     // In case we don't have the previous events
                                     if (targets.isEmpty()) {
-                                        log.info("No candidate servers were found for fetching state, using origin");
+                                        info("No candidate servers were found for fetching state, using current room state");
+                                        targets.addAll(getCurrentState().getServers());
                                         targets.add(eventId.split(":")[1]);
                                     } else {
-                                        log.info("We found {} candidate servers for fetching state at event {}", targets.size(), eventId);
+                                        info("We found {} candidate servers for fetching state at event {}", targets.size(), eventId);
                                     }
 
-                                    for (String target : targets) {
-                                        if (StringUtils.equals(global.getDomain(), target)) {
+                                    for (IRemoteHomeServer srv : global.getHsMgr().get(targets)) {
+                                        if (StringUtils.equals(global.getDomain(), srv.getDomain())) {
                                             // We don't need to call ourselves
                                             continue;
                                         }
 
                                         try {
-                                            log.info("Asking {} for state", target);
-                                            IRoomStateSnapshot snapshot = global.getHsMgr().get(target).getState(id, eventId);
+                                            info("Asking {} for state", srv.getDomain());
+                                            IRoomStateSnapshotIds snapshotIds = srv.getStateIds(id, eventId);
+                                            EventLookup chainLookup = global.getEvMgr().lookup(snapshotIds.getAuthChainIds());
+                                            EventLookup pduLookup = global.getEvMgr().lookup(snapshotIds.getStateEventIds());
 
-                                            log.info("We got state");
+                                            IRoomStateSnapshot snapshot;
+                                            if (chainLookup.hasAll() && pduLookup.hasAll()) {
+                                                info("Found all state events via ID");
+                                                snapshot = new RoomStateSnapshot(pduLookup.getFound(), chainLookup.getFound());
+                                            } else {
+                                                info("Missing state events, fetching full data set");
+                                                snapshot = srv.getState(id, eventId);
+                                                info("Storing auth chain events");
+                                                snapshot.getAuthChain().stream().sorted(EventComparator.forEvent()).forEach(global.getStore()::putEvent);
+                                                info("Storing state events");
+                                                snapshot.getState().stream().sorted(EventComparator.forEvent()).forEach(global.getStore()::putEvent);
+                                            }
+
+                                            info("We got state");
                                             // FIXME we must optimize this - rely on the caching?
                                             // We store every event of the
-                                            log.info("Storing auth chain events");
-                                            snapshot.getAuthChain().stream().sorted(EventComparator.forEvent()).forEach(global.getStore()::putEvent);
-                                            log.info("Storing state events");
-                                            snapshot.getState().stream().sorted(EventComparator.forEvent()).forEach(global.getStore()::putEvent);
 
-                                            log.info("Building state");
+                                            info("Building state");
                                             RoomState.Builder builder = RoomState.build();
                                             snapshot.getState().forEach(builder::addEvent);
                                             RoomState state = builder.get();
-                                            log.info("Storing state");
+                                            info("Storing state");
                                             global.getStore().putRoomState(id, eventId, state);
                                             return state;
+                                            /*
+                                        } catch (FederationException fedEx) {
+                                            FIXME MUST HANDLE
+                                            */
                                         } catch (MatrixException mxEx) {
                                             if (StringUtils.equals(ForbiddenException.Code, mxEx.getErrorCode())) {
-                                                log.info("We are not allowed to see the state, returning empty state");
+                                                info("We are not allowed to see the state, returning empty state");
                                                 RoomState state = RoomState.empty();
                                                 global.getStore().putRoomState(id, eventId, state);
                                                 return state;
                                             } else {
-                                                log.warn("Unable to fetch state from {}: {}", target, mxEx.getMessage());
+                                                log.warn("Unable to fetch state from {}: {}", srv.getDomain(), mxEx.getMessage());
                                             }
                                         } catch (RuntimeException e) {
-                                            log.warn("Unable to fetch state from {}: {}", target, e.getMessage());
+                                            log.warn("Unable to fetch state from {}: {}", srv.getDomain(), e.getMessage());
                                         }
                                     }
 
@@ -166,13 +187,13 @@ public class Room implements IRoom {
                 .sorted(EventComparator.forEvent())
                 .collect(Collectors.toList());
 
-        log.info("Room {}: Storing auth chain", id);
+        info("Storing auth chain", id);
         chain.forEach(e -> global.getEvMgr().store(e));
 
-        log.info("Room {}: Storing state", id);
+        info("Storing state", id);
         state.forEach(e -> global.getEvMgr().store(e));
 
-        log.info("Room {}: Storing seed");
+        info("Storing seed", id);
         global.getEvMgr().store(seed);
 
         RoomState.Builder b = RoomState.build();
@@ -312,6 +333,7 @@ public class Room implements IRoom {
                 .forEach(prevEvents::add);
 
         JsonObject event = new JsonObject();
+        event.addProperty(EventKey.Id.get(), "$makeJoinId:" + mxid.getDomain());
         event.addProperty(EventKey.Type.get(), RoomEventType.Membership.get());
         event.add(EventKey.AuthEvents.get(), GsonUtil.asArray(getCreation().getId()));
         event.add(EventKey.Content.get(), GsonUtil.makeObj(EventKey.Membership.get(), RoomMembership.Join.get()));
@@ -385,7 +407,16 @@ public class Room implements IRoom {
 
     @Override
     public synchronized void inject(IEvent ev) { // FIXME use RWLock
-        log.info("{} : Injecting event {}", id, ev.getId());
+        info("Injecting event {}", ev.getId());
+
+        boolean isConnected = ev.getParents().stream()
+                .map(IEventIdReference::getEventId)
+                .allMatch(id -> global.getEvMgr().has(id));
+
+        if (!isConnected) {
+            JsonArray earliest = GsonUtil.asArray(extremities);
+            JsonArray latest = GsonUtil.asArray(ev.getId());
+        }
 
         IRoomState parentState = algo.resolve(getStates(ev));
         RoomEventAuthorization eval = algo.authorize(parentState, ev);

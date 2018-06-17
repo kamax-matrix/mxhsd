@@ -27,6 +27,10 @@ import io.kamax.mxhsd.api.federation.IRemoteHomeServer;
 import io.kamax.mxhsd.api.federation.IRemoteHomeServerManager;
 import io.kamax.mxhsd.core.GlobalStateHolder;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class RemoteHomeServerManager implements IRemoteHomeServerManager {
@@ -52,6 +56,14 @@ public class RemoteHomeServerManager implements IRemoteHomeServerManager {
     @Override
     public IRemoteHomeServer get(String domain) {
         return cache.getUnchecked(domain);
+    }
+
+    @Override
+    public List<IRemoteHomeServer> get(Collection<String> domains) {
+        List<IRemoteHomeServer> servers = new ArrayList<>();
+        domains.forEach(d -> servers.add(cache.getUnchecked(d)));
+        servers.sort(Comparator.comparing(IRemoteHomeServer::lastAvailable));
+        return servers;
     }
 
 }
