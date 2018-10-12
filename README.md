@@ -1,5 +1,5 @@
 # mxhsd
-[![Build Status](https://travis-ci.org/kamax-io/mxhsd.svg?branch=master)](https://travis-ci.org/kamax-io/mxhsd)  
+[![Build Status](https://travis-ci.org/kamax-matrix/mxhsd.svg?branch=master)](https://travis-ci.org/kamax-matrix/mxhsd)  
 
 ----
 
